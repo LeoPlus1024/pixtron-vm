@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.31)
+project(PixotronVM C)
+
+set(CMAKE_C_STANDARD 11)
+set(PIXOTRON_VM_STACK_SIZE "1024")
+
+configure_file(${PROJECT_SOURCE_DIR}/Config.h.in ${CMAKE_BINARY_DIR}/include/Config.h)
+
+file(GLOB SOURCES *.c)
+
+
+include_directories(AFTER "include" ${CMAKE_BINARY_DIR}/include)
+add_executable(${PROJECT_NAME} ${SOURCES})

@@ -1,0 +1,4 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+#define PIXOTRON_VM_STACK_SIZE (@PIXOTRON_VM_STACK_SIZE@)
+#endif
