@@ -2,7 +2,7 @@
 // Created by leo on 25-5-22.
 //
 
-#include "include/Memory.h"
+#include "Memory.h"
 #include <malloc.h>
 #include <stdlib.h>
 
@@ -13,4 +13,13 @@ extern void *PixotronVM_calloc(size_t size) {
         exit(-1);
     }
     return ptr;
+}
+
+extern void PixotronVM_free(void **ref) {
+    if (ref == NULL || *ref == NULL) {
+        return;
+    }
+    void *ptr = *ref;
+    free(ptr);
+    *ref = NULL;
 }

@@ -5,13 +5,39 @@
 #ifndef TYPE_H
 #define TYPE_H
 
+#include <stddef.h>
+
 #include "Opncode.h"
 #include <stdint.h>
 
+typedef uint64_t VMValue;
+
+struct VirtualStackFrame;
+
+typedef struct VirtualStackFrame {
+    // 局部变量表
+    VMValue *localVarTable;
+    // 局部变量数量
+    size_t maxLocals;
+    // 操作数栈
+    VMValue *operandStack;
+    // 最大栈深度
+    size_t maxStack;
+    // 操作数栈指针
+    size_t sp;
+    // 调用栈
+    struct VirtualStackFrame *pre;
+    // 返回地址
+    size_t returnAddress;
+} *VirtualStackFramePtr;
 
 typedef struct {
-    uint8_t *data;
-    uint32_t sp;
+    // 当前栈深度
+    size_t depth;
+    // 最大栈深度
+    size_t maxDepth;
+    // 当前栈顶栈帧
+    VirtualStackFramePtr frame;
 } VirtualStack, *VirtualStackPtr;
 
 
@@ -55,7 +81,6 @@ typedef struct {
     BinaryHeaderPtr header;
 } PixtronVM, *PixtronVMPtr;
 
-typedef uint64_t VMValue;
 
 typedef struct {
     DataType type;
@@ -68,6 +93,7 @@ typedef struct {
         double d;
     } value;
 } Variant;
+
 
 #define VM_VALUE_SIZE (sizeof(VMValue))
 

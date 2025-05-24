@@ -9,6 +9,7 @@
 
 #include "IError.h"
 #include "Memory.h"
+#include "VirtualStack.h"
 
 #define MAGIC  (0xFFAABBCC)
 
@@ -37,6 +38,8 @@ extern bool PixtronVM_init(PixtronVMPtr pixtron) {
 
     pixtron->header = header;
     pixtron->data = buffer + dataOffset;
+
+    PixtronVM_stack_frame_push(pixtron, 10, 10);
 
     return true;
 }

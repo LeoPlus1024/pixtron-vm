@@ -10,6 +10,7 @@ typedef enum:uint8_t {
     // 栈操作
     PUSH, // 压栈（操作数含类型和值）
     POP, // 弹栈（操作数含类型）
+    CALL,
 
     // 算术运算
     OP_ADD, // 加法（操作数含类型）

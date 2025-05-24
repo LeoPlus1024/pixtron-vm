@@ -11,13 +11,15 @@
 #include "Program.h"
 #include <stdint.h>
 
+#include "VirtualStack.h"
+
 
 extern PixtronVMPtr PixtronVM_create(const uint8_t *buffer, const uint32_t size) {
     PixtronVMPtr pixtron = PixotronVM_calloc(sizeof(PixtronVM));
     VirtualStackPtr stack = PixotronVM_calloc(sizeof(VirtualStack));
-    stack->sp = PIXOTRON_VM_STACK_SIZE;
-    stack->data = PixotronVM_calloc(PIXOTRON_VM_STACK_SIZE);
-
+    stack->maxDepth = VM_MAX_STACK_DEPTH;
+    stack->depth = 0;
+    stack->frame = NULL;
     pixtron->size = size;
     pixtron->stack = stack;
     pixtron->buffer = buffer;
@@ -32,38 +34,6 @@ extern PixtronVMPtr PixtronVM_create(const uint8_t *buffer, const uint32_t size)
     return pixtron;
 }
 
-
-static void PixtronVM_stack_push(PixtronVMPtr pixtron, const Variant *variant) {
-    VirtualStackPtr stack = pixtron->stack;
-    const uint32_t sp = stack->sp;
-    if (sp < VM_VALUE_SIZE) {
-        fprintf(stderr, "PixotronVM_stack_push: stack overflow\n");
-        exit(1);
-    }
-    const uint32_t tmp = sp - VM_VALUE_SIZE;
-    void *stackTop = stack->data + tmp;
-    PixtronVM_to_VMValue(variant, stackTop);
-    stack->sp = tmp;
-}
-
-static void PixtronVM_ops_type(PixtronVMPtr pixtron, const VMValue *value) {
-}
-
-static void PixtronVM_stack_pop(PixtronVMPtr pixtron, Variant *variant) {
-    VirtualStackPtr stack = pixtron->stack;
-    const uint32_t sp = stack->sp;
-    if (sp + VM_VALUE_SIZE > PIXOTRON_VM_STACK_SIZE) {
-        fprintf(stderr, "PixotronVM_stack_pop: stack underflow.\n");
-        exit(-1);
-    }
-    VMValue value = 0;
-    const void *stackTop = stack->data + sp;
-    memcpy(&value, stackTop, VM_VALUE_SIZE);
-    stack->sp = sp + VM_VALUE_SIZE;
-    const DataType type = PixtronVM_typeof(value);
-    memcpy(&value, &variant, TYPE_SIZE[type]);
-    variant->type = type;
-}
 
 static uint32_t PixtronVM_ops_data(PixtronVMPtr pixtron, const uint64_t pc, Variant *variant) {
     const uint8_t *buffer = pixtron->buffer;
@@ -122,10 +92,14 @@ extern void PixtronVM_exec(PixtronVMPtr pixtron) {
                     pc = pc + 5;
                 }
             }
+            case CALL: {
+                break;
+            }
             default:
 
 
 
         }
     }
+    PixtronVM_stack_frame_pop(pixtron);
 }
