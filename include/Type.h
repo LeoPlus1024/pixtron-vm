@@ -83,7 +83,7 @@ typedef struct {
 
     union {
         int8_t b;
-        int16_t u;
+        int16_t s;
         int32_t i;
         int64_t l;
         double d;
@@ -98,5 +98,13 @@ extern inline Type PixtronVM_typeof(VMValue value);
 
 
 extern inline void PixtronVM_to_VMValue(const Variant *variant, uint8_t *value);
+
+
+extern inline void PixtronVM_to_VMDouble(Variant *variant);
+
+extern inline void PixtronVM_to_VMLong(Variant *variant);
+
+
+extern inline void PixtronVM_negative(Variant *variant);
 
 #endif //TYPE_H

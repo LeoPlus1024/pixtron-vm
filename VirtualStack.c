@@ -35,7 +35,13 @@ extern inline void PixtronVM_stack_pop(PixtronVMPtr vm, Variant *variant) {
     memcpy(&value, stackTop, VM_VALUE_SIZE);
     frame->sp = sp + 1;
     const Type type = PixtronVM_typeof(value);
-    memcpy(&(variant->value), &value, TYPE_SIZE[type]);
+    if (type == TYPE_DOUBLE || type == TYPE_LONG) {
+        memcpy(&(variant->value), &value, TYPE_SIZE[type]);
+    }
+    // 对于 byte、short类型直接扩容到int类型
+    else {
+        variant->value.i = (int32_t) value;
+    }
     variant->type = type;
 }
 
@@ -85,11 +91,11 @@ extern inline void PixtronVM_stack_ltable_set(PixtronVMPtr vm, uint16_t index, c
     const uint16_t maxLocals = frame->maxLocals;
     assert(index < maxLocals);
     const VMValue tmp = frame->localVarTable[index];
-    Type t0 = PixtronVM_typeof(tmp);
+    const Type t0 = PixtronVM_typeof(tmp);
     if (t0 == NIL) {
         frame->localVarTable[index] = tmp;
     } else {
-        Type t1 = PixtronVM_typeof(tmp);
+        const Type t1 = PixtronVM_typeof(tmp);
         assert(t0==t1);
         frame->localVarTable[index] = *value;
     }

@@ -11,7 +11,6 @@
 #include "Memory.h"
 #include "Opncode.h"
 #include <stdint.h>
-#include <time.h>
 
 #include "DataSegment.h"
 #include "Engine.h"
@@ -131,8 +130,9 @@ extern void PixtronVM_exec(PixtronVMPtr vm) {
                 else if (s == LOCAL_VAR) {
                 }
             }
-            case ADD: {
-                PixotronVM_exec_add(vm);
+            case ADD:
+            case SBC: {
+                PixotronVM_exec_add_sbc(vm, ops == SBC);
                 break;
             }
             case CALL: {
