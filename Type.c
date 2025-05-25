@@ -1,7 +1,7 @@
 #include "Type.h"
 #include <string.h>
 
-extern inline DataType PixtronVM_typeof(const VMValue value) {
+extern inline Type PixtronVM_typeof(const VMValue value) {
     if ((value & 0x7FF0000000000000) != 0x7FF0000000000000) {
         return TYPE_DOUBLE;
     }
@@ -9,7 +9,7 @@ extern inline DataType PixtronVM_typeof(const VMValue value) {
 }
 
 extern void inline PixtronVM_to_VMValue(const Variant *variant, uint8_t *value) {
-    const DataType type = variant->type;
+    const Type type = variant->type;
     const uint8_t size = TYPE_SIZE[type];
     memcpy(value, &variant->value, size);
     if (type == TYPE_DOUBLE) {

@@ -1,5 +1,6 @@
 #include "VirtualStack.h"
 
+#include <assert.h>
 #include <Config.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,12 +34,12 @@ extern inline void PixtronVM_stack_pop(PixtronVMPtr vm, Variant *variant) {
     const void *stackTop = frame->operandStack + sp;
     memcpy(&value, stackTop, VM_VALUE_SIZE);
     frame->sp = sp + 1;
-    const DataType type = PixtronVM_typeof(value);
+    const Type type = PixtronVM_typeof(value);
     memcpy(&(variant->value), &value, TYPE_SIZE[type]);
     variant->type = type;
 }
 
-extern inline void PixtronVM_stack_frame_push(PixtronVMPtr vm, const size_t maxLocals, const size_t maxStack) {
+extern inline void PixtronVM_stack_frame_push(PixtronVMPtr vm, const uint16_t maxLocals, const uint16_t maxStack) {
     VirtualStackPtr stack = vm->stack;
     const size_t depth = stack->depth;
     if (depth + 1 == VM_MAX_STACK_DEPTH) {
@@ -74,4 +75,22 @@ extern inline void PixtronVM_stack_frame_pop(PixtronVMPtr vm) {
     PixotronVM_free(TO_REF(frame->operandStack));
     PixotronVM_free(TO_REF(frame->localVarTable));
     PixotronVM_free(TO_REF(frame));
+}
+
+
+extern inline void PixtronVM_stack_ltable_set(PixtronVMPtr vm, uint16_t index, const VMValue *value) {
+    assert(value != NULL);
+    VirtualStackFramePtr frame = vm->stack->frame;
+    assert(frame != NULL);
+    const uint16_t maxLocals = frame->maxLocals;
+    assert(index < maxLocals);
+    const VMValue tmp = frame->localVarTable[index];
+    Type t0 = PixtronVM_typeof(tmp);
+    if (t0 == NIL) {
+        frame->localVarTable[index] = tmp;
+    } else {
+        Type t1 = PixtronVM_typeof(tmp);
+        assert(t0==t1);
+        frame->localVarTable[index] = *value;
+    }
 }

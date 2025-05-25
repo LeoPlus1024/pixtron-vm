@@ -1,6 +1,8 @@
 #include "PixotronVM.h"
 
 #include <assert.h>
+#include <errno.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,13 +10,47 @@
 #include "Config.h"
 #include "Memory.h"
 #include "Opncode.h"
-#include "Program.h"
 #include <stdint.h>
 #include <time.h>
 
 #include "DataSegment.h"
 #include "Engine.h"
 #include "VirtualStack.h"
+#include "IError.h"
+
+
+#define MAGIC  (0xFFAABBCC)
+
+
+static bool PixtronVM_init(PixtronVMPtr vm) {
+    uint8_t *buffer = vm->buffer;
+    uint32_t magic = *((uint32_t *) buffer);
+    if (magic != MAGIC) {
+        fprintf(stderr, "Magic not match except %d but it is %d\n",MAGIC, magic);
+        errno = MAGIC_ERROR;
+        return false;
+    }
+    const Version version = *((Version *) (buffer + 4));
+    const uint32_t dataOffset = *((uint32_t *) (buffer + 6)) + 18;
+    const uint32_t dataLength = *((uint32_t *) (buffer + 10)) + 18;
+    const uint32_t codeOffset = *((uint32_t *) (buffer + 14)) + 18;
+
+    BinaryHeaderPtr header = PixotronVM_calloc(sizeof(BinaryHeader));
+
+    header->magic = MAGIC;
+    header->version = version;
+    header->dataOffset = dataOffset;
+    header->dataLength = dataLength;
+    header->codeOffset = codeOffset;
+    vm->pc = codeOffset;
+
+    vm->header = header;
+    vm->data = buffer + dataOffset;
+
+    PixtronVM_stack_frame_push(vm, 10, 10);
+
+    return true;
+}
 
 
 extern PixtronVMPtr PixtronVM_create(uint8_t *buffer, uint32_t size) {
@@ -41,7 +77,7 @@ extern PixtronVMPtr PixtronVM_create(uint8_t *buffer, uint32_t size) {
 static uint32_t PixtronVM_ops_data(PixtronVMPtr vm, const uint64_t pc, Variant *variant) {
     const uint8_t *buffer = vm->buffer;
     const uint8_t subOps = buffer[pc];
-    const DataType type = OPS_DATA_TYPE(subOps);
+    const Type type = OPS_DATA_TYPE(subOps);
     const DataSource source = OPS_DATA_SOURCE(subOps);
     variant->type = type;
     uint64_t tmp = pc + 1;
@@ -82,13 +118,17 @@ extern void PixtronVM_exec(PixtronVMPtr vm) {
             case POP: {
                 Variant value;
                 PixtronVM_stack_pop(vm, &value);
-                uint8_t subOps = buffer[pc];
+                const uint8_t subOps = buffer[pc];
                 const DataSource s = OPS_DATA_SOURCE(subOps);
                 pc = pc + 1;
+                // 设置全局变量
                 if (s == GLOBAL_VAR) {
                     const uint32_t *pos = (uint32_t *) (buffer + pc);
                     PixtronVM_data_segment_set(vm, pos,OPS_DATA_TYPE(subOps), &value);
                     pc = pc + 5;
+                }
+                // 设置局部变量
+                else if (s == LOCAL_VAR) {
                 }
             }
             case ADD: {

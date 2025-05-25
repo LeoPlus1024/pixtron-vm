@@ -9,7 +9,7 @@
  * @param type Data type
  * @param variant {@link Variant}
  */
-extern void inline PixtronVM_data_segment_set(PixtronVMPtr vm, const uint32_t *offset, DataType type,
+extern void inline PixtronVM_data_segment_set(PixtronVMPtr vm, const uint32_t *offset, const Type type,
                                               const Variant *variant);
 
 /**

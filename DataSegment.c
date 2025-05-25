@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 
-extern inline void PixtronVM_data_segment_set(PixtronVMPtr vm, const uint32_t *offset, DataType type,
+extern inline void PixtronVM_data_segment_set(PixtronVMPtr vm, const uint32_t *offset, const Type type,
                                               const Variant *variant) {
     assert(type == variant->type);
     const uint32_t index = *offset;

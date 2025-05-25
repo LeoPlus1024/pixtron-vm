@@ -29,13 +29,15 @@ typedef enum:uint8_t {
 
 // 类型标记（操作数中使用）
 typedef enum:uint8_t {
-    TYPE_BYTE = 0,
-    TYPE_BOOL,
+    NIL = 0,
+    TYPE_BYTE,
+    TYPE_SHORT,
     TYPE_INT,
     TYPE_LONG,
     TYPE_DOUBLE,
+    TYPE_BOOL,
     TYPE_REF,
-} DataType;
+} Type;
 
 typedef enum {
     IMPLIED = 0,
@@ -45,11 +47,13 @@ typedef enum {
 } DataSource;
 
 static const uint8_t TYPE_SIZE[] = {
+    [NIL] = 0,
     [TYPE_BYTE] = 1,
-    [TYPE_BOOL] = 1,
+    [TYPE_BYTE] = 2,
     [TYPE_INT] = 4,
     [TYPE_LONG] = 6,
     [TYPE_DOUBLE] = 8,
+    [TYPE_BOOL] = 1,
     [TYPE_REF] = 6
 };
 

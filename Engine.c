@@ -9,7 +9,7 @@ extern inline void PixotronVM_exec_add(PixtronVMPtr vm) {
     Variant b;
     PixtronVM_stack_pop(vm, &a);
     PixtronVM_stack_pop(vm, &b);
-    const DataType type = a.type;
+    const Type type = a.type;
     assert((type == b.type));
     assert(VM_TYPE_NUMBER(type));
     if (type == TYPE_BYTE) {

@@ -8,9 +8,10 @@
  */
 int main(void) {
     const uint8_t buffer[] = {
-        204, 187, 170, 255, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 35, 15, 0, 0, 0, 0, 35, 15, 0, 0,
+        204, 187, 170, 255, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 51, 15, 0, 0, 0, 0, 51, 15, 0, 0,
         0, 2
     };
+
     PixtronVMPtr vm = PixtronVM_create(buffer, sizeof(buffer) / sizeof(buffer[0]));
     PixtronVM_exec(vm);
     Variant variant;

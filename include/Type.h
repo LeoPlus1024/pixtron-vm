@@ -14,11 +14,11 @@ typedef struct VirtualStackFrame {
     // 局部变量表
     VMValue *localVarTable;
     // 局部变量数量
-    size_t maxLocals;
+    uint16_t maxLocals;
     // 操作数栈
     VMValue *operandStack;
     // 最大栈深度
-    size_t maxStack;
+    uint16_t maxStack;
     // 操作数栈指针
     size_t sp;
     // 调用栈
@@ -79,7 +79,7 @@ typedef struct {
 
 
 typedef struct {
-    DataType type;
+    Type type;
 
     union {
         int8_t b;
@@ -94,7 +94,7 @@ typedef struct {
 #define VM_VALUE_SIZE (sizeof(VMValue))
 
 
-extern inline DataType PixtronVM_typeof(VMValue value);
+extern inline Type PixtronVM_typeof(VMValue value);
 
 
 extern inline void PixtronVM_to_VMValue(const Variant *variant, uint8_t *value);
