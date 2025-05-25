@@ -1,7 +1,3 @@
-//
-// Created by leo on 25-5-22.
-//
-
 #ifndef TYPE_H
 #define TYPE_H
 

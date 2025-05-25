@@ -10,7 +10,9 @@
 #include "Opncode.h"
 #include "Program.h"
 #include <stdint.h>
+#include <time.h>
 
+#include "DataSegment.h"
 #include "Engine.h"
 #include "VirtualStack.h"
 
@@ -36,34 +38,30 @@ extern PixtronVMPtr PixtronVM_create(uint8_t *buffer, uint32_t size) {
 }
 
 
-static uint32_t PixtronVM_ops_data(PixtronVMPtr pixtron, const uint64_t pc, Variant *variant) {
-    const uint8_t *buffer = pixtron->buffer;
+static uint32_t PixtronVM_ops_data(PixtronVMPtr vm, const uint64_t pc, Variant *variant) {
+    const uint8_t *buffer = vm->buffer;
     const uint8_t subOps = buffer[pc];
     const DataType type = OPS_DATA_TYPE(subOps);
     const DataSource source = OPS_DATA_SOURCE(subOps);
-    const uint8_t size = TYPE_SIZE[type];
+    variant->type = type;
+    uint64_t tmp = pc + 1;
+    // 立即数
     if (source == IMMEDIATE) {
-        if (size == 0 || (size + pc + 1) > pixtron->size) {
+        const uint8_t size = TYPE_SIZE[type];
+        if (size == 0 || (size + tmp) > vm->size) {
             fprintf(stderr, "Opcode data width error.");
             exit(-1);
         }
-
-        memcpy(&variant->value, &buffer[pc + 1], size);
+        memcpy(&variant->value, &buffer[tmp], size);
+        tmp = tmp + size;
     }
     // 全局变量
     else if (source == GLOBAL_VAR) {
-        uint8_t b = 10;
+        const uint32_t *pos = (uint32_t *) buffer + tmp;
+        PixtronVM_data_segment_get(vm, pos, variant);
+        tmp = tmp + 4;
     }
-    variant->type = type;
-    return pc + size + 1;
-}
-
-static void PixtronVM_gmod(PixtronVMPtr pixtron, const uint32_t *pos, const DataType type, const Variant *variant) {
-    assert(type == variant->type);
-    const uint32_t index = *pos;
-    uint8_t *ptr = pixtron->data + index;
-    const uint8_t size = TYPE_SIZE[type];
-    memcpy(ptr, &variant->value, size);
+    return tmp;
 }
 
 extern void PixtronVM_exec(PixtronVMPtr vm) {
@@ -89,7 +87,7 @@ extern void PixtronVM_exec(PixtronVMPtr vm) {
                 pc = pc + 1;
                 if (s == GLOBAL_VAR) {
                     const uint32_t *pos = (uint32_t *) (buffer + pc);
-                    PixtronVM_gmod(vm, pos,OPS_DATA_TYPE(subOps), &value);
+                    PixtronVM_data_segment_set(vm, pos,OPS_DATA_TYPE(subOps), &value);
                     pc = pc + 5;
                 }
             }

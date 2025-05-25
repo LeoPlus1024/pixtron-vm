@@ -1,7 +1,3 @@
-//
-// Created by leo on 25-5-23.
-//
-
 #include "Program.h"
 
 #include <errno.h>

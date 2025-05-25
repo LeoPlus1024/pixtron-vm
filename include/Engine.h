@@ -7,7 +7,7 @@
 #include "PixotronVM.h"
 
 /**
- * Exec add
+ * Exec add operate
  * @param vm {@link PixotronVM}
  */
 extern inline void PixotronVM_exec_add(PixtronVMPtr vm);

@@ -1,7 +1,3 @@
-//
-// Created by leo on 25-5-23.
-//
-
 #ifndef IERROR_H
 #define IERROR_H
 

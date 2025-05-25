@@ -1,5 +1,4 @@
 #include "Type.h"
-
 #include <string.h>
 
 extern inline DataType PixtronVM_typeof(const VMValue value) {

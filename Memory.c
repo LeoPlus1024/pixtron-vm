@@ -1,7 +1,3 @@
-//
-// Created by leo on 25-5-22.
-//
-
 #include "Memory.h"
 #include <malloc.h>
 #include <stdlib.h>

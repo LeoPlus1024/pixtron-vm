@@ -1,7 +1,3 @@
-//
-// Created by leo on 25-5-22.
-//
-
 #ifndef OPS_H
 #define OPS_H
 #include <stdint.h>

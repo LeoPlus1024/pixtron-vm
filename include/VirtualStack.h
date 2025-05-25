@@ -1,7 +1,3 @@
-//
-// Created by leo on 25-5-24.
-//
-
 #ifndef VIRTUALSTACK_H
 #define VIRTUALSTACK_H
 #include "Type.h"
