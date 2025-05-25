@@ -70,7 +70,7 @@ typedef struct {
     // Program count
     uint64_t pc;
     // Program
-    const uint8_t *buffer;
+    uint8_t *buffer;
     // Program size
     uint32_t size;
     // Data
@@ -79,7 +79,7 @@ typedef struct {
     VirtualStackPtr stack;
     // Binary header
     BinaryHeaderPtr header;
-} PixtronVM, *PixtronVMPtr;
+} PixtronVM, *PixtronVMPtr, **PixtronVMRef;
 
 
 typedef struct {

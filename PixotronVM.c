@@ -11,10 +11,11 @@
 #include "Program.h"
 #include <stdint.h>
 
+#include "Engine.h"
 #include "VirtualStack.h"
 
 
-extern PixtronVMPtr PixtronVM_create(const uint8_t *buffer, const uint32_t size) {
+extern PixtronVMPtr PixtronVM_create(uint8_t *buffer, uint32_t size) {
     PixtronVMPtr pixtron = PixotronVM_calloc(sizeof(PixtronVM));
     VirtualStackPtr stack = PixotronVM_calloc(sizeof(VirtualStack));
     stack->maxDepth = VM_MAX_STACK_DEPTH;
@@ -65,32 +66,36 @@ static void PixtronVM_gmod(PixtronVMPtr pixtron, const uint32_t *pos, const Data
     memcpy(ptr, &variant->value, size);
 }
 
-extern void PixtronVM_exec(PixtronVMPtr pixtron) {
-    const uint8_t *buffer = pixtron->buffer;
-    const uint32_t size = pixtron->size;
-    uint64_t pc = pixtron->pc;
-    while (pc < size - 1) {
+extern void PixtronVM_exec(PixtronVMPtr vm) {
+    const uint8_t *buffer = vm->buffer;
+    const uint32_t size = vm->size;
+    uint64_t pc = vm->pc;
+    while (pc < size) {
         const Opcode ops = buffer[pc];
 
         pc = pc + 1;
         switch (ops) {
             case PUSH: {
                 Variant value;
-                pc = PixtronVM_ops_data(pixtron, pc, &value);
-                PixtronVM_stack_push(pixtron, &value);
+                pc = PixtronVM_ops_data(vm, pc, &value);
+                PixtronVM_stack_push(vm, &value);
                 break;
             }
             case POP: {
                 Variant value;
-                PixtronVM_stack_pop(pixtron, &value);
+                PixtronVM_stack_pop(vm, &value);
                 uint8_t subOps = buffer[pc];
                 const DataSource s = OPS_DATA_SOURCE(subOps);
                 pc = pc + 1;
                 if (s == GLOBAL_VAR) {
                     const uint32_t *pos = (uint32_t *) (buffer + pc);
-                    PixtronVM_gmod(pixtron, pos,OPS_DATA_TYPE(subOps), &value);
+                    PixtronVM_gmod(vm, pos,OPS_DATA_TYPE(subOps), &value);
                     pc = pc + 5;
                 }
+            }
+            case ADD: {
+                PixotronVM_exec_add(vm);
+                break;
             }
             case CALL: {
                 break;
@@ -101,5 +106,16 @@ extern void PixtronVM_exec(PixtronVMPtr pixtron) {
 
         }
     }
-    PixtronVM_stack_frame_pop(pixtron);
+}
+
+extern void PixtronVM_destroy(PixtronVMRef ref) {
+    if (ref == NULL || *ref == NULL) {
+        return;
+    }
+    PixtronVMPtr vm = *ref;
+    PixtronVM_stack_frame_pop(vm);
+    PixotronVM_free(TO_REF(vm->header));
+    PixotronVM_free(TO_REF(vm->stack));
+    //    PixotronVM_free(TO_REF(vm->buffer));
+    PixotronVM_free(CAST_REF(ref));
 }

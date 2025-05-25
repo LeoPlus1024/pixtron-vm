@@ -1,7 +1,3 @@
-//
-// Created by leo on 25-5-24.
-//
-
 #include "VirtualStack.h"
 
 #include <Config.h>
@@ -10,8 +6,8 @@
 #include <string.h>
 #include "Memory.h"
 
-extern inline void PixtronVM_stack_push(PixtronVMPtr pixtron, const Variant *variant) {
-    VirtualStackPtr stack = pixtron->stack;
+extern inline void PixtronVM_stack_push(PixtronVMPtr vm, const Variant *variant) {
+    VirtualStackPtr stack = vm->stack;
     VirtualStackFramePtr frame = stack->frame;
     const size_t sp = frame->sp;
     if (sp == 0) {
@@ -25,8 +21,8 @@ extern inline void PixtronVM_stack_push(PixtronVMPtr pixtron, const Variant *var
 }
 
 
-extern inline void PixtronVM_stack_pop(PixtronVMPtr pixtron, Variant *variant) {
-    VirtualStackPtr stack = pixtron->stack;
+extern inline void PixtronVM_stack_pop(PixtronVMPtr vm, Variant *variant) {
+    VirtualStackPtr stack = vm->stack;
     VirtualStackFramePtr frame = stack->frame;
     const size_t sp = frame->sp;
     if (sp + 1 > frame->maxStack) {
@@ -38,12 +34,12 @@ extern inline void PixtronVM_stack_pop(PixtronVMPtr pixtron, Variant *variant) {
     memcpy(&value, stackTop, VM_VALUE_SIZE);
     frame->sp = sp + 1;
     const DataType type = PixtronVM_typeof(value);
-    memcpy(&value, &variant, TYPE_SIZE[type]);
+    memcpy(&(variant->value), &value, TYPE_SIZE[type]);
     variant->type = type;
 }
 
-extern inline void PixtronVM_stack_frame_push(PixtronVMPtr pixtron, const size_t maxLocals, const size_t maxStack) {
-    VirtualStackPtr stack = pixtron->stack;
+extern inline void PixtronVM_stack_frame_push(PixtronVMPtr vm, const size_t maxLocals, const size_t maxStack) {
+    VirtualStackPtr stack = vm->stack;
     const size_t depth = stack->depth;
     if (depth + 1 == VM_MAX_STACK_DEPTH) {
         fprintf(stderr, "PixotronVM_stack_push: stack overflow.\n");
@@ -65,8 +61,8 @@ extern inline void PixtronVM_stack_frame_push(PixtronVMPtr pixtron, const size_t
     stack->depth = depth + 1;
 }
 
-extern inline void PixtronVM_stack_frame_pop(PixtronVMPtr pixtron) {
-    VirtualStackPtr stack = pixtron->stack;
+extern inline void PixtronVM_stack_frame_pop(PixtronVMPtr vm) {
+    VirtualStackPtr stack = vm->stack;
     const size_t depth = stack->depth;
     if (depth == 0) {
         fprintf(stderr, "PixotronVM_stack_pop: stack underflow.\n");

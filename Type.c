@@ -1,7 +1,6 @@
 #include "Type.h"
 
 #include <string.h>
-#include <time.h>
 
 extern inline DataType PixtronVM_typeof(const VMValue value) {
     if ((value & 0x7FF0000000000000) != 0x7FF0000000000000) {
