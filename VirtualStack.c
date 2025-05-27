@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
 #include "Memory.h"
 
 extern inline void PixtronVM_stack_push(PixtronVMPtr vm, const Variant *variant) {
@@ -35,8 +37,12 @@ extern inline void PixtronVM_stack_pop(PixtronVMPtr vm, Variant *variant) {
     memcpy(&value, stackTop, VM_VALUE_SIZE);
     frame->sp = sp + 1;
     const Type type = PixtronVM_typeof(value);
-    if (type == TYPE_DOUBLE || type == TYPE_LONG) {
+    if (type == TYPE_DOUBLE) {
         memcpy(&(variant->value), &value, TYPE_SIZE[type]);
+    }
+    // 对于long型使用48位填充最高位作为符号位
+    else if (type == TYPE_LONG) {
+        variant->value.l = VLONG_TO_CLONG(value);
     }
     // 对于 byte、short类型直接扩容到int类型
     else {

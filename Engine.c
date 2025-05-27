@@ -1,4 +1,4 @@
-#include "include/Engine.h"
+#include "Engine.h"
 
 #include <assert.h>
 #include <stdbool.h>
@@ -6,7 +6,7 @@
 #include "VirtualStack.h"
 
 
-extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm,bool sbc) {
+extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm, Opcode opcode) {
     Variant top;
     Variant next;
 
@@ -16,7 +16,7 @@ extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm,bool sbc) {
     assert(VM_TYPE_NUMBER(top.type) && "Top operand must be number.");
     assert(VM_TYPE_NUMBER(next.type) && "Next operand must be number.");
 
-    if (sbc) {
+    if (opcode == SBC) {
         PixtronVM_negative(&top);
     }
 
@@ -32,7 +32,7 @@ extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm,bool sbc) {
             HANDLE_CASE(TYPE_SHORT, s)
             HANDLE_CASE(TYPE_INT, i)
             case TYPE_LONG:
-                next.value.l = (next.value.l + top.value.l) & 0xffffffffffff;
+                next.value.l = CLONG_TO_VLONG(next.value.l + top.value.l);
                 break;
             HANDLE_CASE(TYPE_DOUBLE, d)
 #undef HANDLE_CASE
@@ -51,7 +51,7 @@ extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm,bool sbc) {
     else if (VM_TYPE_LONG(top.type) || VM_TYPE_LONG(next.type)) {
         PixtronVM_to_VMLong(&top);
         PixtronVM_to_VMLong(&next);
-        next.value.l = (next.value.l + top.value.l) & 0xffffffffffff;
+        next.value.l = CLONG_TO_VLONG(next.value.l + top.value.l);
     }
     // Byte、Short、Int
     else {
@@ -65,4 +65,21 @@ extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm,bool sbc) {
         }
     }
     PixtronVM_stack_push(vm, &next);
+}
+
+extern inline uint64_t PixtronVM_exec_jmp(PixtronVMPtr vm, uint64_t pc, Opcode opcode) {
+    if (opcode == GOTO) {
+        const int16_t offset = *(int16_t *) (vm->buffer + pc);
+        return pc + offset + 2;
+    }
+    Variant variant;
+    PixtronVM_stack_pop(vm, &variant);
+    uint64_t dst = pc + 2;
+    const bool ifeq = opcode == IFEQ;
+    assert(VM_TYPE_BOOL(variant.type)&&"Ifeq or Ifnq only support boolean.");
+    if ((ifeq && VM_FALSE(variant)) || !ifeq && VM_TRUE(variant)) {
+        const int16_t offset = *(int16_t *) (vm->buffer + pc);
+        dst = dst + offset;
+    }
+    return dst;
 }

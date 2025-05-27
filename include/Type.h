@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "Opncode.h"
+#include "Opcode.h"
 #include <stdint.h>
 
 typedef uint64_t VMValue;

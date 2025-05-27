@@ -1,6 +1,5 @@
 #include "PixotronVM.h"
 
-#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -9,13 +8,13 @@
 
 #include "Config.h"
 #include "Memory.h"
-#include "Opncode.h"
+#include "Opcode.h"
 #include <stdint.h>
 
 #include "DataSegment.h"
-#include "Engine.h"
 #include "VirtualStack.h"
 #include "IError.h"
+#include "Engine.h"
 
 
 #define MAGIC  (0xFFAABBCC)
@@ -132,7 +131,13 @@ extern void PixtronVM_exec(PixtronVMPtr vm) {
             }
             case ADD:
             case SBC: {
-                PixotronVM_exec_add_sbc(vm, ops == SBC);
+                PixotronVM_exec_add_sbc(vm, ops);
+                break;
+            }
+            case GOTO:
+            case IFEQ:
+            case IFNE: {
+                PixtronVM_exec_jmp(vm, pc, ops);
                 break;
             }
             case CALL: {

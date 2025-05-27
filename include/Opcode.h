@@ -1,5 +1,5 @@
-#ifndef OPS_H
-#define OPS_H
+#ifndef OPCODE_H
+#define OPCODE_H
 #include <stdint.h>
 
 typedef enum:uint8_t {
@@ -12,17 +12,15 @@ typedef enum:uint8_t {
     SBC, // 减法
     MUL,
     DIV,
-
+    // 无条件跳转
+    GOTO,
+    // 如果栈顶数字为0则跳转
+    IFEQ,
+    // 如果栈顶数字不为0则跳转
+    IFNE,
     // 类型转换
     CONV, // 转换（如 i2l、f2d）
-
-    // 控制流
-    GOTO,
-    IFEQ,
-    INVOKE, // 方法调用
-
     CALL,
-
     // 扩展预留
     RESERVED_START = 0x80
 } Opcode;
@@ -68,4 +66,15 @@ static const uint8_t TYPE_SIZE[] = {
 #define VM_TYPE_SHORT(type) (type == TYPE_SHORT)
 #define VM_TYPE_INT(type) (type == TYPE_INT)
 #define VM_TYPE_BYTE(type) (type == TYPE_BYTE)
-#endif //OPS_H
+#define VM_TRUE(variant) (variant.value.b == 1)
+#define VM_FALSE(variant) (variant.value.b == 0)
+/**
+ * Cast c language long to PixotronVM long
+ */
+#define CLONG_TO_VLONG(value) ((int64_t)((uint64_t)value << 16) >> 16)
+/**
+ * Cast PixotronVM long to c language long type
+ */
+#define VLONG_TO_CLONG(value) ((int64_t) ((uint64_t)value << 16) >> 16)
+
+#endif
