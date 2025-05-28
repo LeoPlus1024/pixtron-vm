@@ -83,3 +83,33 @@ extern inline uint64_t PixtronVM_exec_jmp(PixtronVMPtr vm, uint64_t pc, Opcode o
     }
     return dst;
 }
+
+extern inline void PixtronVM_exec_icmp(PixtronVMPtr vm) {
+    Variant top;
+    Variant next;
+    PixtronVM_stack_pop(vm, &top);
+    PixtronVM_stack_pop(vm, &next);
+    next.value.i = SIGN_CMP(next.value.i, top.value.i);
+    PixtronVM_stack_push(vm, &next);
+}
+
+extern inline void PixtronVM_exec_cmp(PixtronVMPtr vm, Opcode opcode) {
+    Variant top;
+    Variant next;
+    PixtronVM_stack_pop(vm, &top);
+    PixtronVM_stack_pop(vm, &next);
+    switch (opcode) {
+        case ICMP:
+            next.value.i = SIGN_CMP(next.value.i, top.value.i);
+            break;
+        case DCMP:
+            next.value.i = SIGN_CMP(next.value.d, top.value.d);
+            break;
+        case LCMP:
+            next.value.i = SIGN_CMP(next.value.l, top.value.l);
+            break;
+        default:
+            assert(false && "Unhandled cmp opcode.");
+    }
+    PixtronVM_stack_push(vm, &next);
+}

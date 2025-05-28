@@ -6,7 +6,6 @@ typedef enum:uint8_t {
     // 栈操作
     PUSH, // 压栈（操作数含类型和值）
     POP, // 弹栈（操作数含类型）
-
     // 算术运算
     ADD, // 加法（操作数含类型）
     SBC, // 减法
@@ -18,6 +17,12 @@ typedef enum:uint8_t {
     IFEQ,
     // 如果栈顶数字不为0则跳转
     IFNE,
+    // 整数比较
+    ICMP,
+    // 长整形比较
+    LCMP,
+    // 浮点数比较
+    DCMP,
     // 类型转换
     CONV, // 转换（如 i2l、f2d）
     CALL,
@@ -76,5 +81,8 @@ static const uint8_t TYPE_SIZE[] = {
  * Cast PixotronVM long to c language long type
  */
 #define VLONG_TO_CLONG(value) ((int64_t) ((uint64_t)value << 16) >> 16)
+
+#define SIGN_CMP(a, b) ((typeof(a))((a) > (b)) - ((typeof(a))((a) < (b))))
+
 
 #endif

@@ -140,12 +140,15 @@ extern void PixtronVM_exec(PixtronVMPtr vm) {
                 PixtronVM_exec_jmp(vm, pc, ops);
                 break;
             }
+            case ICMP:
+            case DCMP:
+            case LCMP:
+                PixtronVM_exec_cmp(vm, ops);
+                break;
             case CALL: {
                 break;
             }
             default:
-
-
 
         }
     }
