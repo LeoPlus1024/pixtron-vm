@@ -12,8 +12,7 @@ static PixtronVMPtr exec(uint8_t *buffer, const uint32_t length) {
 }
 
 static void execRet(uint8_t *buffer, const uint32_t length, Variant *variant) {
-    PixtronVMPtr vm = PixtronVM_create(buffer, length);
-    PixtronVM_exec(vm);
+    PixtronVMPtr vm = exec(buffer, length);
     PixtronVM_stack_pop(vm, variant);
     PixtronVM_destroy(&vm);
 }
