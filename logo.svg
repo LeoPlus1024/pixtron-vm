@@ -1,16 +1,30 @@
 <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-    <!-- Simple background -->
-    <rect width="200" height="200" fill="#1e1e2e"/>
+    <!-- Abstract Pixel Core -->
+    <path d="M70 70L130 70L130 130L70 130Z" fill="none" stroke="#6366F1" stroke-width="8"/>
 
-    <!-- Minimal pixel block design -->
-    <g fill="#6c5ce7">
-        <!-- Core VM block -->
-        <rect x="70" y="70" width="60" height="60" rx="4"/>
-
-        <!-- Pixel elements -->
-        <rect x="50" y="50" width="20" height="20"/>
-        <rect x="130" y="50" width="20" height="20"/>
-        <rect x="50" y="130" width="20" height="20"/>
-        <rect x="130" y="130" width="20" height="20"/>
+    <!-- Floating Pixel Matrix -->
+    <g fill="#8B5CF6" opacity="0.8">
+        <rect x="40" y="40" width="12" height="12" rx="2"/>
+        <rect x="148" y="40" width="12" height="12" rx="2"/>
+        <rect x="40" y="148" width="12" height="12" rx="2"/>
+        <rect x="148" y="148" width="12" height="12" rx="2"/>
     </g>
+
+    <!-- Dynamic Connection Lines -->
+    <g stroke="#A5B4FC" stroke-width="3" stroke-linecap="round">
+        <path d="M70 70L52 52M130 70L148 52M130 130L148 148M70 130L52 148"/>
+    </g>
+
+    <!-- Glowing Center -->
+    <circle cx="100" cy="100" r="20" fill="#6366F1" filter="url(#glow)"/>
+
+    <!-- Modern Text -->
+    <text x="100" y="185" font-family="'Inter', sans-serif" font-size="18"
+          text-anchor="middle" fill="#111827" font-weight="500">PIXTRON<span style="font-weight:700">VM</span></text>
+
+    <!-- Glow Effect -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="5" result="blur"/>
+        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
 </svg>

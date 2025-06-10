@@ -1,6 +1,8 @@
 # PixtronVM - 轻量级类型安全栈式虚拟机
 
+<div align="center">
 ![PixotronVM](./logo.svg)
+</div>
 
 **PixtronVM** 是一款专为高性能场景设计的静态类型栈式虚拟机，通过显式类型标注和字节码优化，在资源受限环境中提供安全高效的代码执行能力。
 
