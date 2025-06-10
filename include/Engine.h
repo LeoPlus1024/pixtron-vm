@@ -1,10 +1,5 @@
-//
-// Created by leo on 25-5-27.
-//
-
 #ifndef ENGINE_H
 #define ENGINE_H
-#include <stdbool.h>
 #include "PixotronVM.h"
 /**
  * Exec add or sbc operate
@@ -19,11 +14,30 @@ extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm, Opcode opcode);
  * @param pc Progress count
  * @return Program counter
  */
-extern inline uint64_t PixtronVM_exec_jmp(PixtronVMPtr vm, uint64_t pc, Opcode opcode);
+extern inline void PixtronVM_exec_jmp(PixtronVMPtr vm, Opcode opcode);
 
 /**
  * Exec cmp operate <b>icmp</b>,<b>lcmp</b>,<b>dcmp</b> etc.
  */
 extern inline void PixtronVM_exec_cmp(PixtronVMPtr vm, Opcode opcode);
+
+/**
+ * Exec <b>conv</b> operate for stack top value
+ */
+extern inline void PixtronVM_exec_conv(PixtronVMPtr vm);
+
+/**
+ * Exec stack pop operation
+ * @param vm {@link PixtronVMPtr} - Pointer to the virtual machine instance
+ * Removes the top value from the virtual machine's operand stack
+ */
+extern inline void PixtronVM_exec_pop(PixtronVMPtr vm);
+
+/**
+ * Exec stack push operation
+ * @param vm {@link PixtronVMPtr} - Pointer to the virtual machine instance
+ * Pushes a value onto the virtual machine's operand stack
+ */
+extern inline void PixtronVM_exec_push(PixtronVMPtr vm);
 
 #endif //ENGINE_H

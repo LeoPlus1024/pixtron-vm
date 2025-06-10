@@ -3,8 +3,27 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#include "DataSegment.h"
 #include "VirtualStack.h"
 
+
+static void PixtronVM_exec_ops_data(PixtronVMPtr vm, Variant *variant) {
+    const uint8_t subOps = PixtronVM_code_segment_u8(vm);
+    const Type type = OPS_DATA_TYPE(subOps);
+    const DataSource source = OPS_DATA_SOURCE(subOps);
+    variant->type = type;
+    // 立即数
+    if (source == IMMEDIATE) {
+        PixtronVM_code_segment_imm(vm, variant);
+    }
+    // 全局变量
+    else if (source == GLOBAL_VAR) {
+        Variant tmp;
+        tmp.type = TYPE_INT;
+        PixtronVM_code_segment_imm(vm, &tmp);
+        PixtronVM_data_segment_get(vm, tmp.value.i, variant);
+    }
+}
 
 extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm, Opcode opcode) {
     Variant top;
@@ -67,21 +86,22 @@ extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm, Opcode opcode) {
     PixtronVM_stack_push(vm, &next);
 }
 
-extern inline uint64_t PixtronVM_exec_jmp(PixtronVMPtr vm, uint64_t pc, Opcode opcode) {
+extern inline void PixtronVM_exec_jmp(PixtronVMPtr vm, Opcode opcode) {
+    uint16_t offset;
     if (opcode == GOTO) {
-        const int16_t offset = *(int16_t *) (vm->buffer + pc);
-        return pc + offset + 2;
+        offset = PixtronVM_code_segment_u16(vm);
+    } else {
+        Variant variant;
+        PixtronVM_stack_pop(vm, &variant);
+        const bool ifeq = opcode == IFEQ;
+        assert(VM_TYPE_BOOL(variant.type)&&"Ifeq or Ifnq only support boolean.");
+        if ((ifeq && VM_FALSE(variant)) || !ifeq && VM_TRUE(variant)) {
+            offset = PixtronVM_code_segment_u16(vm);
+        } else {
+            offset = 0;
+        }
     }
-    Variant variant;
-    PixtronVM_stack_pop(vm, &variant);
-    uint64_t dst = pc + 2;
-    const bool ifeq = opcode == IFEQ;
-    assert(VM_TYPE_BOOL(variant.type)&&"Ifeq or Ifnq only support boolean.");
-    if ((ifeq && VM_FALSE(variant)) || !ifeq && VM_TRUE(variant)) {
-        const int16_t offset = *(int16_t *) (vm->buffer + pc);
-        dst = dst + offset;
-    }
-    return dst;
+    vm->pc = vm->pc + offset;
 }
 
 extern inline void PixtronVM_exec_icmp(PixtronVMPtr vm) {
@@ -112,4 +132,48 @@ extern inline void PixtronVM_exec_cmp(PixtronVMPtr vm, Opcode opcode) {
             assert(false && "Unhandled cmp opcode.");
     }
     PixtronVM_stack_push(vm, &next);
+}
+
+extern inline void PixtronVM_exec_conv(PixtronVMPtr vm) {
+    const Type type = PixtronVM_code_segment_u8(vm);
+    Variant variant;
+    PixtronVM_stack_pop(vm, &variant);
+    const Type src = variant.type;
+    if (src == type) {
+        return;
+    }
+    assert(VM_TYPE_NUMBER(src)&&"Only support cast conv basic type.");
+    assert(VM_TYPE_NUMBER(type));
+    if (type == TYPE_DOUBLE) {
+        PixtronVM_to_VMDouble(&variant);
+    } else if (type == TYPE_LONG) {
+        PixtronVM_to_VMLong(&variant);
+    } else {
+        variant.type = type;
+    }
+    PixtronVM_stack_push(vm, &variant);
+}
+
+extern inline void PixtronVM_exec_pop(PixtronVMPtr vm) {
+    Variant value;
+    PixtronVM_stack_pop(vm, &value);
+    const uint8_t subOps = PixtronVM_code_segment_u8(vm);
+    const DataSource s = OPS_DATA_SOURCE(subOps);
+    // Global variable
+    if (s == GLOBAL_VAR) {
+        const uint32_t pos = PixtronVM_code_segment_u32(vm);
+        PixtronVM_data_segment_set(vm, pos,OPS_DATA_TYPE(subOps), &value);
+    }
+    // Local variable
+    else if (s == LOCAL_VAR) {
+        const uint16_t index = PixtronVM_code_segment_u16(vm);
+        PixtronVM_stack_ltable_set(vm, index, &value);
+    }
+}
+
+
+extern inline void PixtronVM_exec_push(PixtronVMPtr vm) {
+    Variant value;
+    PixtronVM_exec_ops_data(vm, &value);
+    PixtronVM_stack_push(vm, &value);
 }

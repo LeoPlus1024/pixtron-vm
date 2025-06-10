@@ -93,18 +93,36 @@ typedef struct {
 
 #define VM_VALUE_SIZE (sizeof(VMValue))
 
-
+/**
+ * Get the type of a VMValue
+ * @param value The VMValue to check
+ * @return The Type enumeration value representing the VMValue's type
+ */
 extern inline Type PixtronVM_typeof(VMValue value);
 
-
+/**
+ * Convert a Variant to its raw VMValue representation
+ * @param variant Pointer to the source Variant to convert
+ * @param value Output buffer to store the raw VMValue bytes (must have enough space)
+ */
 extern inline void PixtronVM_to_VMValue(const Variant *variant, uint8_t *value);
 
-
+/**
+ * Convert a Variant to double-precision floating point representation
+ * @param variant Pointer to the Variant to convert (modified in-place)
+ */
 extern inline void PixtronVM_to_VMDouble(Variant *variant);
 
+/**
+ * Convert a Variant to 64-bit integer (long) representation
+ * @param variant Pointer to the Variant to convert (modified in-place)
+ */
 extern inline void PixtronVM_to_VMLong(Variant *variant);
 
-
+/**
+ * Perform arithmetic negation on a Variant's value
+ * @param variant Pointer to the Variant to negate (modified in-place)
+ */
 extern inline void PixtronVM_negative(Variant *variant);
 
 #endif //TYPE_H

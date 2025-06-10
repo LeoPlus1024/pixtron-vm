@@ -90,19 +90,15 @@ extern inline void PixtronVM_stack_frame_pop(PixtronVMPtr vm) {
 }
 
 
-extern inline void PixtronVM_stack_ltable_set(PixtronVMPtr vm, uint16_t index, const VMValue *value) {
-    assert(value != NULL);
+extern inline void PixtronVM_stack_ltable_set(PixtronVMPtr vm, uint16_t index, const Variant *variant) {
+    assert(variant != NULL);
     VirtualStackFramePtr frame = vm->stack->frame;
     assert(frame != NULL);
     const uint16_t maxLocals = frame->maxLocals;
     assert(index < maxLocals);
     const VMValue tmp = frame->localVarTable[index];
     const Type t0 = PixtronVM_typeof(tmp);
-    if (t0 == NIL) {
-        frame->localVarTable[index] = tmp;
-    } else {
-        const Type t1 = PixtronVM_typeof(tmp);
-        assert(t0==t1);
-        frame->localVarTable[index] = *value;
-    }
+    assert((t0 == NIL || t0==variant->type)&&"Local variable table type mistake.");
+    uint8_t *ptr = (uint8_t *) frame->localVarTable + index;
+    PixtronVM_to_VMValue(variant, ptr);
 }

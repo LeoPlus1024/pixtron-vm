@@ -10,6 +10,7 @@
 #include "Memory.h"
 #include "Opcode.h"
 #include <stdint.h>
+#include <time.h>
 
 #include "DataSegment.h"
 #include "VirtualStack.h"
@@ -61,7 +62,7 @@ extern PixtronVMPtr PixtronVM_create(uint8_t *buffer, uint32_t size) {
     pixtron->stack = stack;
     pixtron->buffer = buffer;
 
-    bool success = PixtronVM_init(pixtron);
+    const bool success = PixtronVM_init(pixtron);
 
     if (!success) {
         fprintf(stderr, "Failed to initialize PixtronVM\n");
@@ -72,84 +73,39 @@ extern PixtronVMPtr PixtronVM_create(uint8_t *buffer, uint32_t size) {
 }
 
 
-static uint32_t PixtronVM_ops_data(PixtronVMPtr vm, const uint64_t pc, Variant *variant) {
-    const uint8_t *buffer = vm->buffer;
-    const uint8_t subOps = buffer[pc];
-    const Type type = OPS_DATA_TYPE(subOps);
-    const DataSource source = OPS_DATA_SOURCE(subOps);
-    variant->type = type;
-    uint64_t tmp = pc + 1;
-    // 立即数
-    if (source == IMMEDIATE) {
-        const uint8_t size = TYPE_SIZE[type];
-        if (size == 0 || (size + tmp) > vm->size) {
-            fprintf(stderr, "Opcode data width error.");
-            exit(-1);
-        }
-        memcpy(&variant->value, &buffer[tmp], size);
-        tmp = tmp + size;
-    }
-    // 全局变量
-    else if (source == GLOBAL_VAR) {
-        const uint32_t *pos = (uint32_t *) buffer + tmp;
-        PixtronVM_data_segment_get(vm, pos, variant);
-        tmp = tmp + 4;
-    }
-    return tmp;
-}
-
 extern void PixtronVM_exec(PixtronVMPtr vm) {
-    const uint8_t *buffer = vm->buffer;
     const uint32_t size = vm->size;
-    uint64_t pc = vm->pc;
-    while (pc < size) {
-        const Opcode ops = buffer[pc];
 
-        pc = pc + 1;
+    while (vm->pc < size) {
+        const Opcode ops = PixtronVM_code_segment_u8(vm);
+
         switch (ops) {
-            case PUSH: {
-                Variant value;
-                pc = PixtronVM_ops_data(vm, pc, &value);
-                PixtronVM_stack_push(vm, &value);
+            case PUSH:
+                PixtronVM_exec_push(vm);
                 break;
-            }
-            case POP: {
-                Variant value;
-                PixtronVM_stack_pop(vm, &value);
-                const uint8_t subOps = buffer[pc];
-                const DataSource s = OPS_DATA_SOURCE(subOps);
-                pc = pc + 1;
-                // 设置全局变量
-                if (s == GLOBAL_VAR) {
-                    const uint32_t *pos = (uint32_t *) (buffer + pc);
-                    PixtronVM_data_segment_set(vm, pos,OPS_DATA_TYPE(subOps), &value);
-                    pc = pc + 5;
-                }
-                // 设置局部变量
-                else if (s == LOCAL_VAR) {
-                }
-            }
+            case POP:
+                PixtronVM_exec_pop(vm);
+                break;
             case ADD:
-            case SBC: {
+            case SBC:
                 PixotronVM_exec_add_sbc(vm, ops);
                 break;
-            }
             case GOTO:
             case IFEQ:
-            case IFNE: {
-                PixtronVM_exec_jmp(vm, pc, ops);
+            case IFNE:
+                PixtronVM_exec_jmp(vm, ops);
                 break;
-            }
             case ICMP:
             case DCMP:
             case LCMP:
                 PixtronVM_exec_cmp(vm, ops);
                 break;
-            case CALL: {
+            case CONV:
+                PixtronVM_exec_conv(vm);
                 break;
-            }
+            case CALL:
+                break;
             default:
-
         }
     }
 }
