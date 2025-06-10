@@ -127,6 +127,8 @@ extern void PixtronVM_exec(PixtronVMPtr vm) {
                 }
                 // 设置局部变量
                 else if (s == LOCAL_VAR) {
+                    const uint16_t index = *((uint16_t *) (buffer + pc));
+                    PixtronVM_stack_ltable_set(vm,index, &value);
                 }
             }
             case ADD:

@@ -4,7 +4,6 @@
 
 #ifndef ENGINE_H
 #define ENGINE_H
-#include <stdbool.h>
 #include "PixotronVM.h"
 /**
  * Exec add or sbc operate
