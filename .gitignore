@@ -2,3 +2,5 @@ cmake-build-debug
 .clang-tidy
 test.bin
 .idea
+build
+.gradle
