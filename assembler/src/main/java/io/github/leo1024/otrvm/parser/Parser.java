@@ -1,72 +1,62 @@
 package io.github.leo1024.otrvm.parser;
 
+import io.github.leo1024.otrvm.conf.Constants;
+import io.github.leo1024.otrvm.parser.impl.pseudo.End;
+import io.github.leo1024.otrvm.parser.impl.pseudo.Func;
 
-import io.github.leo1024.otrvm.conf.DataLength;
-import io.github.leo1024.otrvm.conf.Opcode;
-import io.github.leo1024.otrvm.parser.impl.Imm;
-
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
-    public static List<Expr> parse(InputStream is) {
-        var context = new Context(is);
-        var list = new ArrayList<Expr>();
-        for (; ; ) {
-            String text = context.read();
-            if (text == null) {
-                break;
+    public static Pseudo parse(Context context, String text) {
+        if (text.equals(Constants._END)) {
+            return End.INSTANCE;
+        }
+        int index = text.indexOf(" ");
+        String pseudo = text.substring(0, index);
+        String value = text.substring(index).trim();
+        return switch (pseudo) {
+            case Constants._FUNC -> parseFunc(context, value);
+            default -> throw context.parseError("Illegal pseudo define.");
+        };
+    }
+
+    private static Func parseFunc(Context context, String value) {
+        int left = value.indexOf("(");
+        if (left == -1) {
+            throw context.parseError("Illegal func define.");
+        }
+        String name = value.substring(0, left);
+        int right = value.indexOf(")");
+        if (right == -1) {
+            throw context.parseError("Illegal func define.");
+        }
+        final List<Func.Param> paramList = new ArrayList<>();
+        if ((right - left) > 1) {
+            String text = value.substring(left + 1, right);
+            String[] pairs = text.split(",");
+            for (String pair : pairs) {
+                int index = pair.indexOf(" ");
+                final String type;
+                final String paramName;
+                if (index == -1) {
+                    throw context.parseError("Func param name missing.");
+                }
+                type = pair.substring(0, index);
+                paramName = pair.substring(index).trim();
+
+                paramList.add(new Func.Param(type, paramName));
             }
-            var expr = parseIns(context, text);
-            list.add(expr);
         }
-        return list;
-    }
-
-
-    private static Expr parseIns(final Context context, final String text) {
-        var index = text.indexOf(" ");
-        final String ins;
-        final String params;
-        if (index != -1) {
-            ins = text.substring(0, index);
-            params = text.substring(index + 1);
+        String retText = value.substring(right).trim();
+        final String retValue;
+        if (retText.startsWith(":")) {
+            retValue = retText.substring(1).trim();
         } else {
-            ins = text;
-            params = null;
+            retValue = null;
         }
-        Opcode opcode = Opcode.of(ins);
-        if (opcode == null) {
-            context.parseError("Illegal opcode:%s".formatted(ins));
-        }
-        DataLength length = null;
-        if (opcode == Opcode.PUSH) {
-            length = convertDataLength(context, ins);
-        }
-        return new Expr(opcode, convertISParam(context, params, length));
+        return new Func(name, retValue, paramList);
     }
 
-    private static ISParam convertISParam(final Context context, final String param, final DataLength length) {
-        if (param == null) {
-            return null;
-        }
-        if (param.startsWith("#")) {
-            return Imm.of(context, param, length);
-        }
-        return null;
-    }
 
-    private static DataLength convertDataLength(final Context context, final String is) {
-        int index = is.indexOf(".");
-        if (index == -1) {
-            return DataLength.INT;
-        }
-        String text = is.substring(index + 1);
-        DataLength length = DataLength.of(text);
-        if (length == null) {
-            context.parseError("Unknow data suffix:%s".formatted(text));
-        }
-        return length;
-    }
 }

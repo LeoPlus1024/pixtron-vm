@@ -5,6 +5,7 @@ import io.github.leo1024.otrvm.ex.ParserException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 public class Context {
     private final CharSequencer charSequencer;
@@ -16,7 +17,7 @@ public class Context {
     }
 
     public String read() {
-        var text = this.charSequencer.read();
+        String text = this.charSequencer.read();
         if (text == null) {
             return null;
         }
@@ -28,18 +29,30 @@ public class Context {
         return text;
     }
 
+    public boolean checkNextLine(Function<String, Boolean> func) {
+        String text = this.read();
+        if (text == null) {
+            return false;
+        }
+        boolean match = func.apply(text);
+        if (!match) {
+            this.charSequencer.setCache(true);
+        }
+        return match;
+    }
+
     private void insertLabelTable(String text) {
-        var label = text.substring(0, text.length() - 1).trim();
+        String label = text.substring(0, text.length() - 1).trim();
         if (this.labelTable.containsKey(label)) {
-            parseError("label %s repeat define.".formatted(label));
+            throw parseError("label %s repeat define.".formatted(label));
         }
         this.labelTable.put(label, this.charSequencer.getLineNum());
     }
 
-    public void parseError(final String text) {
+    public ParserException parseError(final String text) {
         String line = charSequencer.getLine();
         int lineNum = charSequencer.getLineNum();
-        String message = String.format("line:%d %s\n  %s".formatted(lineNum, text, line));
-        throw new ParserException(message);
+        String message = String.format("line:%d %s\n> %s".formatted(lineNum, text, line));
+        return new ParserException(message);
     }
 }
