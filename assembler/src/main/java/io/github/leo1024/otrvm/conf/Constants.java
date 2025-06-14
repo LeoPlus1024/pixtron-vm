@@ -13,8 +13,12 @@ public class Constants {
     public static final char RIGHT_PAREN = ')';
     public static final char COMMENT = '#';
     public static final char DOLLAR = '$';
+    public static final char AT = '@';
+    public static final char ESCAPE = '\\';
+    public static final char DOUBLE_QUOTE = '"';
+    public static final char COLON = ':';
 
     public static char[] DELIMITERS = new char[]{
-            CR, LF, TAB, SPACE, DOT, COMMA, LEFT_PAREN, RIGHT_PAREN
+            CR, LF, TAB, SPACE, DOT, COMMA, LEFT_PAREN, RIGHT_PAREN, DOUBLE_QUOTE
     };
 }

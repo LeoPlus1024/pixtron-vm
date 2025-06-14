@@ -13,10 +13,11 @@ public class TokenizerTest {
     @Test
     public void test() {
         String text = """
-                .func main(int,byte)
+                @func main(int i,byte b)
                     push #10
-                    pop $1
-                .end
+                    pop $i
+                    pop "xzxxxx"
+                @end
                 """;
         List<Token> tokens = parserText(text);
         System.out.println(tokens);

@@ -21,7 +21,7 @@ public class Token {
 
     @Override
     public String toString() {
-        return "[%d,%d]'%s'".formatted(line, column, value);
+        return "(%s)[%d,%d]'%s'".formatted(kind, line, column, value);
     }
 
     public TokenKind getKind() {

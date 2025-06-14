@@ -25,6 +25,7 @@ public class CharSequence {
         this.inputStream = inputStream;
         this.line = 1;
         this.column = 0;
+        this.chr = EOF_CHR;
     }
 
     public char read() {
@@ -40,7 +41,7 @@ public class CharSequence {
      * <p>
      * Reading rules:
      * <li>
-     *  Starts reading from the current character (this.chr)
+     * Starts reading from the current character (this.chr)
      * </li>
      * <li>
      * Continuously appends characters until either:
@@ -50,7 +51,7 @@ public class CharSequence {
      * - The end of input stream (EOF) is reached
      * </pre>
      * <li>
-     *  When encountering a delimiter:
+     * When encountering a delimiter:
      * </li>
      * <pre>
      * - Sets the cached flag to true (indicating the delimiter is cached)
@@ -60,24 +61,29 @@ public class CharSequence {
      * @return Continuous string of characters (excluding the terminating delimiter)
      */
     public String readUntilDelimiter() {
+        return readUtilEncounter(Constants.DELIMITERS);
+    }
+
+    public String readStrLiteral() {
         StringBuilder sb = new StringBuilder();
-        sb.append(this.chr);
-        loop:
         for (; ; ) {
-            char c = read();
+            boolean isEscape = this.chr == Constants.ESCAPE;
+            char chr = this.read();
             if (isEof()) {
+                throw new TokenizerException("String literal can't normal end.");
+            }
+            if (chr == Constants.DOUBLE_QUOTE && !isEscape) {
                 break;
             }
-            for (char delimiter : Constants.DELIMITERS) {
-                if (c == delimiter) {
-                    this.cached = true;
-                    break loop;
-                }
-            }
-            sb.append(c);
+            sb.append(chr);
         }
         return sb.toString();
     }
+
+    public String readHexOrVariable() {
+        return readUtilEncounter(Constants.CR, Constants.LF, Constants.SPACE, Constants.TAB, Constants.COMMA);
+    }
+
 
     private char read0() throws IOException {
         if (cached) {
@@ -101,6 +107,26 @@ public class CharSequence {
             }
         }
         return chr;
+    }
+
+    private String readUtilEncounter(char... cc) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.chr);
+        loop:
+        for (; ; ) {
+            char c = read();
+            if (isEof()) {
+                throw new TokenizerException("Unexpected end of file.");
+            }
+            for (char chr : cc) {
+                if (c == chr) {
+                    this.cached = true;
+                    break loop;
+                }
+            }
+            sb.append(c);
+        }
+        return sb.toString();
     }
 
 

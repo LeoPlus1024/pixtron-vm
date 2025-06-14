@@ -3,8 +3,8 @@ package io.github.leo1024.otrvm.conf;
 import java.util.Arrays;
 
 public enum Pseudo {
-    FUNC("func"),
-    END("end");
+    FUNC("@func"),
+    END("@end");
     private final String code;
 
     Pseudo(String code) {

@@ -1,19 +1,15 @@
 package io.github.leo1024.otrvm.lexer;
 
-import io.github.leo1024.otrvm.conf.Constants;
-import io.github.leo1024.otrvm.conf.Opcode;
-import io.github.leo1024.otrvm.conf.Pseudo;
-import io.github.leo1024.otrvm.conf.TokenKind;
+import io.github.leo1024.otrvm.conf.*;
 import io.github.leo1024.otrvm.ex.TokenizerException;
+import io.github.leo1024.otrvm.util.LexerUtil;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class Tokenizer {
-    static final Pattern INT_PATTERN = Pattern.compile("[0-9]+");
-    static final Pattern FLOAT_PATTERN = Pattern.compile("[0-9]?\\.[0-9]+");
+
 
     final CharSequence charSequence;
 
@@ -35,24 +31,53 @@ public class Tokenizer {
             int column = this.charSequence.getColumn();
             Token token = switch (chr) {
                 case Constants.COMMA,
+                     Constants.COLON,
                      Constants.LEFT_PAREN,
                      Constants.DOT,
                      Constants.RIGHT_PAREN -> new Token(TokenKind.DELIMITER, chr, line, column);
-                case Constants.COMMENT, Constants.DOLLAR -> new Token(TokenKind.LITERAL_PREFIX, chr, line, column);
+                // Hex  literal
+                case Constants.COMMENT -> {
+                    String hex = this.charSequence.readHexOrVariable();
+                    if (!LexerUtil.checkHexLiteral(hex)) {
+                        throw TokenizerException.create(line, column, "Invalid hex literal.", hex);
+                    }
+                    yield new Token(TokenKind.HEX, hex, line, column);
+                }
+                // variable reference
+                case Constants.DOLLAR -> {
+                    String variable = this.charSequence.readHexOrVariable();
+                    if (!LexerUtil.checkRefVar(variable)) {
+                        throw TokenizerException.create(line, column, "Illegal variable name.", variable);
+                    }
+                    yield new Token(TokenKind.REF_VAR, variable, line, column);
+                }
+                // String
+                case Constants.DOUBLE_QUOTE ->
+                        new Token(TokenKind.STRING, this.charSequence.readStrLiteral(), line, column);
+                // Pseudo
+                case Constants.AT -> {
+                    String text = this.charSequence.readUntilDelimiter();
+                    Pseudo pseudo = Pseudo.of(text);
+                    if (pseudo == null) {
+                        throw TokenizerException.create(line, column, "Invalid pseudo token", text);
+                    }
+                    yield new Token(TokenKind.PSEUDO, text, line, column);
+                }
+                // Opcode/Type/Identifier
                 default -> {
                     String text = this.charSequence.readUntilDelimiter();
                     if (Character.isDigit(chr)) {
-                        yield createDigitToken(line, column, text);
+                        yield LexerUtil.createDigitToken(line, column, text);
                     }
-                    Opcode opcode = Opcode.of(text);
-                    if (opcode != null) {
+                    // Opcode
+                    if (Opcode.of(text) != null) {
                         yield new Token(TokenKind.OPCODE, text, line, column);
                     }
-                    Pseudo pseudo = Pseudo.of(text);
-                    if (pseudo != null) {
-                        yield new Token(TokenKind.PSEUDO, text, line, column);
+                    // Type
+                    if (Type.of(text) != null) {
+                        yield new Token(TokenKind.TYPE, text, line, column);
                     }
-                    yield new Token(TokenKind.TEXT, text, line, column);
+                    yield new Token(TokenKind.IDENTIFIER, text, line, column);
                 }
             };
             tokenList.add(token);
@@ -60,15 +85,5 @@ public class Tokenizer {
         return tokenList;
     }
 
-    private Token createDigitToken(int line, int column, String text) {
-        boolean isFloat = FLOAT_PATTERN.matcher(text).matches();
-        if (isFloat) {
-            return new Token(TokenKind.FLOAT, text, line, column);
-        }
-        boolean isInt = INT_PATTERN.matcher(text).matches();
-        if (isInt) {
-            return new Token(TokenKind.INTEGER, text, line, column);
-        }
-        throw TokenizerException.create(line, column, "Invalid digit token", text);
-    }
+
 }
