@@ -1,6 +1,10 @@
 package io.github.leo1024.otrvm.lexer;
 
+import io.github.leo1024.otrvm.conf.Opcode;
+import io.github.leo1024.otrvm.conf.Pseudo;
 import io.github.leo1024.otrvm.conf.TokenKind;
+import io.github.leo1024.otrvm.conf.Type;
+import io.github.leo1024.otrvm.parser.impl.Id;
 
 public class Token {
     private final TokenKind kind;
@@ -38,5 +42,47 @@ public class Token {
 
     public int getColumn() {
         return column;
+    }
+
+
+    public Pseudo toPseudo() {
+        return Pseudo.of(value);
+    }
+
+    public Opcode toOpcode() {
+        return Opcode.of(value);
+    }
+
+    public boolean valEqual(char c) {
+        return this.value.equals(String.valueOf(c));
+    }
+
+
+    public String getPosition() {
+        return "line " + getLine() + ":" + getColumn();
+    }
+
+    public Id toId() {
+        return new Id(value);
+    }
+
+    public Type toType() {
+        return Type.of(value);
+    }
+
+    public boolean tokenKindIn(TokenKind... kinds) {
+        for (TokenKind tokenKind : kinds) {
+            if (tokenKind == kind) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean isImmediate() {
+        return this.kind == TokenKind.INTEGER
+                || this.kind == TokenKind.HEX
+                || this.kind == TokenKind.FLOAT
+                || this.kind == TokenKind.STRING;
     }
 }

@@ -2,7 +2,7 @@ package io.github.leo1024.otrvm.lexer;
 
 
 import io.github.leo1024.otrvm.conf.Constants;
-import io.github.leo1024.otrvm.ex.TokenizerException;
+import io.github.leo1024.otrvm.ex.ParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +32,7 @@ public class CharSequence {
         try {
             return read0();
         } catch (IOException e) {
-            throw new TokenizerException(e);
+            throw new ParserException(e);
         }
     }
 
@@ -64,13 +64,22 @@ public class CharSequence {
         return readUtilEncounter(Constants.DELIMITERS);
     }
 
+    public void skipComment() {
+        while (!this.isEof()) {
+            char chr = this.read();
+            if (chr == Constants.LF || chr == Constants.CR) {
+                break;
+            }
+        }
+    }
+
     public String readStrLiteral() {
         StringBuilder sb = new StringBuilder();
         for (; ; ) {
             boolean isEscape = this.chr == Constants.ESCAPE;
             char chr = this.read();
             if (isEof()) {
-                throw new TokenizerException("String literal can't normal end.");
+                throw new ParserException("String literal can't normal end.");
             }
             if (chr == Constants.DOUBLE_QUOTE && !isEscape) {
                 break;
@@ -116,7 +125,7 @@ public class CharSequence {
         for (; ; ) {
             char c = read();
             if (isEof()) {
-                throw new TokenizerException("Unexpected end of file.");
+                throw new ParserException("Unexpected end of file.");
             }
             for (char chr : cc) {
                 if (c == chr) {

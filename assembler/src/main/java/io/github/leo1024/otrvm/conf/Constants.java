@@ -17,6 +17,8 @@ public class Constants {
     public static final char ESCAPE = '\\';
     public static final char DOUBLE_QUOTE = '"';
     public static final char COLON = ':';
+    public static final char PERCENT ='%';
+    public static final char SEMICOLON = ';';
 
     public static char[] DELIMITERS = new char[]{
             CR, LF, TAB, SPACE, DOT, COMMA, LEFT_PAREN, RIGHT_PAREN, DOUBLE_QUOTE

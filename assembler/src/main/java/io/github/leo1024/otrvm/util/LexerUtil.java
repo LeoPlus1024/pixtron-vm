@@ -1,7 +1,7 @@
 package io.github.leo1024.otrvm.util;
 
 import io.github.leo1024.otrvm.conf.TokenKind;
-import io.github.leo1024.otrvm.ex.TokenizerException;
+import io.github.leo1024.otrvm.ex.ParserException;
 import io.github.leo1024.otrvm.lexer.Token;
 
 import java.util.regex.Pattern;
@@ -23,6 +23,10 @@ public class LexerUtil {
     // Rules: First character must be letter/_/$, subsequent characters can be letters/numbers/_/$
     static final Pattern REF_VAR_PATTERN = Pattern.compile("^\\$[a-zA-Z_$][\\w$]*");
 
+    public static boolean isInteger(String text) {
+        return INT_PATTERN.matcher(text).matches();
+    }
+
     /**
      * <p>Creates a numeric token (either integer or float) from input text.</p>
      * <p>Processing logic:</p>
@@ -35,7 +39,7 @@ public class LexerUtil {
      * @param column Column number for error reporting
      * @param text   Input text to analyze
      * @return Token of appropriate numeric type
-     * @throws TokenizerException When text doesn't match any numeric format
+     * @throws ParserException When text doesn't match any numeric format
      */
     public static Token createDigitToken(int line, int column, String text) {
         // Prioritize float check (must contain decimal point)
@@ -51,7 +55,7 @@ public class LexerUtil {
         }
 
         // Handle non-numeric input
-        throw TokenizerException.create(line, column, "Invalid digit token", text);
+        throw ParserException.create(line, column, "Invalid digit token", text);
     }
 
     /**

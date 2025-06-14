@@ -10,5 +10,6 @@ public enum TokenKind {
     OPCODE,
     FLOAT,
     INTEGER,
-    TYPE
+    TYPE,
+    VM_OPTIONS
 }
