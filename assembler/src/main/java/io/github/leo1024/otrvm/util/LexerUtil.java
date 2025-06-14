@@ -14,8 +14,7 @@ public class LexerUtil {
     static final Pattern INT_PATTERN = Pattern.compile("[0-9]+");
 
     // Pattern for matching floating-point numbers (optional integer part + decimal point + mandatory fractional part)
-    // Note: Current pattern doesn't match multi-digit integer parts (e.g., "123.45"). Consider: [0-9]*\\.[0-9]+
-    static final Pattern FLOAT_PATTERN = Pattern.compile("[0-9]?\\.[0-9]+");
+    static final Pattern FLOAT_PATTERN = Pattern.compile("^\\d*\\.\\d+$");
 
     // Pattern for hexadecimal literals (# prefix + one or more hex digits)
     static final Pattern HEX_PATTERN = Pattern.compile("#[0-9a-fA-F]+");
