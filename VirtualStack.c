@@ -9,7 +9,7 @@
 
 #include "Memory.h"
 
-extern inline void PixtronVM_stack_push(PixtronVMPtr vm, const Variant *variant) {
+extern inline void PixtronVM_stack_push(PixtronVM *vm, const Variant *variant) {
     VirtualStackPtr stack = vm->stack;
     VirtualStackFramePtr frame = stack->frame;
     const size_t sp = frame->sp;
@@ -24,7 +24,7 @@ extern inline void PixtronVM_stack_push(PixtronVMPtr vm, const Variant *variant)
 }
 
 
-extern inline void PixtronVM_stack_pop(PixtronVMPtr vm, Variant *variant) {
+extern inline void PixtronVM_stack_pop(PixtronVM *vm, Variant *variant) {
     VirtualStackPtr stack = vm->stack;
     VirtualStackFramePtr frame = stack->frame;
     const size_t sp = frame->sp;
@@ -39,7 +39,7 @@ extern inline void PixtronVM_stack_pop(PixtronVMPtr vm, Variant *variant) {
     PixtronVM_to_Variable(value, variant);
 }
 
-extern inline void PixtronVM_stack_frame_push(PixtronVMPtr vm, const uint16_t maxLocals, const uint16_t maxStack) {
+extern inline void PixtronVM_stack_frame_push(PixtronVM *vm, const uint16_t maxLocals, const uint16_t maxStack) {
     VirtualStackPtr stack = vm->stack;
     const size_t depth = stack->depth;
     if (depth + 1 == VM_MAX_STACK_DEPTH) {
@@ -62,7 +62,7 @@ extern inline void PixtronVM_stack_frame_push(PixtronVMPtr vm, const uint16_t ma
     stack->depth = depth + 1;
 }
 
-extern inline void PixtronVM_stack_frame_pop(PixtronVMPtr vm) {
+extern inline void PixtronVM_stack_frame_pop(PixtronVM *vm) {
     VirtualStackPtr stack = vm->stack;
     const size_t depth = stack->depth;
     if (depth == 0) {
@@ -78,7 +78,7 @@ extern inline void PixtronVM_stack_frame_pop(PixtronVMPtr vm) {
 }
 
 
-extern inline void PixtronVM_stack_ltable_set(PixtronVMPtr vm, uint16_t index, const Variant *variant) {
+extern inline void PixtronVM_stack_ltable_set(PixtronVM *vm, uint16_t index, const Variant *variant) {
     assert(variant != NULL);
     VirtualStackFramePtr frame = vm->stack->frame;
     assert(frame != NULL);
@@ -91,7 +91,7 @@ extern inline void PixtronVM_stack_ltable_set(PixtronVMPtr vm, uint16_t index, c
     PixtronVM_to_VMValue(variant, ptr);
 }
 
-extern inline void PixtronVM_stack_ltable_get(PixtronVMPtr vm, uint16_t index, Variant *variant) {
+extern inline void PixtronVM_stack_ltable_get(PixtronVM *vm, uint16_t index, Variant *variant) {
     assert(variant!=NULL);
     VirtualStackFramePtr frame = vm->stack->frame;
     assert(frame != NULL);

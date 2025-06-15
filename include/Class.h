@@ -1,14 +1,10 @@
-//
-// Created by leo on 25-6-15.
-//
-
 #ifndef CLASS_H
 #define CLASS_H
 #include "Type.h"
 
 typedef struct {
-    Type type,
-    uint8_t *name;
+    Type type;
+    gchar *name;
 } FuncParam;
 
 typedef struct {
@@ -21,9 +17,13 @@ typedef struct {
 typedef struct {
     uint32_t magic;
     Version version;
-    Func **func;
+    Func **farr;
     uint8_t *codes;
-    uint8_t *namespace;
+    Variant *varr;
+    gchar *className;
+    guint vlen;
 } Class;
+
+extern Class *PixtronVM_class_get(const PixtronVM *vm, const gchar *className);
 
 #endif //CLASS_H

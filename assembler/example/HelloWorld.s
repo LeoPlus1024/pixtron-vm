@@ -1,6 +1,6 @@
 @namespace HelloWorld
 ; count
-@var int count 0
+@var int count 10
 ; main
 @func main(int i,byte b)
   %locals 10

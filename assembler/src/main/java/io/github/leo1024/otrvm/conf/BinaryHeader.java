@@ -2,7 +2,6 @@ package io.github.leo1024.otrvm.conf;
 
 import io.github.leo1024.otrvm.ISerializable;
 import io.github.leo1024.otrvm.util.ByteUtil;
-import io.github.leo1024.otrvm.util.CLanguageUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -52,22 +51,18 @@ public class BinaryHeader implements ISerializable {
 
 
         int pos = 0;
-        byte[] namespaceBytes = CLanguageUtil.toCStyleStr(this.namespace);
-        int namespaceBytesLength = namespaceBytes.length;
-        byte[] data = new byte[length + maxFuncSize + maxVarSize + namespaceBytesLength + 8];
+        byte[] data = new byte[length + maxFuncSize + maxVarSize + 8];
 
         pos = ByteUtil.appendInt2Bytes(data, pos, magic);
         data[pos++] = version.getVersion();
-        System.arraycopy(namespaceBytes, 0, data, pos, namespaceBytesLength);
-        pos += namespaceBytesLength;
-        pos = ByteUtil.appendInt2Bytes(data, pos, maxVarSize);
+        pos = ByteUtil.appendInt2Bytes(data, pos, varList.size());
 
         for (byte[] array : varArrays) {
             System.arraycopy(array, 0, data, pos, array.length);
             pos += array.length;
         }
 
-        pos = ByteUtil.appendInt2Bytes(data, pos, maxFuncSize);
+        pos = ByteUtil.appendInt2Bytes(data, pos, funcMetas.size());
 
         for (byte[] array : funcArrays) {
             System.arraycopy(array, 0, data, pos, array.length);

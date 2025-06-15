@@ -1,22 +1,18 @@
 package io.github.leo1024.otrvm.test;
 
 import io.github.leo1024.otrvm.Assembler;
+import io.github.leo1024.otrvm.conf.Configure;
 import org.junit.jupiter.api.Test;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.file.Path;
 
 public class AssemblerTest {
     @Test
     public void testHelloWorld() {
-        try (InputStream is = AssemblerTest.class.getResourceAsStream("HelloWorld.s");
-             FileOutputStream outputStream = new FileOutputStream("test.bin")) {
-            Assembler assembler = Assembler.create(is);
-            assembler.assemble(outputStream);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Configure configure = Configure.newBuilder()
+                .workDir(Path.of("example"))
+                .outputDir(Path.of("example/build"))
+                .build();
+        Assembler.create(configure);
     }
 }

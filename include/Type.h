@@ -5,12 +5,17 @@
 
 #include "Opcode.h"
 #include <stdint.h>
+#include <glib.h>
+
+#include "Class.h"
 
 typedef uint64_t VMValue;
 
 struct VirtualStackFrame;
 
 typedef struct VirtualStackFrame {
+    // Class
+    Class *class;
     // 局部变量表
     VMValue *localVarTable;
     // 局部变量数量
@@ -38,7 +43,7 @@ typedef struct {
 
 
 typedef enum:uint16_t {
-    V1_0,
+    V1_0 = 1,
     V1_1,
     V1_2,
     V1_3,
@@ -63,23 +68,20 @@ typedef struct {
 
 
 typedef struct {
+    // Working directory
+    gchar *workdir;
     // Program count
     uint64_t pc;
-    // Program
-    uint8_t *buffer;
-    // Program size
-    uint32_t size;
-    // Data
-    uint8_t *data;
     // VM Stack
     VirtualStackPtr stack;
-    // Binary header
-    BinaryHeaderPtr header;
+    // Classes
+    GHashTable *classes;
 } PixtronVM, *PixtronVMPtr, **PixtronVMRef;
 
 
 typedef struct {
     Type type;
+    gchar *name;
 
     union {
         int8_t b;
