@@ -125,7 +125,7 @@ public class CharSequence {
         for (; ; ) {
             char c = read();
             if (isEof()) {
-                throw new ParserException("Unexpected end of file.");
+                break;
             }
             for (char chr : cc) {
                 if (c == chr) {

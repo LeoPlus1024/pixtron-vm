@@ -46,4 +46,9 @@ public enum Opcode {
         }
         return of(token.getValue());
     }
+
+    @Override
+    public String toString() {
+        return this.mnemonic;
+    }
 }

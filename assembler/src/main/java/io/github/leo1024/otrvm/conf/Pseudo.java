@@ -4,7 +4,10 @@ import java.util.Arrays;
 
 public enum Pseudo {
     FUNC("@func"),
-    END("@end");
+    END("@end"),
+    VAR("@var"),
+    NAMESPACE("@namespace"),
+    ;
     private final String code;
 
     Pseudo(String code) {

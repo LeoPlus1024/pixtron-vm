@@ -16,8 +16,15 @@ public class Parser {
         this.tokenSequence = new TokenSequence(tokenList);
     }
 
-    public Context parse() {
-        Context context = new Context();
+    public ASTBuilder parse() {
+        // Parse namespace
+        Token token = this.tokenSequence.consume();
+        boolean hasNamespace = Helper.checkPseudoToken(token, Pseudo.NAMESPACE);
+        if (!hasNamespace) {
+            throw ParserException.create(token, "Expect a namespace.");
+        }
+        String namespace = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
+        final ASTBuilder context = new ASTBuilder(namespace);
         while (!tokenSequence.isEof()) {
             parseExpr(context);
         }
@@ -35,23 +42,46 @@ public class Parser {
         }
         // Expr
         else {
-            Expr expr = switch (tokenSequence.currentKind()) {
+            TokenKind tokenKind = this.tokenSequence.currentKind();
+            switch (tokenKind) {
                 case PSEUDO -> parsePseudo(context);
                 case OPCODE -> parseOpcode(context);
-                default -> throw ParserException.create(tokenSequence.consume(), "Unexpected token.");
+                default -> {
+                    Token token = this.tokenSequence.consume();
+                    if (tokenKind == TokenKind.IDENTIFIER
+                            && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
+                        context.addLabel(token.getValue());
+                    } else {
+                        throw ParserException.create(token, "Unexpected token.");
+                    }
+                }
+            }
+        }
+    }
+
+    private void parsePseudo(Context context) {
+        Token token = this.tokenSequence.consume();
+        Pseudo pseudo = token.toPseudo();
+        if (pseudo == Pseudo.VAR) {
+            this.parseVar(context);
+        } else {
+            Expr expr = switch (pseudo) {
+                case FUNC -> parseFunc(context);
+                case END -> new End();
+                default -> null;
             };
             context.addExpr(expr);
         }
     }
 
-    private Expr parsePseudo(Context context) {
-        Token token = this.tokenSequence.consume();
-        return switch (token.toPseudo()) {
-            case FUNC -> parseFunc(context);
-            case END -> new End();
-            default -> null;
-        };
+
+    private void parseVar(Context context) {
+        Type type = Helper.expect(this.tokenSequence, TokenKind.TYPE).toType();
+        String name = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
+        Object value = Helper.convertLiteral(Helper.expect(this.tokenSequence, TokenKind.immediate()));
+        context.addVar(type, name, value);
     }
+
 
     private Expr parseFunc(final Context context) {
         Token name = Helper.expect(tokenSequence, TokenKind.IDENTIFIER);
@@ -60,11 +90,11 @@ public class Parser {
             Helper.requireTokenNotNull(token, "Func param can't norm enclose.");
             return token.valEqual(Constants.RIGHT_PAREN);
         });
-        List<Func.Param> paramList = new ArrayList<>();
+        List<FuncMeta.Param> paramList = new ArrayList<>();
         while (!emptyParam) {
             Token paramType = Helper.expect(tokenSequence, TokenKind.TYPE);
             Token paramName = Helper.expect(tokenSequence, TokenKind.IDENTIFIER);
-            Func.Param param = new Func.Param(paramName.toId(), paramType.toType());
+            FuncMeta.Param param = new FuncMeta.Param(paramName.toId(), paramType.toType());
             paramList.add(param);
             if (!this.tokenSequence.checkToken(token -> token.valEqual(Constants.COMMA))) {
                 emptyParam = true;
@@ -76,7 +106,8 @@ public class Parser {
         if (declareRetType) {
             retType = Helper.expect(tokenSequence, TokenKind.TYPE).toType();
         }
-        Func func = new Func(context, name.toId(), paramList, retType);
+        FuncMeta funcMeta = new FuncMeta(context.getNamespace(), name.toId(), retType, paramList);
+        Func func = new Func(context, funcMeta);
         while (!this.tokenSequence.checkToken(it -> Helper.checkPseudoToken(it, Pseudo.END))) {
             parseExpr(func);
         }
@@ -91,21 +122,25 @@ public class Parser {
     }
 
 
-    private Expr parseOpcode(final Context context) {
+    private void parseOpcode(final Context context) {
         Token token = this.tokenSequence.consume();
         Opcode opcode = Opcode.of(token);
         Expr expr = switch (opcode) {
             case LOAD, GLOAD -> parseLoadExpr(opcode);
             case STORE, GSTORE -> parseStoreExpr(opcode);
             case ADD, SBC, MUL, DIV -> new Math(opcode);
+            case GOTO -> {
+                String label = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
+                yield new Redirect(opcode, label);
+            }
             default -> throw ParserException.create(token, "Unsupported opcode.");
         };
-        return expr;
+        context.addExpr(expr);
     }
 
     private Expr parseLoadExpr(final Opcode opcode) {
         Helper.expect(this.tokenSequence, Constants.DOT);
-        OperandSize size = Helper.convertOperandSize(this.tokenSequence);
+        Type type = Helper.convertOperandType(this.tokenSequence);
         Token token = this.tokenSequence.consume();
         Helper.requireTokenNotNull(token, "Load instruct missing operand.");
         boolean immediate = token.isImmediate();
@@ -132,14 +167,14 @@ public class Parser {
         } else {
             index = Helper.convertVarRefIndex(token);
         }
-        return new Load(size, from, immValue, index);
+        return new Load(type, from, immValue, index);
     }
 
     public Expr parseStoreExpr(Opcode opcode) {
         Helper.expect(this.tokenSequence, Constants.DOT);
-        OperandSize size = Helper.convertOperandSize(this.tokenSequence);
+        Type type = Helper.convertOperandType(this.tokenSequence);
         DataFrom from = opcode == Opcode.STORE ? DataFrom.LC : DataFrom.GL;
         int index = Helper.convertVarRefIndex(this.tokenSequence.consume());
-        return new Store(from, index, size);
+        return new Store(from, index, type);
     }
 }

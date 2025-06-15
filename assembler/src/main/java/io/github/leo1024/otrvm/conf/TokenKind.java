@@ -11,5 +11,10 @@ public enum TokenKind {
     FLOAT,
     INTEGER,
     TYPE,
-    VM_OPTIONS
+    VM_OPTIONS;
+
+
+    public static TokenKind[] immediate() {
+        return new TokenKind[]{STRING, HEX, FLOAT, INTEGER};
+    }
 }

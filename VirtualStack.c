@@ -36,19 +36,7 @@ extern inline void PixtronVM_stack_pop(PixtronVMPtr vm, Variant *variant) {
     const void *stackTop = frame->operandStack + sp;
     memcpy(&value, stackTop, VM_VALUE_SIZE);
     frame->sp = sp + 1;
-    const Type type = PixtronVM_typeof(value);
-    if (type == TYPE_DOUBLE) {
-        memcpy(&(variant->value), &value, TYPE_SIZE[type]);
-    }
-    // 对于long型使用48位填充最高位作为符号位
-    else if (type == TYPE_LONG) {
-        variant->value.l = VLONG_TO_CLONG(value);
-    }
-    // 对于 byte、short类型直接扩容到int类型
-    else {
-        variant->value.i = (int32_t) value;
-    }
-    variant->type = type;
+    PixtronVM_to_Variable(value, variant);
 }
 
 extern inline void PixtronVM_stack_frame_push(PixtronVMPtr vm, const uint16_t maxLocals, const uint16_t maxStack) {
@@ -101,4 +89,14 @@ extern inline void PixtronVM_stack_ltable_set(PixtronVMPtr vm, uint16_t index, c
     assert((t0 == NIL || t0==variant->type)&&"Local variable table type mistake.");
     uint8_t *ptr = (uint8_t *) frame->localVarTable + index;
     PixtronVM_to_VMValue(variant, ptr);
+}
+
+extern inline void PixtronVM_stack_ltable_get(PixtronVMPtr vm, uint16_t index, Variant *variant) {
+    assert(variant!=NULL);
+    VirtualStackFramePtr frame = vm->stack->frame;
+    assert(frame != NULL);
+    const uint16_t maxLocals = frame->maxLocals;
+    assert(index < maxLocals);
+    const VMValue tmp = frame->localVarTable[index];
+    PixtronVM_to_Variable(tmp, variant);
 }

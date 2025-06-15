@@ -9,4 +9,9 @@ public class Math implements Expr {
     public Math(Opcode opcode) {
         this.opcode = opcode;
     }
+
+    @Override
+    public byte[] toBytes() {
+        return new byte[]{opcode.getValue()};
+    }
 }

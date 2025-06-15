@@ -12,16 +12,19 @@ static void PixtronVM_exec_ops_data(PixtronVMPtr vm, Variant *variant) {
     const Type type = OPS_DATA_TYPE(subOps);
     const DataSource source = OPS_DATA_SOURCE(subOps);
     variant->type = type;
-    // 立即数
+    // Immediate
     if (source == IMMEDIATE) {
         PixtronVM_code_segment_imm(vm, variant);
     }
-    // 全局变量
-    else if (source == GLOBAL_VAR) {
-        Variant tmp;
-        tmp.type = TYPE_INT;
-        PixtronVM_code_segment_imm(vm, &tmp);
-        PixtronVM_data_segment_get(vm, tmp.value.i, variant);
+    // Local
+    else {
+        const uint16_t index = PixtronVM_code_segment_u16(vm);
+        const bool local = source == LOCAL_VAR;
+        if (local) {
+            PixtronVM_stack_ltable_get(vm, index, variant);
+        } else {
+            //
+        }
     }
 }
 

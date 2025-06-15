@@ -38,4 +38,12 @@ extern inline void PixtronVM_stack_frame_pop(PixtronVMPtr vm);
  */
 extern inline void PixtronVM_stack_ltable_set(PixtronVMPtr vm, uint16_t index, const Variant *variant);
 
+ /**
+ * Get a value from the current frame's local variable table
+ * @param vm The PixtronVM instance pointer
+ * @param index Local variable table slot index
+ * @param variant Pointer to store the retrieved variant value
+ */
+extern inline void PixtronVM_stack_ltable_get(PixtronVMPtr vm, uint16_t index, Variant *variant);
+
 #endif //VIRTUALSTACK_H

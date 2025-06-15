@@ -125,4 +125,11 @@ extern inline void PixtronVM_to_VMLong(Variant *variant);
  */
 extern inline void PixtronVM_negative(Variant *variant);
 
+/**
+ * Convert a VMValue to a Variant
+ * @param value The VMValue to convert
+ * @param variant Output buffer to store the converted Variant (modified in-place)
+ */
+extern inline void PixtronVM_to_Variable(VMValue value, Variant *variant);
+
 #endif //TYPE_H

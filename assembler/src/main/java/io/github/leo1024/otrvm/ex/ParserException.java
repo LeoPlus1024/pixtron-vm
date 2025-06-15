@@ -2,7 +2,6 @@ package io.github.leo1024.otrvm.ex;
 
 import io.github.leo1024.otrvm.lexer.Token;
 
-import javax.swing.text.html.Option;
 import java.util.Optional;
 
 public class ParserException extends RuntimeException {

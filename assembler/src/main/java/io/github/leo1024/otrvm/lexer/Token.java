@@ -80,9 +80,11 @@ public class Token {
     }
 
     public boolean isImmediate() {
-        return this.kind == TokenKind.INTEGER
-                || this.kind == TokenKind.HEX
-                || this.kind == TokenKind.FLOAT
-                || this.kind == TokenKind.STRING;
+        for (TokenKind tokenKind : TokenKind.immediate()) {
+            if (this.kind == tokenKind) {
+                return true;
+            }
+        }
+        return false;
     }
 }

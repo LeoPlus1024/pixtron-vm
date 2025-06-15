@@ -1,8 +1,8 @@
 package io.github.leo1024.otrvm.parser;
 
-import io.github.leo1024.otrvm.conf.OperandSize;
 import io.github.leo1024.otrvm.conf.Pseudo;
 import io.github.leo1024.otrvm.conf.TokenKind;
+import io.github.leo1024.otrvm.conf.Type;
 import io.github.leo1024.otrvm.ex.ParserException;
 import io.github.leo1024.otrvm.lexer.Token;
 
@@ -55,16 +55,21 @@ public class Helper {
         return token.getValue().equals(pseudo.getCode());
     }
 
-    public static OperandSize convertOperandSize(TokenSequence sequence) {
+    public static Type convertOperandType(TokenSequence sequence) {
         Token token = sequence.consume();
         if (token == null) {
             throw ParserException.create(token, "Expected a operand size but it reach eof.");
         }
-        OperandSize operandSize = OperandSize.of(token.getValue());
-        if (operandSize == null) {
-            throw ParserException.create(token, "Can't convert token '%s' to operand size.".formatted(token.getKind()));
-        }
-        return operandSize;
+        String suffix = token.getValue();
+        return switch (suffix) {
+            case "u" -> Type.BYTE;
+            case "s" -> Type.SHORT;
+            case "i" -> Type.INT;
+            case "l" -> Type.LONG;
+            case "d" -> Type.FLOAT;
+            case "b" -> Type.BOOL;
+            default -> throw new IllegalStateException("Unexpected value: " + suffix);
+        };
     }
 
     public static Object convertLiteral(Token token) {
@@ -86,6 +91,11 @@ public class Helper {
             throw ParserException.create(token, "Can't convert token  to var ref index.");
         }
         String value = token.getValue().substring(1);
-        return Integer.valueOf(value);
+        int index = Integer.parseInt(value);
+        if ((index & 0xFFFF0000) != 0) {
+            throw ParserException.create(token, "Exceed variable refence max value.");
+        }
+        return index;
     }
+
 }

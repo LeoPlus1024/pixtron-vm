@@ -78,3 +78,19 @@ extern inline void PixtronVM_negative(Variant *variant) {
         default: assert(0&&"Not support number type.");
     }
 }
+
+extern inline void PixtronVM_to_Variable(VMValue value, Variant *variant) {
+    const Type type = PixtronVM_typeof(value);
+    if (type == TYPE_DOUBLE) {
+        memcpy(&(variant->value), &value, TYPE_SIZE[type]);
+    }
+    // 对于long型使用48位填充最高位作为符号位
+    else if (type == TYPE_LONG) {
+        variant->value.l = VLONG_TO_CLONG(value);
+    }
+    // 对于 byte、short类型直接扩容到int类型
+    else {
+        variant->value.i = (int32_t) value;
+    }
+    variant->type = type;
+}
