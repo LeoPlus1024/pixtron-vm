@@ -19,7 +19,7 @@ extern inline void PixtronVM_stack_push(PixtronVM *vm, const Variant *variant) {
     }
     const uint32_t tmp = sp - 1;
     void *stackTop = frame->operandStack + tmp;
-    PixtronVM_to_VMValue(variant, stackTop);
+    PixtronVM_ConvertValueToBuffer(variant, stackTop);
     frame->sp = tmp;
 }
 
@@ -36,7 +36,7 @@ extern inline void PixtronVM_stack_pop(PixtronVM *vm, Variant *variant) {
     const void *stackTop = frame->operandStack + sp;
     memcpy(&value, stackTop, VM_VALUE_SIZE);
     frame->sp = sp + 1;
-    PixtronVM_to_Variable(value, variant);
+    PixtronVM_ConvertValueToVariant(value, variant);
 }
 
 extern inline void PixtronVM_stack_frame_push(PixtronVM *vm, const uint16_t maxLocals, const uint16_t maxStack) {
@@ -85,10 +85,10 @@ extern inline void PixtronVM_stack_ltable_set(PixtronVM *vm, uint16_t index, con
     const uint16_t maxLocals = frame->maxLocals;
     assert(index < maxLocals);
     const VMValue tmp = frame->localVarTable[index];
-    const Type t0 = PixtronVM_typeof(tmp);
+    const Type t0 = PixtronVM_GetValueType(tmp);
     assert((t0 == NIL || t0==variant->type)&&"Local variable table type mistake.");
     uint8_t *ptr = (uint8_t *) frame->localVarTable + index;
-    PixtronVM_to_VMValue(variant, ptr);
+    PixtronVM_ConvertValueToBuffer(variant, ptr);
 }
 
 extern inline void PixtronVM_stack_ltable_get(PixtronVM *vm, uint16_t index, Variant *variant) {
@@ -98,5 +98,5 @@ extern inline void PixtronVM_stack_ltable_get(PixtronVM *vm, uint16_t index, Var
     const uint16_t maxLocals = frame->maxLocals;
     assert(index < maxLocals);
     const VMValue tmp = frame->localVarTable[index];
-    PixtronVM_to_Variable(tmp, variant);
+    PixtronVM_ConvertValueToVariant(tmp, variant);
 }

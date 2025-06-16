@@ -60,6 +60,17 @@ static const uint8_t TYPE_SIZE[] = {
     [TYPE_REF] = 6
 };
 
+typedef enum:uint16_t {
+    V1_0 = 1,
+    V1_1,
+    V1_2,
+    V1_3,
+    V1_4,
+    V1_5,
+    V1_6,
+    V1_7,
+} Version;
+
 #define OPS_COMPOSE(type,source) (source | (type << 4))
 #define OPS_DATA_TYPE(value) ((value >> 4) & 0x0f)
 #define OPS_DATA_SOURCE(value) (value & 0x0f)

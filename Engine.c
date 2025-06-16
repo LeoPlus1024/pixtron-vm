@@ -64,15 +64,15 @@ extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm, Opcode opcode) {
     }
     // Double自动扩展
     else if (VM_TYPE_DOUBLE(top.type) || VM_TYPE_DOUBLE(next.type)) {
-        PixtronVM_to_VMDouble(&top);
-        PixtronVM_to_VMDouble(&next);
+        PixtronVM_ConvertToDoubleValue(&top);
+        PixtronVM_ConvertToDoubleValue(&next);
         const double sum = next.value.d + top.value.d;
         next.value.d = sum;
     }
     // Long自动扩展
     else if (VM_TYPE_LONG(top.type) || VM_TYPE_LONG(next.type)) {
-        PixtronVM_to_VMLong(&top);
-        PixtronVM_to_VMLong(&next);
+        PixtronVM_ConvertToLongValue(&top);
+        PixtronVM_ConvertToLongValue(&next);
         next.value.l = CLONG_TO_VLONG(next.value.l + top.value.l);
     }
     // Byte、Short、Int
@@ -148,9 +148,9 @@ extern inline void PixtronVM_exec_conv(PixtronVMPtr vm) {
     assert(VM_TYPE_NUMBER(src)&&"Only support cast conv basic type.");
     assert(VM_TYPE_NUMBER(type));
     if (type == TYPE_DOUBLE) {
-        PixtronVM_to_VMDouble(&variant);
+        PixtronVM_ConvertToDoubleValue(&variant);
     } else if (type == TYPE_LONG) {
-        PixtronVM_to_VMLong(&variant);
+        PixtronVM_ConvertToLongValue(&variant);
     } else {
         variant.type = type;
     }

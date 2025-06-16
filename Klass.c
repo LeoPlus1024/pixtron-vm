@@ -3,6 +3,7 @@
 
 #include "Memory.h"
 #include "IError.h"
+#include "Type.h"
 
 #define MAGIC (0xFFAABBCC)
 
@@ -12,13 +13,13 @@ static void PixtronVM_klass_free(Klass **klass) {
     }
     const Klass *self = *klass;
     PixotronVM_free(TO_REF(self->name));
-    PixotronVM_free(TO_REF(self->codes));
-    gint vlen = (gint) self->vlen;
-    while ((vlen--) >= 0) {
-        FieldMeta *fieldMetas = self->fieldMetas + vlen;
-        PixotronVM_free(TO_REF(FieldMeta->name));
+    PixotronVM_free(TO_REF(self->byteCode));
+    gint fieldCount = (gint) self->fieldCount;
+    while ((fieldCount--) >= 0) {
+        Field *field = self->fields + fieldCount;
+        PixotronVM_free(TO_REF(field->name));
     }
-    PixotronVM_free(TO_REF(self->varr));
+    PixotronVM_free(TO_REF(self->fields));
     PixotronVM_free(TO_REF(klass));
 }
 
@@ -55,26 +56,23 @@ static Klass *PixtronVM_klass_new(const gchar *klassName, GFile *file, GError **
     klass->magic = magic;
     klass->version = buf[4];
     klass->name = g_strdup(klassName);
-    gint vlen = *((gint *) (buf + 5));
+    const gint fieldCount = *((gint *) (buf + 5));
     gint position = 9;
-    FieldMeta *fieldMetas = PixotronVM_calloc(sizeof(FieldMeta) * vlen);
+    Field *files = PixotronVM_calloc(sizeof(Field) * fieldCount);
+    VMValue *values = PixotronVM_calloc(sizeof(VMValue) * fieldCount);
     gint index = 0;
-    while (index < vlen) {
-        FieldMeta *fileMeta = (fieldMetas + index);
-        fileMeta->name = g_strdup((gchar *)(buf + position));
-        Type type = *((Type *) (buf + position));
-        position = position + 1 + (gint) strlen(variant->name);
-        const uint8_t n = TYPE_SIZE[variant->type];
-        VMValue value;
-        memcpy(&value, buf + position, n);
-        position = position + n;
-        if(type != DOUBLE) {
-            value |= (type <<< 48);
-        }
+    while (index < fieldCount) {
+        Field *field = (files + index);
+        field->name = g_strdup((gchar *)(buf + position));
+        field->type = *((Type *) (buf + position));
+        position = position + 1 + (gint) strlen(field->name);
+        const VMValue value = PixtronVM_CreateValueFromBuffer(field->type, buf + position);
+        values[index] = value;
+        position = position + TYPE_SIZE[field->type];
         index++;
     }
-    klass->varr = varr;
-    klass->vlen = vlen;
+    klass->fields = files;
+    klass->fieldCount = fieldCount;
 
 finally:
     if (*error != NULL) {
