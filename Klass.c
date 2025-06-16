@@ -15,8 +15,8 @@ static void PixtronVM_klass_free(Klass **klass) {
     PixotronVM_free(TO_REF(self->codes));
     gint vlen = (gint) self->vlen;
     while ((vlen--) >= 0) {
-        Variant *variant = self->varr + vlen;
-        PixotronVM_free(TO_REF(variant->name));
+        FieldMeta *fieldMetas = self->fieldMetas + vlen;
+        PixotronVM_free(TO_REF(FieldMeta->name));
     }
     PixotronVM_free(TO_REF(self->varr));
     PixotronVM_free(TO_REF(klass));
@@ -57,16 +57,20 @@ static Klass *PixtronVM_klass_new(const gchar *klassName, GFile *file, GError **
     klass->name = g_strdup(klassName);
     gint vlen = *((gint *) (buf + 5));
     gint position = 9;
-    Variant *varr = PixotronVM_calloc(sizeof(Variant) * vlen);
+    FieldMeta *fieldMetas = PixotronVM_calloc(sizeof(FieldMeta) * vlen);
     gint index = 0;
     while (index < vlen) {
-        Variant *variant = (varr + index);
-        variant->name = g_strdup((gchar *)(buf + position));
-        variant->type = *((Type *) (buf + position));
+        FieldMeta *fileMeta = (fieldMetas + index);
+        fileMeta->name = g_strdup((gchar *)(buf + position));
+        Type type = *((Type *) (buf + position));
         position = position + 1 + (gint) strlen(variant->name);
         const uint8_t n = TYPE_SIZE[variant->type];
-        memcpy(&variant->value, buf + position, n);
+        VMValue value;
+        memcpy(&value, buf + position, n);
         position = position + n;
+        if(type != DOUBLE) {
+            value |= (type <<< 48);
+        }
         index++;
     }
     klass->varr = varr;
