@@ -22,37 +22,39 @@ static void PixtronVM_klass_free(Klass **klass) {
     PixotronVM_free(TO_REF(klass));
 }
 
-static Klass *PixtronVM_klass_new(const gchar *KlassName, GFile *file, GError **ref) {
+static Klass *PixtronVM_klass_new(const gchar *klassName, GFile *file, GError **error) {
+    g_return_val_if_fail(klassName != NULL, NULL);
+    g_return_val_if_fail(file != NULL, NULL);
+    g_return_val_if_fail(error != NULL && *error == NULL, NULL);
     Klass *klass = NULL;
-    GError *error = NULL;
     GFileInfo *fileInfo = NULL;
     GFileInputStream *inputStream = NULL;
-    inputStream = g_file_read(file, NULL, &error);
-    if (error != NULL) {
+    inputStream = g_file_read(file, NULL, error);
+    if (*error != NULL) {
         goto finally;
     }
     fileInfo = g_file_query_info(file, G_FILE_ATTRIBUTE_STANDARD_SIZE, G_FILE_QUERY_INFO_NONE, NULL, &error);
-    if (error != NULL) {
+    if (*error != NULL) {
         goto finally;
     }
     const goffset fileSize = g_file_info_get_size(fileInfo);
     guint8 buf[fileSize];
-    g_input_stream_read_all(G_INPUT_STREAM(inputStream), buf, fileSize, NULL, NULL, &error);
+    g_input_stream_read_all(G_INPUT_STREAM(inputStream), buf, fileSize, NULL, NULL, error);
     g_input_stream_close(G_INPUT_STREAM(inputStream), NULL, NULL);
     g_object_unref(inputStream);
 
-    if (error != NULL) {
+    if (*error != NULL) {
         goto finally;
     }
     const guint magic = *((guint *) buf);
     if (magic != MAGIC) {
-        error = g_error_new_literal(KLASS_DOMAIN, MAGIC_ERROR, "Magic mistake.");
+        g_set_error(error, KLASS_DOMAIN, MAGIC_ERROR, "Magic mistake.");
         goto finally;
     }
     klass = PixotronVM_calloc(sizeof(Klass));
     klass->magic = magic;
     klass->version = buf[4];
-    klass->name = g_strdup(KlassName);
+    klass->name = g_strdup(klassName);
     gint vlen = *((gint *) (buf + 5));
     gint position = 9;
     Variant *varr = PixotronVM_calloc(sizeof(Variant) * vlen);
@@ -71,10 +73,8 @@ static Klass *PixtronVM_klass_new(const gchar *KlassName, GFile *file, GError **
     klass->vlen = vlen;
 
 finally:
-    if (error != NULL) {
+    if (*error != NULL) {
         PixtronVM_klass_free(&klass);
-    } else {
-        *ref = error;
     }
     if (inputStream != NULL) {
         g_input_stream_close(G_INPUT_STREAM(inputStream), NULL, NULL);
@@ -84,10 +84,9 @@ finally:
     return klass;
 }
 
-static Klass *PixtronVM_Klass_load(const PixtronVM *vm, const gchar *KlassName, GError **ref) {
+static Klass *PixtronVM_Klass_load(const PixtronVM *vm, const gchar *KlassName, GError **error) {
     GFile *dir = NULL;
     Klass *klass = NULL;
-    GError *error = NULL;
     GFile *KlassFile = NULL;
     GFileInfo *fileInfo = NULL;
     GFileEnumerator *enumerator = NULL;
@@ -98,10 +97,10 @@ static Klass *PixtronVM_Klass_load(const PixtronVM *vm, const gchar *KlassName, 
                                            G_FILE_QUERY_INFO_NONE,
                                            NULL,
                                            &error);
-    if (error != NULL) {
+    if (*error != NULL) {
         goto finally;
     }
-    while ((fileInfo = g_file_enumerator_next_file(enumerator, NULL, &error)) != NULL) {
+    while ((fileInfo = g_file_enumerator_next_file(enumerator, NULL, error)) != NULL) {
         const gchar *name = g_file_info_get_name(fileInfo);
         if (!g_str_has_suffix(name, ".clazz")) {
             continue;
@@ -109,8 +108,8 @@ static Klass *PixtronVM_Klass_load(const PixtronVM *vm, const gchar *KlassName, 
         gchar *tmp = g_strndup(name, strlen(name) - 6);
         if (g_str_equal(name, KlassName) == 0) {
             KlassFile = g_file_get_child(dir, name);
-            klass = PixtronVM_klass_new(tmp, KlassFile, &error);
-            if (error != NULL) {
+            klass = PixtronVM_klass_new(tmp, KlassFile, error);
+            if (*error != NULL) {
                 goto finally;
             }
             g_hash_table_insert(vm->klassTable, tmp, klass);
@@ -120,8 +119,7 @@ static Klass *PixtronVM_Klass_load(const PixtronVM *vm, const gchar *KlassName, 
         g_clear_object(&fileInfo);
     }
 finally:
-    if (error != NULL) {
-        *ref = error;
+    if (*error != NULL) {
         PixtronVM_klass_free(&klass);
     }
     g_clear_object(&dir);
@@ -139,9 +137,12 @@ extern Klass *PixtronVM_Klass_get(const PixtronVM *vm, const gchar *KlassName) {
     }
     GError *error = NULL;
     klass = PixtronVM_Klass_load(vm, KlassName, &error);
-    if (error != NULL) {
-        g_printerr("Find Klass:%s fail:%s", KlassName, error->message);
-        g_clear_error(&error);
+    if (error != NULL || klass == NULL) {
+        if (error != NULL) {
+            g_printerr("Find Klass:%s fail:%s", KlassName, error->message);
+            g_clear_error(&error);
+        }
+        g_thread_exit(NULL);
     }
     return klass;
 }

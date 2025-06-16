@@ -9,4 +9,6 @@ typedef enum {
     MAGIC_ERROR = 2000,
     TYPE_ERROR,
 } VMError;
+
+
 #endif //IERROR_H
