@@ -25,7 +25,7 @@ typedef struct {
     Func *methods;
     uint8_t *byteCode;
     FieldMeta *fieldMetas;
-    VMValue *values;
+    VMValue *fieldValues;
     gchar *name;
     guint vlen;
 } Klass;
