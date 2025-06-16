@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <glib.h>
 
-#include "Class.h"
+#include "Klass.h"
 
 typedef uint64_t VMValue;
 
@@ -15,7 +15,7 @@ struct VirtualStackFrame;
 
 typedef struct VirtualStackFrame {
     // Class
-    Class *class;
+    Class *klass;
     // 局部变量表
     VMValue *localVarTable;
     // 局部变量数量
@@ -75,7 +75,7 @@ typedef struct {
     // VM Stack
     VirtualStackPtr stack;
     // Classes
-    GHashTable *classes;
+    GHashTable *klassTable;
 } PixtronVM, *PixtronVMPtr, **PixtronVMRef;
 
 

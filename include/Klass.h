@@ -20,10 +20,10 @@ typedef struct {
     Func **farr;
     uint8_t *codes;
     Variant *varr;
-    gchar *className;
+    gchar *name;
     guint vlen;
-} Class;
+} Klass;
 
-extern Class *PixtronVM_class_get(const PixtronVM *vm, const gchar *className);
+extern Klass *PixtronVM_class_get(const PixtronVM *vm, const gchar *klassName);
 
 #endif //CLASS_H

@@ -9,7 +9,7 @@
 #include "Opcode.h"
 #include <time.h>
 
-#include "Class.h"
+#include "Klass.h"
 #include "DataSegment.h"
 #include "VirtualStack.h"
 #include "Engine.h"
@@ -29,13 +29,13 @@ extern PixtronVM *PixtronVM_create(const gchar *workDir) {
         fprintf(stderr, "Classes HashTable init fail.");
         exit(-1);
     }
-    vm->classes = classes;
+    vm->klassTable = classes;
     return vm;
 }
 
 
 extern void PixtronVM_exec(PixtronVM *vm, const gchar *clazz, const gchar *func) {
-    Class *class = PixtronVM_class_get(vm, clazz);
+    Klass *klass = PixtronVM_class_get(vm, clazz);
     for (;;) {
         const Opcode ops = PixtronVM_code_segment_u8(vm);
 
