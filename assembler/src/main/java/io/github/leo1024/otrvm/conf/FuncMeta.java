@@ -61,7 +61,7 @@ public class FuncMeta implements ISerializable {
         }
 
         // alloc precise size
-        byte[] data = new byte[totalLength + paramsLength];
+        byte[] data = new byte[totalLength + paramsLength + 2];
         int pos = 0;
 
         // writer memory offset
@@ -79,6 +79,9 @@ public class FuncMeta implements ISerializable {
         // Writer func name
         System.arraycopy(nameBytes, 0, data, pos, nameBytes.length);
         pos += nameBytes.length;
+
+        System.arraycopy(ByteUtil.short2Bytes((short) params.size()), 0, data, pos, 2);
+        pos += 2;
 
         // Batch writer params
         for (Param param : params) {

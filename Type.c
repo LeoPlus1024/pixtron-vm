@@ -3,14 +3,14 @@
 #include <assert.h>
 
 extern inline VMValue PixtronVM_CreateValueFromBuffer(const Type type, const guint8 *buf) {
-    const VMValue value = 0;
-    memcpy(value, buf, TYPE_SIZE[type]);
+    VMValue value = 0;
+    memcpy(&value, buf, TYPE_SIZE[type]);
     if (type == TYPE_DOUBLE) {
         return value;
     }
     const uint8_t tmp = VM_VALUE_SIZE - 2;
     const uint16_t tag = (0x7FF << 4) | type;
-    memcpy(value + tmp, &tag, 2);
+    memcpy(&value + tmp, &tag, 2);
     return value;
 }
 
@@ -21,7 +21,7 @@ extern inline Type PixtronVM_GetValueType(const VMValue value) {
     return (value >> 48) & 0x0f;
 }
 
-extern inline void PixtronVM_ConvertValueToBuffer(const Variant *variant, const guint8 *buf){
+extern inline void PixtronVM_ConvertValueToBuffer(const Variant *variant, const guint8 *buf) {
     const Type type = variant->type;
     const uint8_t size = TYPE_SIZE[type];
     memcpy(buf, &variant->value, size);

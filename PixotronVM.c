@@ -15,7 +15,7 @@
 #include "Engine.h"
 
 
-extern PixtronVM *PixtronVM_create(const gchar *workDir) {
+extern PixtronVM *PixtronVM_CreateVM(const gchar *workDir) {
     PixtronVM *vm = PixotronVM_calloc(sizeof(PixtronVM));
     VirtualStackPtr stack = PixotronVM_calloc(sizeof(VirtualStack));
     stack->maxDepth = VM_MAX_STACK_DEPTH;
@@ -24,18 +24,18 @@ extern PixtronVM *PixtronVM_create(const gchar *workDir) {
     vm->stack = stack;
     vm->workdir = g_strdup(workDir);
 
-    const GHashTable *classes = g_hash_table_new(g_str_hash, g_str_equal);
-    if (classes == NULL) {
+    GHashTable *klassTable = g_hash_table_new(g_str_hash, g_str_equal);
+    if (klassTable == NULL) {
         fprintf(stderr, "Classes HashTable init fail.");
         exit(-1);
     }
-    vm->klassTable = classes;
+    vm->klassTable = klassTable;
     return vm;
 }
 
 
-extern void PixtronVM_exec(PixtronVM *vm, const gchar *clazz, const gchar *func) {
-    Klass *klass = PixtronVM_class_get(vm, clazz);
+extern void PixtronVM_Exec(PixtronVM *vm, const gchar *clazz, const gchar *func) {
+    Klass *klass = PixtronVM_GetKlass(vm, clazz);
     for (;;) {
         const Opcode ops = PixtronVM_code_segment_u8(vm);
 
@@ -73,14 +73,14 @@ extern void PixtronVM_exec(PixtronVM *vm, const gchar *clazz, const gchar *func)
     }
 }
 
-extern void PixtronVM_destroy(PixtronVMRef ref) {
-    if (ref == NULL || *ref == NULL) {
+extern void PixtronVM_DestroyVM(PixtronVM **vm) {
+    if (vm == NULL || *vm == NULL) {
         return;
     }
-    PixtronVMPtr vm = *ref;
-    PixtronVM_stack_frame_pop(vm);
+    PixtronVMPtr ptr = *vm;
+    PixtronVM_stack_frame_pop(ptr);
     // PixotronVM_free(TO_REF(vm->header));
-    PixotronVM_free(TO_REF(vm->stack));
+    PixotronVM_free(TO_REF(ptr->stack));
     //    PixotronVM_free(TO_REF(vm->buffer));
-    PixotronVM_free(CAST_REF(ref));
+    PixotronVM_free(CAST_REF(vm));
 }

@@ -13,10 +13,12 @@ typedef struct {
 } MethodParam;
 
 typedef struct {
-    uint8_t *name;
+    gchar *name;
     Type ret;
     uint32_t offset;
+    gushort paramCount;
     MethodParam *params;
+    struct _Klass *klass;
 } Method;
 
 typedef struct {
@@ -24,7 +26,7 @@ typedef struct {
     gchar *name;
 } Field;
 
-typedef struct {
+typedef struct _Klass {
     // Magic
     uint32_t magic;
     // Version
@@ -41,6 +43,8 @@ typedef struct {
     gchar *name;
     // Field count
     guint fieldCount;
+    // Method count
+    guint methodCount;
 } Klass;
 
 struct VirtualStackFrame;

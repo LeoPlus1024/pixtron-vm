@@ -106,7 +106,7 @@ public class Parser {
         if (declareRetType) {
             retType = Helper.expect(tokenSequence, TokenKind.TYPE).toType();
         }
-        FuncMeta funcMeta = new FuncMeta(context.getNamespace(), name.toId(), retType, paramList);
+        FuncMeta funcMeta = new FuncMeta(null, name.toId(), retType, paramList);
         Func func = new Func(context, funcMeta);
         while (!this.tokenSequence.checkToken(it -> Helper.checkPseudoToken(it, Pseudo.END))) {
             parseExpr(func);

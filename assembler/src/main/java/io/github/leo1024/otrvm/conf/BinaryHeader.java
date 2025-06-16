@@ -55,14 +55,14 @@ public class BinaryHeader implements ISerializable {
 
         pos = ByteUtil.appendInt2Bytes(data, pos, magic);
         data[pos++] = version.getVersion();
-        pos = ByteUtil.appendInt2Bytes(data, pos, varList.size());
+        pos = ByteUtil.appendInt2Bytes(data, pos, varSize);
 
         for (byte[] array : varArrays) {
             System.arraycopy(array, 0, data, pos, array.length);
             pos += array.length;
         }
 
-        pos = ByteUtil.appendInt2Bytes(data, pos, funcMetas.size());
+        pos = ByteUtil.appendInt2Bytes(data, pos, funcSize);
 
         for (byte[] array : funcArrays) {
             System.arraycopy(array, 0, data, pos, array.length);
