@@ -1,5 +1,10 @@
 #include "Memory.h"
+#ifdef  __APPLE__
+#include <malloc/malloc.h>
+#else
 #include <malloc.h>
+#endif
+#include <stdio.h>
 #include <stdlib.h>
 
 extern void *PixotronVM_calloc(size_t size) {

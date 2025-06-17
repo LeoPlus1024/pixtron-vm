@@ -6,6 +6,7 @@
 #include <glib.h>
 
 typedef uint64_t VMValue;
+struct VM;
 
 typedef struct {
     Type type;
@@ -13,9 +14,12 @@ typedef struct {
 } MethodParam;
 
 typedef struct {
-    gchar *name;
     Type ret;
+    gchar *name;
+    gint locals;
+    gint stacks;
     uint32_t offset;
+    uint32_t endOffset;
     gushort paramCount;
     MethodParam *params;
     struct _Klass *klass;
@@ -45,13 +49,14 @@ typedef struct _Klass {
     guint fieldCount;
     // Method count
     guint methodCount;
+    const struct VM *vm;
 } Klass;
 
-struct VirtualStackFrame;
+struct _VirtualStackFrame;
 
-typedef struct VirtualStackFrame {
-    // Klass
-    Klass *klass;
+typedef struct _VirtualStackFrame {
+    // Method
+    const Method *method;
     // 局部变量表
     VMValue *localVarTable;
     // 局部变量数量
@@ -60,21 +65,21 @@ typedef struct VirtualStackFrame {
     VMValue *operandStack;
     // 最大栈深度
     uint16_t maxStack;
-    // 操作数栈指针
-    size_t sp;
-    // 调用栈
-    struct VirtualStackFrame *pre;
+    // Program counter
+    guint pc;
+    // Stack pointer
+    guint sp;
+    // Previous stack frame
+    struct _VirtualStackFrame *pre;
     // 返回地址
     size_t returnAddress;
-} *VirtualStackFramePtr;
+} VirtualStackFrame, *VirtualStackFramePtr;
 
 typedef struct {
     // 当前栈深度
     size_t depth;
     // 最大栈深度
     size_t maxDepth;
-    // 当前栈顶栈帧
-    VirtualStackFramePtr frame;
 } VirtualStack, *VirtualStackPtr;
 
 
@@ -92,7 +97,7 @@ typedef struct {
 } BinaryHeader, *BinaryHeaderPtr;
 
 
-typedef struct {
+typedef struct VM {
     // Working directory
     gchar *workdir;
     // Program count
@@ -106,7 +111,6 @@ typedef struct {
 
 typedef struct {
     Type type;
-    gchar *name;
 
     union {
         int8_t b;
@@ -116,6 +120,14 @@ typedef struct {
         double d;
     } value;
 } Variant;
+
+
+typedef struct {
+    VirtualStack *stack;
+    // Stack top frame
+    VirtualStackFrame *frame;
+    const PixtronVM *vm;
+} RuntimeContext;
 
 
 #define VM_VALUE_SIZE (sizeof(VMValue))

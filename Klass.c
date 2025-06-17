@@ -4,8 +4,8 @@
 
 #include "Memory.h"
 #include "IError.h"
-#include "String.h"
 #include "Type.h"
+#include "StringUtil.h"
 
 #define MAGIC (0xFFAABBCC)
 
@@ -68,6 +68,7 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
         goto finally;
     }
     klass = PixotronVM_calloc(sizeof(Klass));
+    klass->vm = vm;
     klass->magic = magic;
     klass->version = buf[4];
     klass->name = g_strdup(klassName);
@@ -80,7 +81,7 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
         Field *field = (files + index);
         field->name = g_strdup((gchar *)(buf + position));
         field->type = *((Type *) (buf + position));
-        position = position + 1 + (gint) strlen(field->name);
+        position = position + PixtronVM_GetStrFullLen(field->name);
         const VMValue value = PixtronVM_CreateValueFromBuffer(field->type, buf + position);
         values[index] = value;
         position = position + TYPE_SIZE[field->type];
@@ -104,7 +105,12 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
             method->klass = klass;
         } else {
             position += PixtronVM_GetStrFullLen(klassName);
-            method->klass = PixtronVM_GetKlass(vm, klassName);
+            Klass *methodKlass = PixtronVM_GetKlass(vm, klassName, error);
+            // If other klass load fail exit current klass init
+            if (methodKlass == NULL) {
+                goto finally;
+            }
+            method->klass = methodKlass;
         }
         gchar *funcName = g_strdup((gchar *)(buf+position));
         position += PixtronVM_GetStrFullLen(funcName);
@@ -184,19 +190,27 @@ finally:
     return klass;
 }
 
-extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassName) {
+extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassName, GError **error) {
     Klass *klass = g_hash_table_lookup(vm->klassTable, klassName);
     if (klass != NULL) {
         return klass;
     }
-    GError *error = NULL;
-    klass = PixtronVM_KlassLoad(vm, klassName, &error);
-    if (error != NULL || klass == NULL) {
-        if (error != NULL) {
-            g_printerr("Find Klass:%s fail:%s", klassName, error->message);
-            g_clear_error(&error);
+    klass = PixtronVM_KlassLoad(vm, klassName, error);
+    if (klass == NULL) {
+        if (*error != NULL) {
+            g_printerr("Find Klass:%s fail:%s", klassName, (*error)->message);
         }
-        g_thread_exit(NULL);
     }
     return klass;
+}
+
+extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const gchar *name) {
+    const guint methodCount = klass->methodCount;
+    for (int i = 0; i < methodCount; ++i) {
+        Method *method = klass->methods + i;
+        if (g_str_equal(method->name, name)) {
+            return method;
+        }
+    }
+    return NULL;
 }

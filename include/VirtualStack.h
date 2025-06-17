@@ -7,14 +7,14 @@
  * @param vm The PixtronVM instance pointer
  * @param variant The variant value to push onto the stack
  */
-extern inline void PixtronVM_stack_push(PixtronVM *vm, const Variant *variant);
+extern inline void PixtronVM_StackPush(RuntimeContext *context, const Variant *variant);
 
 /**
  * Pop a value from the VM's operand stack
  * @param vm The PixtronVM instance pointer
  * @param variant Pointer to store the popped variant value
  */
-extern inline void PixtronVM_stack_pop(PixtronVM *vm, Variant *variant);
+extern inline void PixtronVM_StackPop(RuntimeContext *context, const Variant *variant);
 
 /**
  * Push a new stack frame onto the call stack
@@ -22,13 +22,13 @@ extern inline void PixtronVM_stack_pop(PixtronVM *vm, Variant *variant);
  * @param maxLocals Maximum number of local variables in the new frame
  * @param maxStack Maximum operand stack size for the new frame
  */
-extern inline void PixtronVM_stack_frame_push(PixtronVM *vm, uint16_t maxLocals, uint16_t maxStack);
+extern inline void PixtronVM_StackFramePush(RuntimeContext *context, const Method *method);
 
 /**
  * Pop the current stack frame from the call stack
  * @param vm The PixtronVM instance pointer
  */
-extern inline void PixtronVM_stack_frame_pop(PixtronVM *vm);
+extern inline void PixtronVM_StackFramePop(RuntimeContext *context);
 
 /**
  * Set a value in the current frame's local variable table
@@ -36,7 +36,7 @@ extern inline void PixtronVM_stack_frame_pop(PixtronVM *vm);
  * @param index Local variable table slot index
  * @param variant Variant value to store in the local variable table
  */
-extern inline void PixtronVM_stack_ltable_set(PixtronVM *vm, uint16_t index, const Variant *variant);
+extern inline void PixtronVM_SetLocalTable(RuntimeContext *context, uint16_t index, const Variant *variant);
 
 /**
 * Get a value from the current frame's local variable table
@@ -44,6 +44,6 @@ extern inline void PixtronVM_stack_ltable_set(PixtronVM *vm, uint16_t index, con
 * @param index Local variable table slot index
 * @param variant Pointer to store the retrieved variant value
 */
-extern inline void PixtronVM_stack_ltable_get(PixtronVM *vm, uint16_t index, Variant *variant);
+extern inline void PixtronVM_GetLocalTable(RuntimeContext *context, uint16_t index, Variant *variant);
 
 #endif //VIRTUALSTACK_H

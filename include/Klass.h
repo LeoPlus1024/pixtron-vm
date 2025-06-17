@@ -13,6 +13,9 @@
  * @note Thread termination occurs if class loading fails - consider alternative
  *       error handling for production environments.
  */
-extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassName);
+extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassName, GError **error);
+
+
+extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const gchar *name);
 
 #endif //KLASS_H

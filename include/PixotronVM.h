@@ -15,7 +15,7 @@ extern PixtronVM *PixtronVM_CreateVM(const gchar *workDir);
  * @param vm Pointer to the PixtronVM instance to execute
  * @note This will run the VM until completion or until an error occurs
  */
-extern void PixtronVM_Exec(PixtronVM *vm, const gchar *clazz, const gchar *func);
+extern void PixtronVM_LaunchVM(const PixtronVM *vm, const gchar *clazzName);
 
 /**
  * Destroy a PixtronVM instance and release all its resources

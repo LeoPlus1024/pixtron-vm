@@ -8,6 +8,7 @@ typedef enum {
 typedef enum {
     MAGIC_ERROR = 2000,
     TYPE_ERROR,
+    METHOD_NOT_FOUND
 } VMError;
 
 
