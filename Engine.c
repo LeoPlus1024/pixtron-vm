@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "ByteCodeReader.h"
+#include "Klass.h"
 #include "Memory.h"
 #include "VirtualStack.h"
 
@@ -26,6 +27,7 @@ static void PixtronVM_GetOpsData(const RuntimeContext *context, Variant *variant
             PixtronVM_GetLocalTable(context, index, variant);
         } else {
             //
+            PixtronVM_GetKlassFileValue(context, index);
         }
     }
 }

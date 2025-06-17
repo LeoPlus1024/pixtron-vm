@@ -204,6 +204,17 @@ extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassN
     return klass;
 }
 
+extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, const guint16 index) {
+    const VirtualStackFrame *frame = context->frame;
+    const Klass *klass = frame->method->klass;
+    const guint count = klass->fieldCount;
+    if (index >= count) {
+        return NIL;
+    }
+    const VMValue value = klass->fieldVals[index];
+    return value;
+}
+
 extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const gchar *name) {
     const guint methodCount = klass->methodCount;
     for (int i = 0; i < methodCount; ++i) {

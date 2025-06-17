@@ -127,6 +127,8 @@ typedef struct {
     // Stack top frame
     VirtualStackFrame *frame;
     const PixtronVM *vm;
+
+    void (*thrown)(gchar *fmt, ...);
 } RuntimeContext;
 
 
