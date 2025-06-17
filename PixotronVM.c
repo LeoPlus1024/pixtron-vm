@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "Memory.h"
 
@@ -39,7 +40,9 @@ extern void PixtronVM_LaunchVM(const PixtronVM *vm, const gchar *clazzName) {
         g_printerr("Main method not found in klass:%s", klass->name);
         g_thread_exit(NULL);
     }
-    PixtronVM_CallMethod(method);
+    GThread *thread = g_thread_new("main", (GThreadFunc) PixtronVM_CallMethod, (gpointer) method);
+
+    g_thread_join(thread);
 }
 
 extern void PixtronVM_DestroyVM(PixtronVM **vm) {

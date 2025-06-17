@@ -13,10 +13,10 @@ public class BinaryHeader implements ISerializable {
     final int magic;
     final Version version;
     final String namespace;
-    final List<TypeMeta> varList;
+    final List<FieldMeta> varList;
     final List<FuncMeta> funcMetas;
 
-    public BinaryHeader(Version version, String namespace, List<TypeMeta> varList, List<FuncMeta> funcMetas) {
+    public BinaryHeader(Version version, String namespace, List<FieldMeta> varList, List<FuncMeta> funcMetas) {
         this.magic = MAGIC;
         this.version = version;
         this.varList = varList;
@@ -26,8 +26,8 @@ public class BinaryHeader implements ISerializable {
 
     @Override
     public byte[] toBytes() {
-        // Magic(4byte)+Version(1byte)
-        int length = 5;
+        // Magic(4byte)+Version(2byte)
+        int length = 6;
         int varSize = this.varList.size();
         byte[][] varArrays = new byte[varSize][];
         int maxVarSize = 0;
@@ -54,7 +54,7 @@ public class BinaryHeader implements ISerializable {
         byte[] data = new byte[length + maxFuncSize + maxVarSize + 8];
 
         pos = ByteUtil.appendInt2Bytes(data, pos, magic);
-        data[pos++] = version.getVersion();
+        pos = ByteUtil.appendShort2Bytes(data, pos, version.getVersion());
         pos = ByteUtil.appendInt2Bytes(data, pos, varSize);
 
         for (byte[] array : varArrays) {

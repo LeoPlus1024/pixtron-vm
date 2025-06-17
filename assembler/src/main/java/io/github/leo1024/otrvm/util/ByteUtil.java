@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
 
 public class ByteUtil {
     public static int appendInt2Bytes(byte[] bytes, int pos, int value) {
-        if (pos + 4 >= bytes.length) {
+        if (pos + 4 > bytes.length) {
             throw new IndexOutOfBoundsException("Can't append to bytes because bytes capacity is %d but it require %d".formatted(bytes.length, pos + 4));
         }
         bytes[pos++] = (byte) value;
@@ -18,6 +18,19 @@ public class ByteUtil {
         return pos;
     }
 
+
+    public static int appendType2Bytes(byte[] bytes, int pos, Type type) {
+        int value = type.getId();
+        return appendShort2Bytes(bytes, pos, (short) value);
+    }
+
+    public static int appendShort2Bytes(byte[] bytes, int pos, short value) {
+        bytes[pos++] = (byte) value;
+        bytes[pos++] = (byte) (value >> 8);
+        return pos;
+    }
+
+
     public static byte[] long2Bytes(long value) {
         return new byte[]{
                 (byte) value,
@@ -26,7 +39,6 @@ public class ByteUtil {
                 (byte) (value >> 24),
                 (byte) (value >> 32),
                 (byte) (value >> 40),
-                (byte) (value >> 48),
         };
     }
 

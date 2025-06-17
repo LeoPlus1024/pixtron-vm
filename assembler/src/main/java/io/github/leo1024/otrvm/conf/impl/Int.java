@@ -1,13 +1,13 @@
 package io.github.leo1024.otrvm.conf.impl;
 
 import io.github.leo1024.otrvm.conf.Type;
-import io.github.leo1024.otrvm.conf.TypeMeta;
+import io.github.leo1024.otrvm.conf.FieldMeta;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 
-public class Int extends TypeMeta {
+public class Int extends FieldMeta {
     private final int value;
 
     public Int(String name, int value) {

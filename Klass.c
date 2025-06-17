@@ -68,37 +68,45 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
         goto finally;
     }
     klass = PixotronVM_calloc(sizeof(Klass));
+    gint position = 4;
     klass->vm = vm;
     klass->magic = magic;
-    klass->version = buf[4];
+    klass->version = *((Version *) (buf + position));
+    position += 2;
     klass->name = g_strdup(klassName);
-    const gint fieldCount = *((gint *) (buf + 5));
-    gint position = 9;
-    Field *files = PixotronVM_calloc(sizeof(Field) * fieldCount);
-    VMValue *values = PixotronVM_calloc(sizeof(VMValue) * fieldCount);
+    klass->fieldCount = *((gint *) (buf + position));
+    position += 4;
+    Field *files = PixotronVM_calloc(sizeof(Field) * klass->fieldCount);
+    VMValue *values = PixotronVM_calloc(sizeof(VMValue) * klass->fieldCount);
     gint index = 0;
-    while (index < fieldCount) {
+    while (index < klass->fieldCount) {
         Field *field = (files + index);
-        field->name = g_strdup((gchar *)(buf + position));
         field->type = *((Type *) (buf + position));
-        position = position + PixtronVM_GetStrFullLen(field->name);
+        position += 2;
+        field->name = g_strdup((gchar *)(buf + position));
+        position += PixtronVM_GetStrFullLen(field->name);
         const VMValue value = PixtronVM_CreateValueFromBuffer(field->type, buf + position);
         values[index] = value;
         position = position + TYPE_SIZE[field->type];
         index++;
     }
     klass->fields = files;
-    klass->fieldCount = fieldCount;
     klass->methodCount = *((guint *) (buf + position));
     position += 4;
     klass->methods = PixotronVM_calloc(sizeof(Method) * klass->methodCount);
     gint j = 0;
     while (j < klass->methodCount) {
         Method *method = klass->methods + j;
+        method->maxLocals = *((gushort *) (buf + position));
+        position += 2;
+        method->maxStacks = *((gushort *) (buf + position));
+        position += 2;
         method->offset = *((guint *) (buf + position));
         position += 4;
-        method->ret = buf[position];
-        position++;
+        method->endOffset = *((guint *) (buf + position));
+        position += 4;
+        method->retType = *((Type *) (buf + position));
+        position += 2;
         const gchar *selfKlass = (gchar *) (buf + position);
         if (g_str_equal(selfKlass, "")) {
             position++;
@@ -122,7 +130,7 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
             for (int i = 0; i < paramCount; ++i) {
                 MethodParam *param = params + i;
                 params->type = *((Type *) (buf + position));
-                position++;
+                position += 2;
                 param->name = g_strdup((gchar *)(buf+position));
                 position += PixtronVM_GetStrFullLen(param->name);
             }
@@ -209,7 +217,7 @@ extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, const
     const Klass *klass = frame->method->klass;
     const guint count = klass->fieldCount;
     if (index >= count) {
-        return NIL;
+        context->throwException(context, "Field index out of range");
     }
     const VMValue value = klass->fieldVals[index];
     return value;

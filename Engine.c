@@ -10,7 +10,7 @@
 #include "VirtualStack.h"
 
 
-static void PixtronVM_GetOpsData(const RuntimeContext *context, Variant *variant) {
+static void PixtronVM_GetOpsData(RuntimeContext *context, Variant *variant) {
     const guint8 subOps = PixtronVM_ReadByteCodeU8(context);
     const Type type = OPS_DATA_TYPE(subOps);
     const DataSource source = OPS_DATA_SOURCE(subOps);
@@ -36,8 +36,8 @@ static void PixotronVM_AddSub(RuntimeContext *context, Opcode opcode) {
     Variant top;
     Variant next;
 
-    PixtronVM_StackPop(context, &top);
-    PixtronVM_StackPop(context, &next);
+    PixtronVM_PopOperand(context, &top);
+    PixtronVM_PopOperand(context, &next);
 
     assert(VM_TYPE_NUMBER(top.type) && "Top operand must be number.");
     assert(VM_TYPE_NUMBER(next.type) && "Next operand must be number.");
@@ -90,16 +90,16 @@ static void PixotronVM_AddSub(RuntimeContext *context, Opcode opcode) {
             next.type = TYPE_INT;
         }
     }
-    PixtronVM_StackPush(context, &next);
+    PixtronVM_PushOperand(context, &next);
 }
 
-static void PixtronVM_CheckCon(RuntimeContext *context, Opcode opcode) {
+static void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opcode) {
     uint16_t offset;
     if (opcode == GOTO) {
         offset = PixtronVM_ReadByteCodeU16(context);
     } else {
         const Variant variant;
-        PixtronVM_StackPop(context, &variant);
+        PixtronVM_PopOperand(context, &variant);
         const bool ifeq = opcode == IFEQ;
         assert(VM_TYPE_BOOL(variant.type)&&"Ifeq or Ifnq only support boolean.");
         if ((ifeq && VM_FALSE(variant)) || !ifeq && VM_TRUE(variant)) {
@@ -112,60 +112,51 @@ static void PixtronVM_CheckCon(RuntimeContext *context, Opcode opcode) {
     frame->pc = frame->pc + offset;
 }
 
-static void PixtronVM_ICmp(RuntimeContext *context, Opcode opcode) {
+
+extern inline void PixtronVM_Cmp(RuntimeContext *context, Opcode opcode) {
     Variant top;
     Variant next;
-    PixtronVM_StackPop(context, &top);
-    PixtronVM_StackPop(context, &next);
-    next.value.i = SIGN_CMP(next.value.i, top.value.i);
-    PixtronVM_StackPush(context, &next);
+    PixtronVM_PopOperand(context, &top);
+    PixtronVM_PopOperand(context, &next);
+    switch (opcode) {
+        case ICMP:
+            next.value.i = SIGN_CMP(next.value.i, top.value.i);
+            break;
+        case DCMP:
+            next.value.i = SIGN_CMP(next.value.d, top.value.d);
+            break;
+        case LCMP:
+            next.value.i = SIGN_CMP(next.value.l, top.value.l);
+            break;
+        default:
+            assert(false && "Unhandled cmp opcode.");
+    }
+    PixtronVM_PushOperand(context, &next);
 }
 
-//
-// extern inline void PixtronVM_exec_cmp(PixtronVMPtr vm, Opcode opcode) {
-//     Variant top;
-//     Variant next;
-//     PixtronVM_stack_pop(vm, &top);
-//     PixtronVM_stack_pop(vm, &next);
-//     switch (opcode) {
-//         case ICMP:
-//             next.value.i = SIGN_CMP(next.value.i, top.value.i);
-//             break;
-//         case DCMP:
-//             next.value.i = SIGN_CMP(next.value.d, top.value.d);
-//             break;
-//         case LCMP:
-//             next.value.i = SIGN_CMP(next.value.l, top.value.l);
-//             break;
-//         default:
-//             assert(false && "Unhandled cmp opcode.");
-//     }
-//     PixtronVM_stack_push(vm, &next);
-// }
-//
-// extern inline void PixtronVM_exec_conv(PixtronVMPtr vm) {
-//     const Type type = PixtronVM_code_segment_u8(vm);
-//     Variant variant;
-//     PixtronVM_stack_pop(vm, &variant);
-//     const Type src = variant.type;
-//     if (src == type) {
-//         return;
-//     }
-//     assert(VM_TYPE_NUMBER(src)&&"Only support cast conv basic type.");
-//     assert(VM_TYPE_NUMBER(type));
-//     if (type == TYPE_DOUBLE) {
-//         PixtronVM_ConvertToDoubleValue(&variant);
-//     } else if (type == TYPE_LONG) {
-//         PixtronVM_ConvertToLongValue(&variant);
-//     } else {
-//         variant.type = type;
-//     }
-//     PixtronVM_stack_push(vm, &variant);
-// }
-//
-extern inline void PixtronVM_Store(RuntimeContext *context) {
+static void PixtronVM_CONV(RuntimeContext *context) {
+    const Type type = PixtronVM_ReadByteCodeU16(context);
+    Variant variant;
+    PixtronVM_PopOperand(context, &variant);
+    const Type src = variant.type;
+    if (src == type) {
+        return;
+    }
+    assert(VM_TYPE_NUMBER(src)&&"Only support cast conv basic type.");
+    assert(VM_TYPE_NUMBER(type));
+    if (type == TYPE_DOUBLE) {
+        PixtronVM_ConvertToDoubleValue(&variant);
+    } else if (type == TYPE_LONG) {
+        PixtronVM_ConvertToLongValue(&variant);
+    } else {
+        variant.type = type;
+    }
+    PixtronVM_PushOperand(context, &variant);
+}
+
+static inline void PixtronVM_Store(RuntimeContext *context) {
     const Variant value;
-    PixtronVM_StackPop(context, &value);
+    PixtronVM_PopOperand(context, &value);
     const uint8_t subOps = PixtronVM_ReadByteCodeU8(context);
     const DataSource s = OPS_DATA_SOURCE(subOps);
     // Global variable
@@ -180,10 +171,19 @@ extern inline void PixtronVM_Store(RuntimeContext *context) {
 
 
 static void PixtronVM_Load(RuntimeContext *context) {
-    Variant value;
-    PixtronVM_GetOpsData(context, &value);
-    PixtronVM_StackPush(context, &value);
+    Variant variant;
+    PixtronVM_GetOpsData(context, &variant);
+    PixtronVM_PushOperand(context, &variant);
 }
+
+static void PixtronVM_ThrowException(RuntimeContext *context, gchar *fmt, ...) {
+    va_list vaList;
+    va_start(vaList, fmt);
+    g_printerr(fmt, vaList);
+    va_end(vaList);
+    g_thread_exit(NULL);
+}
+
 
 extern Variant *PixtronVM_CallMethod(const Method *method) {
     RuntimeContext *context = PixotronVM_calloc(sizeof(RuntimeContext));
@@ -192,7 +192,8 @@ extern Variant *PixtronVM_CallMethod(const Method *method) {
     stack->maxDepth = VM_MAX_STACK_DEPTH;
     stack->depth = 0;
     context->stack = stack;
-    PixtronVM_StackFramePush(context, method);
+    context->throwException = PixtronVM_ThrowException;
+    PixtronVM_PushStackFrame(context, method);
 
     while (context->frame != NULL) {
         const Opcode ops = PixtronVM_ReadByteCodeU8(context);
@@ -216,17 +217,17 @@ extern Variant *PixtronVM_CallMethod(const Method *method) {
             case ICMP:
             case DCMP:
             case LCMP:
-                PixtronVM_ICmp(context, ops);
+                PixtronVM_Cmp(context, ops);
                 break;
-                //         case CONV:
-                //             PixtronVM_exec_conv(vm);
-                //             break;
-                //         case CALL:
-                //             break;
-                //         default:
-                //
-                //
-                //
+            case CONV:
+                PixtronVM_CONV(context);
+                break;
+            case CALL:
+                break;
+            default:
+
+
+
         }
     }
 }

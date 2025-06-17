@@ -3,13 +3,13 @@ package io.github.leo1024.otrvm.conf;
 public enum Version {
     V1_0(1),
     ;
-    private final byte version;
+    private final short version;
 
     Version(int version) {
-        this.version = (byte) version;
+        this.version = (short) version;
     }
 
-    public byte getVersion() {
+    public short getVersion() {
         return version;
     }
 }

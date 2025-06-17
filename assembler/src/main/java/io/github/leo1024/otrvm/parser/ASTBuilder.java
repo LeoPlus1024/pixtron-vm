@@ -2,14 +2,14 @@ package io.github.leo1024.otrvm.parser;
 
 import io.github.leo1024.otrvm.conf.FuncMeta;
 import io.github.leo1024.otrvm.conf.Type;
-import io.github.leo1024.otrvm.conf.TypeMeta;
+import io.github.leo1024.otrvm.conf.FieldMeta;
 import io.github.leo1024.otrvm.ex.ParserException;
 import io.github.leo1024.otrvm.parser.impl.Func;
 
 import java.util.*;
 
 public class ASTBuilder extends Context {
-    final Map<String, TypeMeta> typeMetaInfoMap;
+    final Map<String, FieldMeta> typeMetaInfoMap;
     final String namespace;
 
     public ASTBuilder(final String namespace) {
@@ -23,11 +23,11 @@ public class ASTBuilder extends Context {
         if (typeMetaInfoMap.containsKey(name)) {
             throw new ParserException("Variable '" + name + "' already exists.");
         }
-        TypeMeta meta = TypeMeta.of(type, name, value);
+        FieldMeta meta = FieldMeta.of(type, name, value);
         this.typeMetaInfoMap.put(name, meta);
     }
 
-    public List<TypeMeta> getVarList() {
+    public List<FieldMeta> getVarList() {
         return List.copyOf(this.typeMetaInfoMap.values());
     }
 

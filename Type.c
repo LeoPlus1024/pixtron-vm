@@ -21,7 +21,7 @@ extern inline Type PixtronVM_GetValueType(const VMValue value) {
     return (value >> 48) & 0x0f;
 }
 
-extern inline void PixtronVM_ConvertValueToBuffer(const Variant *variant, const guint8 *buf) {
+extern inline void PixtronVM_ConvertValueToBuffer(const Variant *variant, guint8 *buf) {
     const Type type = variant->type;
     const uint8_t size = TYPE_SIZE[type];
     memcpy(buf, &variant->value, size);

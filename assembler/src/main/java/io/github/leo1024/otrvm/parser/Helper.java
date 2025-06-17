@@ -76,7 +76,7 @@ public class Helper {
         if (token.tokenKindIn(TokenKind.STRING)) {
             return token.getValue();
         } else if (token.tokenKindIn(TokenKind.HEX)) {
-            return Long.parseLong(token.getValue(), 16);
+            return Long.parseLong(token.getValue().substring(1), 16);
         } else if (token.tokenKindIn(TokenKind.INTEGER)) {
             return Long.parseLong(token.getValue());
         } else if (token.tokenKindIn(TokenKind.FLOAT)) {

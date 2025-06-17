@@ -24,6 +24,10 @@ public class FuncMeta implements ISerializable {
     private final List<Param> params;
     private final String namespace;
     private int offset;
+    // Bytecode size
+    private int byteCodeSize;
+    private int locals;
+    private int stacks;
 
     public FuncMeta(String namespace, Id name, Type retType, List<Param> params) {
         this.name = name;
@@ -44,10 +48,22 @@ public class FuncMeta implements ISerializable {
         this.offset = offset;
     }
 
+    public void setByteCodeSize(int byteCodeSize) {
+        this.byteCodeSize = byteCodeSize;
+    }
+
+    public void setLocals(int locals) {
+        this.locals = locals;
+    }
+
+    public void setStacks(int stacks) {
+        this.stacks = stacks;
+    }
+
     @Override
     public byte[] toBytes() {
-        // offset(4) + typeId(1)
-        int totalLength = 5;
+        // offset(4) +byteCodeSize(4)+ typeId(2)+locals(2)+stacks(2)
+        int totalLength = 14;
         byte[] nameBytes = CLanguageUtil.toCStyleStr(name.getValue());
         byte[] namespaceBytes = CLanguageUtil.toCStyleStr(Optional.ofNullable(namespace).orElse(""));
         totalLength += nameBytes.length;
@@ -56,21 +72,25 @@ public class FuncMeta implements ISerializable {
         // Calculate all params length
         int paramsLength = 0;
         for (Param param : params) {
-            // typeId(1) + nameBytes(contain '\0')
-            paramsLength += 1 + CLanguageUtil.toCStyleStr(param.name.getValue()).length;
+            // typeId(2) + nameBytes(contain '\0')
+            paramsLength += (2 + CLanguageUtil.toCStyleStr(param.name.getValue()).length);
         }
 
         // alloc precise size
         byte[] data = new byte[totalLength + paramsLength + 2];
         int pos = 0;
-
+        // Writer locals
+        pos = ByteUtil.appendShort2Bytes(data, pos, (short) this.locals);
+        // Writer stacks
+        pos = ByteUtil.appendShort2Bytes(data, pos, (short) this.stacks);
         // writer memory offset
         pos = ByteUtil.appendInt2Bytes(data, pos, offset);
+        pos = ByteUtil.appendInt2Bytes(data, pos, byteCodeSize);
+
 
         // Writer return type
-        data[pos++] = Optional.ofNullable(retType)
-                .map(Type::getId)
-                .orElse(Type.NIL.getId());
+        Type realRetType = Optional.ofNullable(retType).orElse(Type.NIL);
+        pos = ByteUtil.appendType2Bytes(data, pos, realRetType);
 
         //Writer namespace
         System.arraycopy(namespaceBytes, 0, data, pos, namespaceBytes.length);
@@ -86,7 +106,7 @@ public class FuncMeta implements ISerializable {
         // Batch writer params
         for (Param param : params) {
             byte[] paramNameBytes = CLanguageUtil.toCStyleStr(param.name.getValue());
-            data[pos++] = param.type.getId();
+            pos = ByteUtil.appendType2Bytes(data, pos, param.type);
             System.arraycopy(paramNameBytes, 0, data, pos, paramNameBytes.length);
             pos += paramNameBytes.length;
         }

@@ -1,12 +1,12 @@
 package io.github.leo1024.otrvm.conf.impl;
 
 import io.github.leo1024.otrvm.conf.Type;
-import io.github.leo1024.otrvm.conf.TypeMeta;
+import io.github.leo1024.otrvm.conf.FieldMeta;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class IFloat extends TypeMeta {
+public class IFloat extends FieldMeta {
     private final double value;
 
     public IFloat(String name, double value) {

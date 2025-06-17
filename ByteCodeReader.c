@@ -38,11 +38,10 @@ extern inline void PixtronVM_ReadByteCodeImm(RuntimeContext *context, Variant *v
     const Klass *klass = method->klass;
     const guint pc = frame->pc;
     if (size == 0 || (size + pc) > method->endOffset) {
-        fprintf(stderr, "Opcode data width error.");
-        exit(-1);
+        context->throwException(context, "Immediate number read exceed method area.");
     }
     const uint8_t *buffer = klass->byteCode + pc;
-    memcpy(&variant->value, &buffer[pc], size);
+    memcpy(&variant->value, buffer, size);
     frame->pc = pc + size;
 }
 

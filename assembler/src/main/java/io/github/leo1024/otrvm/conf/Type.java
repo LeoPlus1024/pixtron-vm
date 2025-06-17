@@ -13,12 +13,12 @@ public enum Type {
     STRING("str", 7, 8);
 
     private final String symbol;
-    private final byte id;
+    private final int id;
     private final int length;
 
     Type(String symbol, int code, int length) {
         this.length = length;
-        this.id = (byte) code;
+        this.id = code;
         this.symbol = symbol;
     }
 
@@ -37,7 +37,7 @@ public enum Type {
         return this != STRING;
     }
 
-    public byte getId() {
+    public int getId() {
         return id;
     }
 

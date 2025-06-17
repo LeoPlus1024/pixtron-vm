@@ -1,12 +1,12 @@
 package io.github.leo1024.otrvm.conf.impl;
 
 import io.github.leo1024.otrvm.conf.Type;
-import io.github.leo1024.otrvm.conf.TypeMeta;
+import io.github.leo1024.otrvm.conf.FieldMeta;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class ILong extends TypeMeta {
+public class ILong extends FieldMeta {
     private final long value;
 
     public ILong(String name, long value) {

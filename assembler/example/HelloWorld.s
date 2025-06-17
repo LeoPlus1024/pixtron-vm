@@ -5,6 +5,7 @@
 @func main(int i,byte b)
   %locals 10
   %stack 10
+  load.i #10
   goto loop
   ; load first param
   load.i $0

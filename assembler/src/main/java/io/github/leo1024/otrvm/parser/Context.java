@@ -5,18 +5,14 @@ import io.github.leo1024.otrvm.conf.VMOption;
 import io.github.leo1024.otrvm.ex.ParserException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public abstract class Context {
     final Context parent;
     final List<Expr> exprList;
-    final Map<VMOption, Object> optionMap;
 
     public Context(Context parent) {
         this.parent = parent;
-        this.optionMap = new HashMap<>();
         this.exprList = new ArrayList<>();
     }
 
@@ -25,7 +21,7 @@ public abstract class Context {
     }
 
     public void setOption(VMOption option, Object value) {
-        this.optionMap.put(option, value);
+        throw new ParserException("Not support set option.");
     }
 
     public void addVar(Type type, String name, Object value) {

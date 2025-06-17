@@ -2,6 +2,7 @@ package io.github.leo1024.otrvm.parser.impl;
 
 import io.github.leo1024.otrvm.conf.FuncMeta;
 import io.github.leo1024.otrvm.conf.LabelMeta;
+import io.github.leo1024.otrvm.conf.VMOption;
 import io.github.leo1024.otrvm.ex.ParserException;
 import io.github.leo1024.otrvm.parser.Context;
 import io.github.leo1024.otrvm.parser.Expr;
@@ -45,5 +46,15 @@ public class Func extends Context implements Expr {
             }
         }
         return null;
+    }
+
+    @Override
+    public void setOption(VMOption option, Object value) {
+        Number number = (Number) value;
+        switch (option) {
+            case STACK -> funcMeta.setStacks(number.intValue());
+            case LOCALS -> funcMeta.setLocals(number.intValue());
+            default -> throw new ParserException("Invalid option.");
+        }
     }
 }

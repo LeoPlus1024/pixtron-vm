@@ -28,21 +28,22 @@ public class Assembler {
     public File assemble(Path buildDir) throws IOException {
         OSUtil.mkdirs(buildDir);
         final List<FuncMeta> funcMetas = builder.getFuncList();
-        final List<TypeMeta> varList = builder.getVarList();
+        final List<FieldMeta> varList = builder.getVarList();
         BinaryHeader header = new BinaryHeader(Version.V1_0, builder.getNamespace(), varList, funcMetas);
         byte[] headerBytes = header.toBytes();
         Path path = buildDir.resolve(String.format("%s.clazz", builder.getNamespace()));
         try (FileOutputStream outputStream = new FileOutputStream(path.toFile())) {
             outputStream.write(headerBytes);
-            int offset = headerBytes.length;
+            int offset = 0;
             for (Expr expr : builder.getExprList()) {
                 if (!(expr instanceof Func func)) {
                     throw new ParserException("Only func define in top level.");
                 }
                 FuncMeta meta = func.getFuncMeta();
-                meta.setOffset(offset);
                 byte[] bytes = parseFunc(func);
                 outputStream.write(bytes);
+                meta.setOffset(offset);
+                meta.setByteCodeSize(bytes.length);
                 offset = offset + bytes.length;
             }
             FileChannel channel = outputStream.getChannel();

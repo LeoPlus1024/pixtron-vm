@@ -14,10 +14,10 @@ typedef struct {
 } MethodParam;
 
 typedef struct {
-    Type ret;
     gchar *name;
-    gint locals;
-    gint stacks;
+    Type retType;
+    gushort maxLocals;
+    gushort maxStacks;
     uint32_t offset;
     uint32_t endOffset;
     gushort paramCount;
@@ -59,20 +59,14 @@ typedef struct _VirtualStackFrame {
     const Method *method;
     // 局部变量表
     VMValue *localVarTable;
-    // 局部变量数量
-    uint16_t maxLocals;
     // 操作数栈
     VMValue *operandStack;
-    // 最大栈深度
-    uint16_t maxStack;
     // Program counter
     guint pc;
     // Stack pointer
     guint sp;
     // Previous stack frame
     struct _VirtualStackFrame *pre;
-    // 返回地址
-    size_t returnAddress;
 } VirtualStackFrame, *VirtualStackFramePtr;
 
 typedef struct {
@@ -121,14 +115,15 @@ typedef struct {
     } value;
 } Variant;
 
+struct _RuntimeContext;
 
-typedef struct {
+typedef struct _RuntimeContext {
     VirtualStack *stack;
     // Stack top frame
     VirtualStackFrame *frame;
     const PixtronVM *vm;
 
-    void (*thrown)(gchar *fmt, ...);
+    void (*throwException)(struct _RuntimeContext *context, gchar *fmt, ...);
 } RuntimeContext;
 
 
@@ -207,7 +202,7 @@ extern inline Type PixtronVM_GetValueType(VMValue value);
  * @param variant Pointer to the source Variant to convert
  * @param value Output buffer to store the raw VMValue bytes (must have enough space)
  */
-extern inline void PixtronVM_ConvertValueToBuffer(const Variant *variant, const guint8 *buf);
+extern inline void PixtronVM_ConvertValueToBuffer(const Variant *variant, guint8 *buf);
 
 /**
  * Convert a Variant to double-precision floating point representation

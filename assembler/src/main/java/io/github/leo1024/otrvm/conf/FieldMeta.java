@@ -3,14 +3,15 @@ package io.github.leo1024.otrvm.conf;
 import io.github.leo1024.otrvm.ISerializable;
 import io.github.leo1024.otrvm.conf.impl.*;
 import io.github.leo1024.otrvm.ex.ParserException;
+import io.github.leo1024.otrvm.util.ByteUtil;
 
 import java.nio.charset.StandardCharsets;
 
-public abstract class TypeMeta implements ISerializable {
+public abstract class FieldMeta implements ISerializable {
     private final Type type;
     private final String name;
 
-    public TypeMeta(final Type type, final String name) {
+    public FieldMeta(final Type type, final String name) {
         this.type = type;
         this.name = name;
     }
@@ -24,13 +25,13 @@ public abstract class TypeMeta implements ISerializable {
         byte[] nameBytes = name.getBytes(StandardCharsets.UTF_8);
         byte[] initValueBytes = getBytes0();
 
-        final int totalLength = 1 + nameBytes.length + 1 + initValueBytes.length;
+        final int totalLength = 2 + nameBytes.length + 1 + initValueBytes.length;
         byte[] bytes = new byte[totalLength];
 
         int offset = 0;
 
         // Writer type id
-        bytes[offset++] = type.getId();
+        offset = ByteUtil.appendType2Bytes(bytes, offset, type);
 
         // Copy name bytes(without end char)
         System.arraycopy(nameBytes, 0, bytes, offset, nameBytes.length);
@@ -53,7 +54,7 @@ public abstract class TypeMeta implements ISerializable {
         return name;
     }
 
-    public static TypeMeta of(final Type type, final String name, Object value) {
+    public static FieldMeta of(final Type type, final String name, Object value) {
         if (!type.isPrimitive()) {
             throw new ParserException("Invalid type.");
         }

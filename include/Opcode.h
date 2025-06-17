@@ -31,7 +31,7 @@ typedef enum:uint8_t {
 } Opcode;
 
 // 类型标记（操作数中使用）
-typedef enum:uint8_t {
+typedef enum:uint16_t {
     NIL = 0,
     TYPE_BYTE,
     TYPE_SHORT,
@@ -49,7 +49,7 @@ typedef enum {
     IMMEDIATE
 } DataSource;
 
-static const uint8_t TYPE_SIZE[] = {
+static const uint16_t TYPE_SIZE[] = {
     [NIL] = 0,
     [TYPE_BYTE] = 1,
     [TYPE_BYTE] = 2,
