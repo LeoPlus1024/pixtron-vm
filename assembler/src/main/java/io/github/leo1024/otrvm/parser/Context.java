@@ -1,6 +1,6 @@
 package io.github.leo1024.otrvm.parser;
 
-import io.github.leo1024.otrvm.conf.Type;
+import io.github.leo1024.otrvm.conf.FieldMeta;
 import io.github.leo1024.otrvm.conf.VMOption;
 import io.github.leo1024.otrvm.ex.ParserException;
 
@@ -24,7 +24,7 @@ public abstract class Context {
         throw new ParserException("Not support set option.");
     }
 
-    public void addVar(Type type, String name, Object value) {
+    public void addField(FieldMeta fieldMeta) {
         throw new ParserException("Not support add var.");
     }
 

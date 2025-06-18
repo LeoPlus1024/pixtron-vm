@@ -16,4 +16,5 @@
 loop:
   ; store first variable slot
   store.i $0
+  ret
 @end

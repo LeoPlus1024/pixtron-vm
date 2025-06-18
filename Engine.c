@@ -106,7 +106,7 @@ static void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opcode) {
     }
     VirtualStackFrame *frame = context->frame;
     // Offset contain current opcode
-    frame->pc = frame->pc + offset - 3;
+    frame->pc = frame->pc + offset - 2;
 }
 
 
@@ -253,6 +253,9 @@ extern Variant *PixtronVM_CallMethod(const Method *method) {
                 break;
             case CONV:
                 PixtronVM_CONV(context);
+                break;
+            case RET:
+                PixtronVM_PopStackFrame(context);
                 break;
             case CALL:
                 break;

@@ -79,7 +79,8 @@ public class Parser {
         Type type = Helper.expect(this.tokenSequence, TokenKind.TYPE).toType();
         String name = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
         Object value = Helper.convertLiteral(Helper.expect(this.tokenSequence, TokenKind.immediate()));
-        context.addVar(type, name, value);
+        FieldMeta fieldMeta = FieldMeta.of(type, name, value);
+        context.addField(fieldMeta);
     }
 
 
@@ -126,6 +127,7 @@ public class Parser {
         Token token = this.tokenSequence.consume();
         Opcode opcode = Opcode.of(token);
         Expr expr = switch (opcode) {
+            case RET -> new Ret();
             case LOAD, GLOAD -> parseLoadExpr(opcode);
             case STORE, GSTORE -> parseStoreExpr(opcode);
             case ADD, SBC, MUL, DIV -> new Math(opcode);

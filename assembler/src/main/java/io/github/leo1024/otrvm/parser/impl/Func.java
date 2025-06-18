@@ -38,14 +38,13 @@ public class Func extends Context implements Expr {
         return funcMeta;
     }
 
-    public LabelMeta checkAndUpdateLabelPos(int index, int position) {
+    public void checkAndUpdateLabelPos(int index, int position) {
         for (LabelMeta value : this.labelMap.values()) {
             if (value.getIndex() == index) {
                 value.setPosition(position);
-                return value;
+                break;
             }
         }
-        return null;
     }
 
     @Override

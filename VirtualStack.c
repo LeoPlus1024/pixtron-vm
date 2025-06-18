@@ -84,10 +84,10 @@ extern inline void PixtronVM_SetLocalTable(RuntimeContext *context, uint16_t ind
         context->throwException(context, "Local index out of bounds.");
     }
     const VMValue tmp = frame->locals[index];
-    const Type t0 = PixtronVM_GetValueType(tmp);
-    if (t0 != NIL && t0 != variant->type) {
-        context->throwException(context, "Local type mistake.");
-    }
+    // const Type t0 = PixtronVM_GetValueType(tmp);
+    // if (t0 != NIL && t0 != variant->type) {
+    //     context->throwException(context, "Local type mistake.");
+    // }
     guint8 *ptr = (guint8 *) frame->locals + index;
     PixtronVM_ConvertValueToBuffer(variant, ptr);
 }

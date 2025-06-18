@@ -13,6 +13,7 @@ typedef enum:uint8_t {
     DIV,
     // 无条件跳转
     GOTO,
+    RET,
     // 如果栈顶数字为0则跳转
     IFEQ,
     // 如果栈顶数字不为0则跳转

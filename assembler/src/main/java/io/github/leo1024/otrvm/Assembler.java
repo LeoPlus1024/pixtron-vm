@@ -28,7 +28,7 @@ public class Assembler {
     public File assemble(Path buildDir) throws IOException {
         OSUtil.mkdirs(buildDir);
         final List<FuncMeta> funcMetas = builder.getFuncList();
-        final List<FieldMeta> varList = builder.getVarList();
+        final List<FieldMeta> varList = builder.getFieldList();
         BinaryHeader header = new BinaryHeader(Version.V1_0, builder.getNamespace(), varList, funcMetas);
         byte[] headerBytes = header.toBytes();
         Path path = buildDir.resolve(String.format("%s.klass", builder.getNamespace()));

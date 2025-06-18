@@ -14,7 +14,9 @@ public enum Opcode {
     SBC("sbc", 3),
     MUL("mul", 4),
     DIV("div", 5),
-    GOTO("goto", 6);
+    GOTO("goto", 6),
+    RET("ret", 7),
+    ;
 
 
     private final byte value;
