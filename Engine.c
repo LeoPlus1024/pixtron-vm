@@ -46,7 +46,7 @@ static void PixotronVM_AddSub(RuntimeContext *context, Opcode opcode) {
         PixtronVM_negative(&top);
     }
 
-    // 类型相同时直接运算
+    // Same type direct operator
     if (top.type == next.type) {
         switch (top.type) {
 #define HANDLE_CASE(type, op) \
@@ -94,22 +94,19 @@ static void PixotronVM_AddSub(RuntimeContext *context, Opcode opcode) {
 }
 
 static void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opcode) {
-    uint16_t offset;
-    if (opcode == GOTO) {
-        offset = PixtronVM_ReadByteCodeU16(context);
-    } else {
-        const Variant variant;
+    const gint16 offset = (gint16) PixtronVM_ReadByteCodeU16(context);
+    if (opcode != GOTO) {
+        Variant variant;
         PixtronVM_PopOperand(context, &variant);
         const bool ifeq = opcode == IFEQ;
         assert(VM_TYPE_BOOL(variant.type)&&"Ifeq or Ifnq only support boolean.");
-        if ((ifeq && VM_FALSE(variant)) || !ifeq && VM_TRUE(variant)) {
-            offset = PixtronVM_ReadByteCodeU16(context);
-        } else {
-            offset = 0;
+        if (!((ifeq && VM_FALSE(variant)) || !ifeq && VM_TRUE(variant))) {
+            return;
         }
     }
     VirtualStackFrame *frame = context->frame;
-    frame->pc = frame->pc + offset;
+    // Offset contain current opcode
+    frame->pc = frame->pc + offset - 3;
 }
 
 
@@ -154,18 +151,19 @@ static void PixtronVM_CONV(RuntimeContext *context) {
     PixtronVM_PushOperand(context, &variant);
 }
 
-static inline void PixtronVM_Store(RuntimeContext *context) {
-    const Variant value;
-    PixtronVM_PopOperand(context, &value);
+static void PixtronVM_Store(RuntimeContext *context) {
+    Variant variant;
+    PixtronVM_PopOperand(context, &variant);
     const uint8_t subOps = PixtronVM_ReadByteCodeU8(context);
     const DataSource s = OPS_DATA_SOURCE(subOps);
+    const guint16 index = PixtronVM_ReadByteCodeU16(context);
     // Global variable
     if (s == GLOBAL_VAR) {
+        PixtronVM_SetKlassFileValue(context, index, &variant);
     }
     // Local variable
     else if (s == LOCAL_VAR) {
-        const uint16_t index = PixtronVM_ReadByteCodeU16(context);
-        PixtronVM_SetLocalTable(context, index, &value);
+        PixtronVM_SetLocalTable(context, index, &variant);
     }
 }
 
@@ -225,7 +223,6 @@ extern Variant *PixtronVM_CallMethod(const Method *method) {
             case CALL:
                 break;
             default:
-
         }
     }
 }

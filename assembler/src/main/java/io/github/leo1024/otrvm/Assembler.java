@@ -31,7 +31,7 @@ public class Assembler {
         final List<FieldMeta> varList = builder.getVarList();
         BinaryHeader header = new BinaryHeader(Version.V1_0, builder.getNamespace(), varList, funcMetas);
         byte[] headerBytes = header.toBytes();
-        Path path = buildDir.resolve(String.format("%s.clazz", builder.getNamespace()));
+        Path path = buildDir.resolve(String.format("%s.klass", builder.getNamespace()));
         try (FileOutputStream outputStream = new FileOutputStream(path.toFile())) {
             outputStream.write(headerBytes);
             int offset = 0;
@@ -72,7 +72,7 @@ public class Assembler {
                     labelCorrectMap.put(offset + 1, meta);
                 }
                 int tmp = offset - meta.getPosition();
-                buf = redirect.toBytes((short) tmp);
+                buf = redirect.toBytes((short)tmp);
             } else {
                 buf = expr.toBytes();
             }
@@ -90,12 +90,11 @@ public class Assembler {
             }
             int i = entry.getKey();
             int tmp = meta.getPosition() - i;
-            bytes[i] = (byte) tmp;
-            bytes[i + 1] = (byte) (tmp >> 8);
+            bytes[i] = (byte)tmp;
+            bytes[i + 1] = (byte)(tmp >> 8);
         }
         return Arrays.copyOf(bytes, offset);
     }
-
 
     public static List<File> create(Configure configure) {
         Path workDir = configure.getWorkDir();

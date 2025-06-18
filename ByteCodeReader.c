@@ -2,30 +2,25 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <stdlib.h>
 
-extern inline void PixtronVM_data_segment_set(PixtronVMPtr vm, const uint32_t index, const Type type,
-                                              const Variant *variant) {
-    // assert(type == variant->type);
-    // uint8_t *dst = vm->data + index;
-    // const uint8_t size = TYPE_SIZE[type];
-    // memcpy(dst, &variant->value, size);
+static inline void PixtronVM_ByteCodeIndexOutOfBoundsCheck(RuntimeContext *context,
+                                                           const VirtualStackFrame *frame,
+                                                           const Method *method,
+                                                           const guint size) {
+    const guint pc = frame->pc;
+    if (pc + size <= method->endOffset) {
+        return;
+    }
+    context->throwException(context, "Bytecode index out of bounds.");
 }
 
-
-extern void inline PixtronVM_data_segment_get(PixtronVMPtr vm, uint32_t offset, Variant *variant) {
-    // const uint8_t *dst = vm->data + offset;
-    // const uint8_t size = TYPE_SIZE[variant->type];
-    // memcpy(&(variant->value), dst, size);
-}
-
-
-extern inline uint8_t PixtronVM_ReadByteCodeU8(const RuntimeContext *context) {
+extern inline guint8 PixtronVM_ReadByteCodeU8(RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
     const guint pc = frame->pc;
     const Method *method = frame->method;
+    PixtronVM_ByteCodeIndexOutOfBoundsCheck(context, frame, method, 1);
     const Klass *klass = method->klass;
-    const uint8_t byte = klass->byteCode[pc];
+    const guint8 byte = klass->byteCode[pc];
     frame->pc = pc + 1;
     return byte;
 }
@@ -36,30 +31,33 @@ extern inline void PixtronVM_ReadByteCodeImm(RuntimeContext *context, Variant *v
     VirtualStackFrame *frame = context->frame;
     const Method *method = frame->method;
     const Klass *klass = method->klass;
+    PixtronVM_ByteCodeIndexOutOfBoundsCheck(context, frame, method, size);
     const guint pc = frame->pc;
-    if (size == 0 || (size + pc) > method->endOffset) {
-        context->throwException(context, "Immediate number read exceed method area.");
-    }
-    const uint8_t *buffer = klass->byteCode + pc;
+    const guint8 *buffer = klass->byteCode + pc;
     memcpy(&variant->value, buffer, size);
     frame->pc = pc + size;
 }
 
-extern inline uint32_t PixtronVM_code_segment_u32(PixtronVMPtr vm) {
-    // const uint8_t *buffer = vm->buffer;
-    // const uint64_t pc = vm->pc;
-    // const uint32_t *value = (uint32_t *) (buffer + pc);
-    // vm->pc = pc + 4;
-    // return *value;
-}
-
-extern inline uint16_t PixtronVM_ReadByteCodeU16(RuntimeContext *context) {
+extern inline guint32 PixtronVM_ReadByteCodeU32(RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
     const Method *method = frame->method;
     const Klass *klass = method->klass;
+    PixtronVM_ByteCodeIndexOutOfBoundsCheck(context, frame, method, 4);
     const uint64_t pc = frame->pc;
     const guint8 *byteCode = klass->byteCode;
-    const uint16_t *value = (uint16_t *) (byteCode + pc);
+    const guint32 *value = (guint32 *) (byteCode + pc);
+    frame->pc = pc + 4;
+    return *value;
+}
+
+extern inline guint16 PixtronVM_ReadByteCodeU16(RuntimeContext *context) {
+    VirtualStackFrame *frame = context->frame;
+    const Method *method = frame->method;
+    const Klass *klass = method->klass;
+    PixtronVM_ByteCodeIndexOutOfBoundsCheck(context, frame, method, 2);
+    const uint64_t pc = frame->pc;
+    const guint8 *byteCode = klass->byteCode;
+    const guint16 *value = (uint16_t *) (byteCode + pc);
     frame->pc = pc + 2;
     return *value;
 }

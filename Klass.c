@@ -170,7 +170,7 @@ static Klass *PixtronVM_KlassLoad(const PixtronVM *vm, const gchar *KlassName, G
     }
     while ((fileInfo = g_file_enumerator_next_file(enumerator, NULL, error)) != NULL) {
         const gchar *name = g_file_info_get_name(fileInfo);
-        if (!g_str_has_suffix(name, ".clazz")) {
+        if (!g_str_has_suffix(name, ".klass")) {
             continue;
         }
         gchar *tmp = g_strndup(name, strlen(name) - 6);
@@ -212,16 +212,33 @@ extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassN
     return klass;
 }
 
-extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, const guint16 index, Variant *variant) {
+static inline Klass *PixtronVM_KlassFieldOutOfBoundsCheck(RuntimeContext *context, const guint16 index) {
     const VirtualStackFrame *frame = context->frame;
     const Klass *klass = frame->method->klass;
     const guint count = klass->fieldCount;
     if (index >= count) {
-        context->throwException(context, "Field index out of range");
+        context->throwException(context, "Klass index out of bounds.");
     }
+    return klass;
+}
+
+extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, const guint16 index, Variant *variant) {
+    const Klass *klass = PixtronVM_KlassFieldOutOfBoundsCheck(context, index);
     const VMValue value = klass->fieldVals[index];
     PixtronVM_ConvertValueToVariant(value, variant);
     return value;
+}
+
+
+extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, const guint16 index, const Variant *variant) {
+    const Klass *klass = PixtronVM_KlassFieldOutOfBoundsCheck(context, index);
+    const Field *field = klass->fields + index;
+    // Type check
+    if (field->type != variant->type) {
+        context->throwException(context, "Klass field type is:%d but value type is:%d.", field->type, variant->type);
+    }
+    guint8 *buffer = (guint8 *) klass->fieldVals + index;
+    PixtronVM_ConvertValueToBuffer(variant, buffer);
 }
 
 extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const gchar *name) {

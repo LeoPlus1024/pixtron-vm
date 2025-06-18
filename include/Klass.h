@@ -16,7 +16,10 @@
 extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassName, GError **error);
 
 
-extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, const guint16 index,Variant *variant);
+extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, guint16 index, Variant *variant);
+
+
+extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, guint16 index, const Variant *variant);
 
 extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const gchar *name);
 
