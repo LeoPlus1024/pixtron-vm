@@ -52,12 +52,23 @@ typedef enum {
 static const uint16_t TYPE_SIZE[] = {
     [NIL] = 0,
     [TYPE_BYTE] = 1,
-    [TYPE_BYTE] = 2,
+    [TYPE_SHORT] = 2,
     [TYPE_INT] = 4,
     [TYPE_LONG] = 6,
     [TYPE_DOUBLE] = 8,
     [TYPE_BOOL] = 1,
     [TYPE_REF] = 6
+};
+
+static const char *const TYPE_NAME[] = {
+    "null",
+    "byte",
+    "short",
+    "int",
+    "long",
+    "double",
+    "bool",
+    "object"
 };
 
 typedef enum:uint16_t {

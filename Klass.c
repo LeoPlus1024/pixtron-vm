@@ -1,5 +1,6 @@
 #include "Klass.h"
 
+#include <stdio.h>
 #include <gio/gio.h>
 
 #include "Memory.h"
@@ -8,6 +9,34 @@
 #include "StringUtil.h"
 
 #define MAGIC (0xFFAABBCC)
+
+static gchar *PixtronVM_MethodToString(const Method *method) {
+    GString *str = g_string_new(NULL);
+    const Type retType = method->retType;
+    const gchar *retTypeName;
+    if (retType == NIL) {
+        retTypeName = "void";
+    } else {
+        retTypeName = TYPE_NAME[retType];
+    }
+    g_string_append(str, retTypeName);
+    g_string_append(str, " ");
+    g_string_append(str, method->name);
+    g_string_append_c(str, '(');
+    const gushort paramCount = method->paramCount;
+    for (gushort i = 0; i < paramCount; i++) {
+        const MethodParam *param = method->params + i;
+        const gchar *typeName = TYPE_NAME[param->type];
+        g_string_append(str, typeName);
+        g_string_append(str, " ");
+        g_string_append(str, param->name);
+        if (i != paramCount - 1) {
+            g_string_append_c(str, ',');
+        }
+    }
+    g_string_append_c(str, ')');
+    return g_string_free(str, FALSE);
+}
 
 static void PixtronVM_FreeKlass(Klass **klass) {
     if (*klass == NULL) {
@@ -97,9 +126,9 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
     gint j = 0;
     while (j < klass->methodCount) {
         Method *method = klass->methods + j;
-        method->maxLocals = *((gushort *) (buf + position));
+        method->maxLocalsSize = *((gushort *) (buf + position));
         position += 2;
-        method->maxStacks = *((gushort *) (buf + position));
+        method->maxStackSize = *((gushort *) (buf + position));
         position += 2;
         method->offset = *((guint *) (buf + position));
         position += 4;
@@ -122,14 +151,14 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
         }
         gchar *funcName = g_strdup((gchar *)(buf+position));
         position += PixtronVM_GetStrFullLen(funcName);
-        gushort paramCount = *((gushort *) (buf + position));
+        const gushort paramCount = *((gushort *) (buf + position));
         position += 2;
         MethodParam *params = NULL;
         if (paramCount > 0) {
             params = PixotronVM_calloc(sizeof(MethodParam) * paramCount);
             for (int i = 0; i < paramCount; ++i) {
                 MethodParam *param = params + i;
-                params->type = *((Type *) (buf + position));
+                param->type = *((Type *) (buf + position));
                 position += 2;
                 param->name = g_strdup((gchar *)(buf+position));
                 position += PixtronVM_GetStrFullLen(param->name);
@@ -137,6 +166,7 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
         }
         method->name = funcName;
         method->params = params;
+        method->toString = PixtronVM_MethodToString;
         method->paramCount = paramCount;
         j++;
     }

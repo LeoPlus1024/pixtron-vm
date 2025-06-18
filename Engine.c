@@ -175,10 +175,44 @@ static void PixtronVM_Load(RuntimeContext *context) {
 }
 
 static void PixtronVM_ThrowException(RuntimeContext *context, gchar *fmt, ...) {
+    const VirtualStackFrame *frame = context->frame;
+    const Method *method = frame->method;
+    const gchar *threadName = g_thread_get_name(g_thread_self());
+    gchar *methodName = method->toString(method);
     va_list vaList;
     va_start(vaList, fmt);
-    g_printerr(fmt, vaList);
+    const gchar *message = g_strdup_printf(fmt, &vaList);
     va_end(vaList);
+    g_printerr(
+        "\n*******************************************************************************\n"
+        "*                    VIRTUAL MACHINE CRASH - FATAL ERROR                       *\n"
+        "*******************************************************************************\n"
+        "* Thread: %-60s *\n"
+        "* Method: (%p) %-60s *\n"
+        "*                                                                             *\n"
+        "* [ERROR]: %-64s*\n"
+        "*                                                                             *\n"
+        "* Execution State:                                                            *\n"
+        "*   Program Counter: 0x%08x (instruction #%d)                         *\n"
+        "*   Stack Pointer:   0x%08x (depth: %d/%d)                             *\n"
+        "*   Locals Address:  0x%p                                    *\n"
+        "*   Operand Stack:   0x%p                                    *\n"
+        "*                                                                             *\n"
+        "*******************************************************************************\n\n",
+        threadName ? threadName : "<unnamed-thread>",
+        method,
+        methodName,
+        message, // error message
+        frame->pc, // pc
+        frame->pc, // pc
+        frame->sp, // sp
+        frame->sp, // stack deep
+        frame->maxStackSize, // max stack deep
+        (void *) frame->locals, // local
+        (void *) frame->operandStack // operand stack address
+    );
+    g_free(methodName);
+    g_free((gpointer) message);
     g_thread_exit(NULL);
 }
 
@@ -223,6 +257,7 @@ extern Variant *PixtronVM_CallMethod(const Method *method) {
             case CALL:
                 break;
             default:
+                context->throwException(context, "Unsupported opcode: %02x", ops);
         }
     }
 }

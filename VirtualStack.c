@@ -24,11 +24,9 @@ extern inline void PixtronVM_PushOperand(RuntimeContext *context, const Variant 
 
 extern inline void PixtronVM_PopOperand(RuntimeContext *context, Variant *variant) {
     VirtualStackFrame *frame = context->frame;
-    const Method *method = frame->method;
     const size_t sp = frame->sp;
-    if (sp + 1 > method->maxStacks) {
-        fprintf(stderr, "PixotronVM_stack_pop: stack underflow.\n");
-        exit(-1);
+    if (sp + 1 == frame->maxStackSize) {
+        context->throwException(context, "Stack overflow.");
     }
     VMValue value = 0;
     const void *stackTop = frame->operandStack + sp;
@@ -54,8 +52,11 @@ extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Metho
         frame->pre = context->frame;
         context->frame = frame;
     }
-    frame->operandStack = PixotronVM_calloc(VM_VALUE_SIZE * method->maxStacks);
-    frame->localVarTable = PixotronVM_calloc(VM_VALUE_SIZE * method->maxLocals);
+    frame->sp = method->maxStackSize - 1;
+    frame->maxStackSize = method->maxStackSize;
+    frame->maxLocalsSize = method->maxLocalsSize;
+    frame->locals = PixotronVM_calloc(VM_VALUE_SIZE * method->maxLocalsSize);
+    frame->operandStack = PixotronVM_calloc(VM_VALUE_SIZE * method->maxStackSize);
     stack->depth = depth + 1;
 }
 
@@ -66,11 +67,11 @@ extern inline void PixtronVM_PopStackFrame(RuntimeContext *context) {
         fprintf(stderr, "PixotronVM_stack_pop: stack underflow.\n");
         exit(-1);
     }
-    VirtualStackFramePtr frame = context->frame;
+    VirtualStackFrame *frame = context->frame;
     context->frame = frame->pre;
     stack->depth = depth - 1;
+    PixotronVM_free(TO_REF(frame->locals));
     PixotronVM_free(TO_REF(frame->operandStack));
-    PixotronVM_free(TO_REF(frame->localVarTable));
     PixotronVM_free(TO_REF(frame));
 }
 
@@ -78,25 +79,25 @@ extern inline void PixtronVM_PopStackFrame(RuntimeContext *context) {
 extern inline void PixtronVM_SetLocalTable(RuntimeContext *context, uint16_t index, const Variant *variant) {
     g_assert(variant != NULL);
     const VirtualStackFrame *frame = context->frame;
-    g_assert(frame!=NULL);
-    const Method *method = frame->method;
-    g_assert(frame != NULL);
-    const uint16_t maxLocals = method->maxLocals;
-    g_assert(index < maxLocals);
-    const VMValue tmp = frame->localVarTable[index];
+    const uint16_t maxLocalsSize = frame->maxLocalsSize;
+    if (index > maxLocalsSize) {
+        context->throwException(context, "Local index out of bounds.");
+    }
+    const VMValue tmp = frame->locals[index];
     const Type t0 = PixtronVM_GetValueType(tmp);
-    g_assert((t0 == NIL || t0==variant->type)&&"Local variable table type mistake.");
-    guint8 *ptr = (guint8 *) frame->localVarTable + index;
+    if (t0 != NIL && t0 != variant->type) {
+        context->throwException(context, "Local type mistake.");
+    }
+    guint8 *ptr = (guint8 *) frame->locals + index;
     PixtronVM_ConvertValueToBuffer(variant, ptr);
 }
 
-extern inline void PixtronVM_GetLocalTable(RuntimeContext *context, uint16_t index, Variant *variant) {
-    g_assert(variant!=NULL);
+extern inline void PixtronVM_GetLocalTable(RuntimeContext *context, const uint16_t index, Variant *variant) {
     const VirtualStackFrame *frame = context->frame;
-    g_assert(frame != NULL);
-    const Method *method = frame->method;
-    const uint16_t maxLocals = method->maxLocals;
-    g_assert(index < maxLocals);
-    const VMValue tmp = frame->localVarTable[index];
+    const uint16_t maxLocals = frame->maxLocalsSize;
+    if (index > maxLocals) {
+        context->throwException(context, "Local index out if bound.");
+    }
+    const VMValue tmp = frame->locals[index];
     PixtronVM_ConvertValueToVariant(tmp, variant);
 }

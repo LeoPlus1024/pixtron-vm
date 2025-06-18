@@ -13,16 +13,20 @@ typedef struct {
     gchar *name;
 } MethodParam;
 
-typedef struct {
+struct _Method;
+
+typedef struct _Method {
     gchar *name;
     Type retType;
-    gushort maxLocals;
-    gushort maxStacks;
+    gushort maxStackSize;
+    gushort maxLocalsSize;
     uint32_t offset;
     uint32_t endOffset;
     gushort paramCount;
     MethodParam *params;
     struct _Klass *klass;
+
+    gchar * (*toString)(const struct _Method *);
 } Method;
 
 typedef struct {
@@ -57,17 +61,19 @@ struct _VirtualStackFrame;
 typedef struct _VirtualStackFrame {
     // Method
     const Method *method;
-    // 局部变量表
-    VMValue *localVarTable;
-    // 操作数栈
+    // local variable
+    VMValue *locals;
+    // Operand stack
     VMValue *operandStack;
     // Program counter
     guint pc;
     // Stack pointer
     guint sp;
+    guint maxStackSize;
+    guint maxLocalsSize;
     // Previous stack frame
     struct _VirtualStackFrame *pre;
-} VirtualStackFrame, *VirtualStackFramePtr;
+} VirtualStackFrame;
 
 typedef struct {
     // 当前栈深度
