@@ -212,7 +212,7 @@ extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassN
     return klass;
 }
 
-extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, const guint16 index) {
+extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, const guint16 index, Variant *variant) {
     const VirtualStackFrame *frame = context->frame;
     const Klass *klass = frame->method->klass;
     const guint count = klass->fieldCount;
@@ -220,6 +220,7 @@ extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, const
         context->throwException(context, "Field index out of range");
     }
     const VMValue value = klass->fieldVals[index];
+    PixtronVM_ConvertValueToVariant(value, variant);
     return value;
 }
 

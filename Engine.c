@@ -18,16 +18,16 @@ static void PixtronVM_GetOpsData(RuntimeContext *context, Variant *variant) {
     // Immediate
     if (source == IMMEDIATE) {
         PixtronVM_ReadByteCodeImm(context, variant);
-    }
-    // Local
-    else {
+    } else {
         const guint16 index = PixtronVM_ReadByteCodeU16(context);
         const bool local = source == LOCAL_VAR;
+        // Local
         if (local) {
             PixtronVM_GetLocalTable(context, index, variant);
-        } else {
-            //
-            PixtronVM_GetKlassFileValue(context, index);
+        }
+        // Klass field
+        else {
+            PixtronVM_GetKlassFileValue(context, index, variant);
         }
     }
 }
@@ -66,14 +66,14 @@ static void PixotronVM_AddSub(RuntimeContext *context, Opcode opcode) {
                 assert(false && "Unhandled numeric type");
         }
     }
-    // Double自动扩展
+    // Auto extension to double
     else if (VM_TYPE_DOUBLE(top.type) || VM_TYPE_DOUBLE(next.type)) {
         PixtronVM_ConvertToDoubleValue(&top);
         PixtronVM_ConvertToDoubleValue(&next);
         const double sum = next.value.d + top.value.d;
         next.value.d = sum;
     }
-    // Long自动扩展
+    // Auto extension to long
     else if (VM_TYPE_LONG(top.type) || VM_TYPE_LONG(next.type)) {
         PixtronVM_ConvertToLongValue(&top);
         PixtronVM_ConvertToLongValue(&next);
@@ -225,8 +225,6 @@ extern Variant *PixtronVM_CallMethod(const Method *method) {
             case CALL:
                 break;
             default:
-
-
 
         }
     }
