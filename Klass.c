@@ -107,7 +107,7 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
     position += 4;
     Field *files = PixotronVM_calloc(sizeof(Field) * klass->fieldCount);
     VMValue *values = PixotronVM_calloc(sizeof(VMValue) * klass->fieldCount);
-    gint index = 0;
+    uint32_t index = 0;
     while (index < klass->fieldCount) {
         Field *field = (files + index);
         field->type = *((Type *) (buf + position));
@@ -123,7 +123,7 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
     klass->methodCount = *((guint *) (buf + position));
     position += 4;
     klass->methods = PixotronVM_calloc(sizeof(Method) * klass->methodCount);
-    gint j = 0;
+    uint32_t j = 0;
     while (j < klass->methodCount) {
         Method *method = klass->methods + j;
         method->maxLocalsSize = *((gushort *) (buf + position));

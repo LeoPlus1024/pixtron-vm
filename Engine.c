@@ -9,23 +9,21 @@
 #include "Memory.h"
 #include "VirtualStack.h"
 
-static inline void PixtronVM_CheckOperandType(RuntimeContext *context, const VMValue *targetOperand,
-                                              const VMValue *sourceOperand) {
-    const Type t0 = targetOperand->type;
-    const Type t1 = sourceOperand->type;
-    if (t0 == t1) {
-        return;
-    }
-    context->throwException(context, "Operand type mismatch the first operand is:'%s' and the second operand is:'%s'.",
-                            TYPE_NAME[t0], TYPE_NAME[t1]);
-}
-
-
 static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, Opcode opcode) {
     const VMValue *sourceOperand = PixtronVM_PopOperand(context);
     VMValue *targetOperand = PixtronVM_PopOperand(context);
 
-    PixtronVM_CheckOperandType(context, targetOperand, sourceOperand);
+    const Type t0 = PixtronVM_GetValueType(targetOperand);
+    const Type t1 = PixtronVM_GetValueType(sourceOperand);
+    if (t0 != t1) {
+        context->throwException(
+            context,
+            "Operand type mismatch the first operand is:'%s' and the second operand is:'%s'.",
+            TYPE_NAME[t0],
+            TYPE_NAME[t1]
+        );
+    }
+
     if (opcode == ADD) {
         APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, +, context);
     } else if (opcode == SUB) {
@@ -77,21 +75,14 @@ extern inline void PixtronVM_Cmp(RuntimeContext *context, Opcode opcode) {
     PixtronVM_PushOperand(context, next);
 }
 
-static void PixtronVM_CONV(RuntimeContext *context) {
-    const Type type = PixtronVM_ReadByteCodeU16(context);
+static void PixtronVM_CONV(RuntimeContext *context, Opcode opcode) {
     VMValue *value = PixtronVM_PopOperand(context);
-    const Type src = value->type;
-    if (src == type) {
-        return;
-    }
-    g_assert(VM_TYPE_NUMBER(src));
-    g_assert(VM_TYPE_NUMBER(type));
-    if (type == TYPE_DOUBLE) {
+    if (opcode == I2F || opcode == L2F) {
         PixtronVM_ConvertToDoubleValue(value);
-    } else if (type == TYPE_LONG) {
+    } else if (opcode == I2L || opcode == F2L) {
         PixtronVM_ConvertToLongValue(value);
-    } else {
-        value->type = type;
+    } else if (opcode == F2I || opcode == L2I) {
+        PixtronVM_ConvertToIntValue(value);
     }
     PixtronVM_PushOperand(context, NULL);
 }
@@ -186,8 +177,27 @@ static void PixtronVM_ThrowException(RuntimeContext *context, gchar *fmt, ...) {
     g_thread_exit(NULL);
 }
 
+static inline bool PixtronVM_Ret(RuntimeContext *context) {
+    const VirtualStackFrame *frame = context->frame;
+    const Type retType = frame->method->retType;
+    VMValue value;
+    if (retType != NIL) {
+        value = *PixtronVM_PopOperand(context);
+    } else {
+        value.type = NIL;
+    }
+    PixtronVM_PopStackFrame(context);
+    if (frame->pre == NULL) {
+        VMValue *retVal = PixotronVM_calloc(VM_VALUE_SIZE);
+        memcpy(retVal, &value, VM_VALUE_SIZE);
+        g_thread_exit(retVal);
+    }
+    PixtronVM_PushOperand(context, &value);
+    return false;
+}
 
-extern VMValue *PixtronVM_CallMethod(const Method *method) {
+
+extern VMValue PixtronVM_CallMethod(const Method *method) {
     RuntimeContext *context = PixotronVM_calloc(sizeof(RuntimeContext));
     context->vm = method->klass->vm;
     context->maxStackDepth = VM_MAX_STACK_DEPTH;
@@ -195,7 +205,8 @@ extern VMValue *PixtronVM_CallMethod(const Method *method) {
     context->throwException = PixtronVM_ThrowException;
     PixtronVM_PushStackFrame(context, method);
 
-    while (context->frame != NULL) {
+    bool exit = false;
+    while (!exit) {
         const Opcode opcode = PixtronVM_ReadByteCodeU8(context);
 
         switch (opcode) {
@@ -221,11 +232,16 @@ extern VMValue *PixtronVM_CallMethod(const Method *method) {
             case LCMP:
                 PixtronVM_Cmp(context, opcode);
                 break;
-            case CONV:
-                PixtronVM_CONV(context);
+            case I2L:
+            case I2F:
+            case L2I:
+            case L2F:
+            case F2I:
+            case F2L:
+                PixtronVM_CONV(context, opcode);
                 break;
             case RET:
-                PixtronVM_PopStackFrame(context);
+                exit = PixtronVM_Ret(context);
                 break;
             case POP:
                 PixtronVM_PopOperand(context);

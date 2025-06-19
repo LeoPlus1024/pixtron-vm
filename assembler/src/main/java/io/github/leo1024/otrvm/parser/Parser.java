@@ -131,6 +131,7 @@ public class Parser {
             case LOAD, GLOAD -> parseLoadExpr(opcode);
             case STORE, GSTORE -> parseStoreExpr(opcode);
             case ADD, SBC, MUL, DIV -> new Math(opcode);
+            case F2I, F2L, I2L, I2F, L2I, L2F -> new Cast(opcode);
             case GOTO -> {
                 String label = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
                 yield new Redirect(opcode, label);

@@ -38,20 +38,12 @@ do { \
         case TYPE_LONG: \
             (targetOperand)->i64 compoundOp##= (sourceOperand)->i64; \
             break; \
-        case TYPE_DOUBLE: \
-            (targetOperand)->f64 compoundOp##= (sourceOperand)->f64; \
-            break; \
         default: \
-            (executionContext)->throwException( \
-                (executionContext), \
-                "Type mismatch. Target type: %d, Value type: %d", \
-                (targetOperand)->type, \
-                (sourceOperand)->type \
-            ); \
+            (targetOperand)->f64 compoundOp##= (sourceOperand)->f64; \
             break; \
     } \
 } while(0)
 
-extern VMValue *PixtronVM_CallMethod(const Method *method);
+extern VMValue PixtronVM_CallMethod(const Method *method);
 
 #endif //ENGINE_H

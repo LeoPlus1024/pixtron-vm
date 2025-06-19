@@ -14,6 +14,12 @@ typedef enum:uint8_t {
     // 无条件跳转
     GOTO,
     RET,
+    I2L,
+    I2F,
+    L2I,
+    L2F,
+    F2I,
+    F2L,
     // 如果栈顶数字为0则跳转
     IFEQ,
     // 如果栈顶数字不为0则跳转
@@ -24,8 +30,6 @@ typedef enum:uint8_t {
     LCMP,
     // 浮点数比较
     DCMP,
-    // 类型转换
-    CONV, // 转换（如 i2l、f2d）
     CALL,
     POP,
     // 扩展预留
@@ -39,7 +43,7 @@ typedef enum:uint16_t {
     TYPE_SHORT,
     TYPE_INT,
     TYPE_LONG,
-    TYPE_DOUBLE,
+    TYPE_FLOAT,
     TYPE_BOOL,
     TYPE_REF,
 } Type;
@@ -57,7 +61,7 @@ static const uint8_t TYPE_SIZE[] = {
     [TYPE_SHORT] = 2,
     [TYPE_INT] = 4,
     [TYPE_LONG] = 6,
-    [TYPE_DOUBLE] = 8,
+    [TYPE_FLOAT] = 8,
     [TYPE_BOOL] = 1,
     [TYPE_REF] = 6
 };
@@ -87,7 +91,6 @@ typedef enum:uint16_t {
 #define OPS_COMPOSE(type,source) (source | (type << 4))
 #define OPS_DATA_TYPE(value) ((value >> 4) & 0x0f)
 #define OPS_DATA_SOURCE(value) (value & 0x0f)
-#define VM_TYPE_NUMBER(type) (type == TYPE_BYTE || type == TYPE_SHORT || type == TYPE_INT || type == TYPE_LONG || type == TYPE_DOUBLE)
 #define VM_TYPE_DOUBLE(type) (type == TYPE_DOUBLE)
 #define VM_TYPE_LONG(type) (type == TYPE_LONG)
 #define VM_TYPE_BOOL(type) (type == TYPE_BOOL)

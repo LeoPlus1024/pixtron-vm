@@ -1,8 +1,5 @@
 #include "ByteCodeReader.h"
 
-#include <assert.h>
-#include <stdio.h>
-
 static inline void PixtronVM_ByteCodeIndexOutOfBoundsCheck(RuntimeContext *context,
                                                            const VirtualStackFrame *frame,
                                                            const Method *method,

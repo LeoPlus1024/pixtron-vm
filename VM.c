@@ -26,7 +26,7 @@ extern PixtronVM *PixtronVM_CreateVM(const gchar *klassPath) {
 }
 
 
-extern void PixtronVM_LaunchVM(const PixtronVM *vm, const gchar *clazzName) {
+extern VMValue *PixtronVM_LaunchVM(const PixtronVM *vm, const gchar *clazzName) {
     GError *error = NULL;
     const Klass *klass = PixtronVM_GetKlass(vm, clazzName, &error);
     if (klass == NULL) {
@@ -41,8 +41,7 @@ extern void PixtronVM_LaunchVM(const PixtronVM *vm, const gchar *clazzName) {
         g_thread_exit(NULL);
     }
     GThread *thread = g_thread_new("Main", (GThreadFunc) PixtronVM_CallMethod, (gpointer) method);
-
-    g_thread_join(thread);
+    return g_thread_join(thread);
 }
 
 extern void PixtronVM_DestroyVM(PixtronVM **vm) {
@@ -50,4 +49,11 @@ extern void PixtronVM_DestroyVM(PixtronVM **vm) {
         return;
     }
     PixotronVM_free(CAST_REF(vm));
+}
+
+extern void PixtronVM_FreeVMValue(VMValue **value) {
+    if (value == NULL) {
+        return;
+    }
+    PixotronVM_free(CAST_REF(value));
 }

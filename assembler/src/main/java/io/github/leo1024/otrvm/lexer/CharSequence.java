@@ -118,7 +118,7 @@ public class CharSequence {
         return chr;
     }
 
-    private String readUtilEncounter(char... cc) {
+    public String readUtilEncounter(char... cc) {
         StringBuilder sb = new StringBuilder();
         sb.append(this.chr);
         loop:

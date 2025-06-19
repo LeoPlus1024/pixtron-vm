@@ -66,7 +66,7 @@ public class Helper {
             case "s" -> Type.SHORT;
             case "i" -> Type.INT;
             case "l" -> Type.LONG;
-            case "d" -> Type.FLOAT;
+            case "f" -> Type.FLOAT;
             case "b" -> Type.BOOL;
             default -> throw new IllegalStateException("Unexpected value: " + suffix);
         };

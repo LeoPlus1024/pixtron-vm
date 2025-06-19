@@ -16,6 +16,12 @@ public enum Opcode {
     DIV("div", 5),
     GOTO("goto", 6),
     RET("ret", 7),
+    I2L("i2l", 8),
+    I2F("i2f", 9),
+    L2I("l2i", 10),
+    L2F("l2f", 11),
+    F2I("f2i", 12),
+    F2L("f2l", 13),
     ;
 
 

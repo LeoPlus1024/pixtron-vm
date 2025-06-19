@@ -1,8 +1,8 @@
 @namespace HelloWorld
 ; count
-@var int count 10
+@field int count 10
 ; main
-@func main(int i,byte b)
+@func main(int i,byte b) : float
   %locals 10
   %stack 10
   load.i #10
@@ -16,5 +16,9 @@
 loop:
   ; store first variable slot
   store.i $0
+  load.i #10
+  i2f
+  load.f 1.5
+  add
   ret
 @end

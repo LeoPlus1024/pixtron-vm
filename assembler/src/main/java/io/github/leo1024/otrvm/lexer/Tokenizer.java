@@ -46,7 +46,7 @@ public class Tokenizer {
                     }
                     yield new Token(TokenKind.HEX, hex, line, column);
                 }
-                // variable reference
+                // Field reference
                 case Constants.DOLLAR -> {
                     String text = this.charSequence.readHexOrVariable();
                     String index = text.substring(1);
@@ -77,10 +77,11 @@ public class Tokenizer {
                 }
                 // Opcode/Type/Identifier
                 default -> {
-                    String text = this.charSequence.readUntilDelimiter();
                     if (Character.isDigit(chr)) {
+                        String text = charSequence.readUtilEncounter(' ', Constants.TAB, Constants.CR, Constants.LF);
                         yield LexerUtil.createDigitToken(line, column, text);
                     }
+                    String text = this.charSequence.readUntilDelimiter();
                     // Opcode
                     if (Opcode.of(text) != null) {
                         yield new Token(TokenKind.OPCODE, text, line, column);

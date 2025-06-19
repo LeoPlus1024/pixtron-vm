@@ -74,27 +74,4 @@ public class LexerUtil {
         }
         return match;
     }
-
-    /**
-     * Validates reference variable format ($-prefixed identifier).
-     *
-     * <pre>
-     * <code>
-     *  // Valid examples:
-     *  $count, $_value, $$var
-     *  // Invalid examples:
-     *  $1var (starts with digit), myVar (missing $)
-     * </code>
-     * </pre>
-     *
-     * @param variable Variable name to validate
-     * @return Validation result (true = valid, false = invalid)
-     */
-    public static boolean checkRefVar(String variable) {
-        boolean match = REF_VAR_PATTERN.matcher(variable).matches();
-        if (!match) {
-            System.err.printf("Invalid ref var:%s%n", variable);
-        }
-        return match;
-    }
 }
