@@ -60,10 +60,10 @@ static const uint8_t TYPE_SIZE[] = {
     [TYPE_BYTE] = 1,
     [TYPE_SHORT] = 2,
     [TYPE_INT] = 4,
-    [TYPE_LONG] = 6,
+    [TYPE_LONG] = 8,
     [TYPE_FLOAT] = 8,
     [TYPE_BOOL] = 1,
-    [TYPE_REF] = 6
+    [TYPE_REF] = 8
 };
 
 static const char *const TYPE_NAME[] = {

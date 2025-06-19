@@ -2,18 +2,6 @@
 
 #include <assert.h>
 
-extern inline VMValue PixtronVM_CreateValueFromBuffer(const Type type, const uint8_t *buf) {
-    VMValue value;
-    memcpy(&value, buf, TYPE_SIZE[type]);
-    if (type == TYPE_FLOAT) {
-        return value;
-    }
-    const uint8_t tmp = VM_VALUE_SIZE - 2;
-    const uint16_t tag = (0x7FF << 4) | type;
-    memcpy(&value + tmp, &tag, 2);
-    return value;
-}
-
 extern inline void PixtronVM_ConvertToDoubleValue(VMValue *value) {
     switch (value->type) {
 #define HANDLE_CASE(type,field) \
@@ -23,6 +11,7 @@ extern inline void PixtronVM_ConvertToDoubleValue(VMValue *value) {
         default: assert(0);
 #undef HANDLE_CASE
     }
+    value->type = TYPE_FLOAT;
 }
 
 extern inline void PixtronVM_ConvertToLongValue(VMValue *value) {
@@ -46,7 +35,7 @@ case type: value->i32 = (int32_t)(value->field);  break;
         default: assert(0);
 #undef HANDLE_CASE
     }
-    value->type = TYPE_LONG;
+    value->type = TYPE_INT;
 }
 
 extern inline Type PixtronVM_GetValueType(const VMValue *value) {

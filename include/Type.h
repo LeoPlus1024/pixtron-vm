@@ -5,18 +5,25 @@
 #include <stdint.h>
 #include <glib.h>
 
+typedef struct {
+    union {
+        int8_t i8;
+        int16_t i16;
+        int32_t i32;
+        int64_t i64;
+        double f64;
+    };
+
+    Type type;
+} VMValue;
+
 typedef union {
     int8_t i8;
     int16_t i16;
     int32_t i32;
     int64_t i64;
     double f64;
-
-    struct {
-        uint64_t payload: 48;
-        Type type: 16;
-    };
-} VMValue;
+} VMSmallValue;
 
 struct VM;
 
@@ -42,8 +49,8 @@ typedef struct _Method {
 } Method;
 
 typedef struct {
-    Type type;
     gchar *name;
+    VMValue *value;
 } Field;
 
 typedef struct _Klass {
@@ -57,8 +64,6 @@ typedef struct _Klass {
     uint8_t *byteCode;
     // Field meta data
     Field *fields;
-    // Field value
-    VMValue *fieldVals;
     //Class name
     char *name;
     // Field count
@@ -126,31 +131,6 @@ typedef struct _RuntimeContext {
 
 
 #define VM_VALUE_SIZE (sizeof(VMValue))
-
-/**
- * @brief Creates a VM value object from a byte buffer
- *
- * Constructs a virtual machine value object by parsing the given byte buffer according
- * to the specified type descriptor. Typically used for deserializing network data
- * or persisted byte streams.
- *
- * @param type Type descriptor defining the data structure layout of the buffer
- * @param buf Source byte buffer pointer. Must be valid and conform to type format.
- * @return VMValue Constructed virtual machine value object
- *
- * @note Caller must ensure:
- * 1. Buffer lifetime extends at least until function returns
- * 2. Buffer format matches the type structure defined by type parameter
- * 3. For variable-length types, buffer header contains required length metadata
- *
- * @warning No boundary checking is performed. Buffer validity must be verified
- *          before invocation.
- *
- * @example
- * const uint8_t packet[] = {0x01, 0x00, 0x00, 0x3F, 0x80};
- * VMValue v = PixtronVM_CreateValueFromBuffer(DOUBLE, packet);
- */
-extern inline VMValue PixtronVM_CreateValueFromBuffer(Type type, const uint8_t *buf);
 
 /**
  * Convert a Variant to double-precision floating point representation

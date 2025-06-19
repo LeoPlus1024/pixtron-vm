@@ -9,12 +9,12 @@
 #include "Memory.h"
 #include "VirtualStack.h"
 
-static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, Opcode opcode) {
+static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, const Opcode opcode) {
     const VMValue *sourceOperand = PixtronVM_PopOperand(context);
     VMValue *targetOperand = PixtronVM_PopOperand(context);
 
-    const Type t0 = PixtronVM_GetValueType(targetOperand);
-    const Type t1 = PixtronVM_GetValueType(sourceOperand);
+    const Type t0 = targetOperand->type;
+    const Type t1 = sourceOperand->type;
     if (t0 != t1) {
         context->throwException(
             context,
@@ -43,7 +43,9 @@ static inline void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opco
     if (opcode != GOTO) {
         const VMValue *value = PixtronVM_PopOperand(context);
         const bool ifeq = opcode == IFEQ;
-        assert(VM_TYPE_BOOL(value->type)&&"Ifeq or Ifnq only support boolean.");
+        if (value->type == TYPE_BOOL) {
+            context->throwException(context, "Ifeq and ifnq only support bool but it is:'%s'", TYPE_NAME[value->type]);
+        }
         if (!((ifeq && VM_FALSE(value->i8)) || !ifeq && VM_TRUE(value->i8))) {
             return;
         }
@@ -177,7 +179,7 @@ static void PixtronVM_ThrowException(RuntimeContext *context, gchar *fmt, ...) {
     g_thread_exit(NULL);
 }
 
-static inline bool PixtronVM_Ret(RuntimeContext *context) {
+static inline void PixtronVM_Ret(RuntimeContext *context) {
     const VirtualStackFrame *frame = context->frame;
     const Type retType = frame->method->retType;
     VMValue value;
@@ -193,7 +195,6 @@ static inline bool PixtronVM_Ret(RuntimeContext *context) {
         g_thread_exit(retVal);
     }
     PixtronVM_PushOperand(context, &value);
-    return false;
 }
 
 
@@ -205,8 +206,7 @@ extern VMValue PixtronVM_CallMethod(const Method *method) {
     context->throwException = PixtronVM_ThrowException;
     PixtronVM_PushStackFrame(context, method);
 
-    bool exit = false;
-    while (!exit) {
+    for (;;) {
         const Opcode opcode = PixtronVM_ReadByteCodeU8(context);
 
         switch (opcode) {
@@ -241,7 +241,7 @@ extern VMValue PixtronVM_CallMethod(const Method *method) {
                 PixtronVM_CONV(context, opcode);
                 break;
             case RET:
-                exit = PixtronVM_Ret(context);
+                PixtronVM_Ret(context);
                 break;
             case POP:
                 PixtronVM_PopOperand(context);

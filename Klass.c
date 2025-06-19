@@ -106,17 +106,20 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
     klass->fieldCount = *((gint *) (buf + position));
     position += 4;
     Field *files = PixotronVM_calloc(sizeof(Field) * klass->fieldCount);
-    VMValue *values = PixotronVM_calloc(sizeof(VMValue) * klass->fieldCount);
+    VMValue *values = PixotronVM_calloc(VM_VALUE_SIZE * klass->fieldCount);
     uint32_t index = 0;
     while (index < klass->fieldCount) {
         Field *field = (files + index);
-        field->type = *((Type *) (buf + position));
+        const Type type = *((Type *) (buf + position));
         position += 2;
-        field->name = g_strdup((gchar *)(buf + position));
-        position += PixtronVM_GetStrFullLen(field->name);
-        const VMValue value = PixtronVM_CreateValueFromBuffer(field->type, buf + position);
-        values[index] = value;
-        position = position + TYPE_SIZE[field->type];
+        gchar *name = g_strdup((gchar *)(buf + position));
+        position += PixtronVM_GetStrFullLen(name);
+        VMValue *value = values + index;
+        const uint8_t typeSize = TYPE_SIZE[type];
+        memcpy(value, buf, typeSize);
+        value->type = type;
+        position = position + typeSize;
+        field->name = name;
         index++;
     }
     klass->fields = files;
@@ -242,7 +245,7 @@ extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassN
     return klass;
 }
 
-static inline Klass *PixtronVM_KlassFieldOutOfBoundsCheck(RuntimeContext *context, const guint16 index) {
+static inline const Klass *PixtronVM_KlassFieldOutOfBoundsCheck(RuntimeContext *context, const guint16 index) {
     const VirtualStackFrame *frame = context->frame;
     const Klass *klass = frame->method->klass;
     const guint count = klass->fieldCount;
@@ -254,20 +257,20 @@ static inline Klass *PixtronVM_KlassFieldOutOfBoundsCheck(RuntimeContext *contex
 
 extern inline void PixtronVM_GetKlassFileValue(RuntimeContext *context, const uint16_t index, VMValue *value) {
     const Klass *klass = PixtronVM_KlassFieldOutOfBoundsCheck(context, index);
-    const VMValue *ptr = klass->fieldVals + index;
-    memcpy(value, ptr, VM_VALUE_SIZE);
+    const Field *field = klass->fields + index;
+    memcpy(value, field->value, VM_VALUE_SIZE);
 }
 
 
 extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, const guint16 index, const VMValue *value) {
     const Klass *klass = PixtronVM_KlassFieldOutOfBoundsCheck(context, index);
     const Field *field = klass->fields + index;
+    const VMValue *_value = field->value;
     // Type check
-    if (field->type != value->type) {
-        context->throwException(context, "Klass field type is:%d but value type is:%d.", field->type, value->type);
+    if (_value->type != value->type) {
+        context->throwException(context, "Klass field type is:%d but value type is:%d.", _value->type, value->type);
     }
-    uint8_t *buffer = (guint8 *) klass->fieldVals + index;
-    memcpy(buffer, value, VM_VALUE_SIZE);
+    memcpy(field->value, value, VM_VALUE_SIZE);
 }
 
 extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const gchar *name) {
