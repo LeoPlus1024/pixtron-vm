@@ -23,7 +23,7 @@ extern inline guint8 PixtronVM_ReadByteCodeU8(RuntimeContext *context);
  * @param context Runtime context containing code segment pointer and VM state
  * @param variant [out] Destination structure for the parsed variant value
  */
-extern inline void PixtronVM_ReadByteCodeImm(RuntimeContext *context, Variant *variant);
+extern inline void PixtronVM_ReadByteCodeImm(RuntimeContext *context, VMValue *value);
 
 /**
  * @brief Reads a 32-bit unsigned integer from the VM's code segment

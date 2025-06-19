@@ -9,35 +9,28 @@
 
 #include "Memory.h"
 
-extern inline void PixtronVM_PushOperand(RuntimeContext *context, const Variant *variant) {
+extern inline void PixtronVM_PushOperand(RuntimeContext *context, const VMValue *value) {
     VirtualStackFrame *frame = context->frame;
     const size_t sp = frame->sp;
     if (sp == 0) {
         context->throwException(context, "Stack underflow.");
     }
     const guint tmp = sp - 1;
-    guint8 *stackTop = (guint8 *) (frame->operandStack + tmp);
-    PixtronVM_ConvertValueToBuffer(variant, stackTop);
+    uint8_t *stackTop = (uint8_t *) (frame->operandStack + tmp);
+    memcpy(stackTop, value, VM_VALUE_SIZE);
     frame->sp = tmp;
 }
 
 
-extern inline void PixtronVM_PopOperand(RuntimeContext *context, Variant *variant) {
+extern inline VMValue *PixtronVM_PopOperand(RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
     const size_t sp = frame->sp;
     if (sp + 1 == frame->maxStackSize) {
         context->throwException(context, "Stack overflow.");
     }
-    // If variant is null trash it
-    if (variant == NULL) {
-        frame->sp = sp + 1;
-        return;
-    }
-    VMValue value = 0;
-    const void *stackTop = frame->operandStack + sp;
-    memcpy(&value, stackTop, VM_VALUE_SIZE);
+    VMValue *value = frame->operandStack;
     frame->sp = sp + 1;
-    PixtronVM_ConvertValueToVariant(value, variant);
+    return value;
 }
 
 extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method) {
@@ -81,28 +74,23 @@ extern inline void PixtronVM_PopStackFrame(RuntimeContext *context) {
 }
 
 
-extern inline void PixtronVM_SetLocalTable(RuntimeContext *context, uint16_t index, const Variant *variant) {
-    g_assert(variant != NULL);
+extern inline void PixtronVM_SetLocalTable(RuntimeContext *context, const uint16_t index, const VMValue *value) {
+    g_assert(value != NULL);
     const VirtualStackFrame *frame = context->frame;
     const uint16_t maxLocalsSize = frame->maxLocalsSize;
     if (index > maxLocalsSize) {
         context->throwException(context, "Local index out of bounds.");
     }
-    const VMValue tmp = frame->locals[index];
-    // const Type t0 = PixtronVM_GetValueType(tmp);
-    // if (t0 != NIL && t0 != variant->type) {
-    //     context->throwException(context, "Local type mistake.");
-    // }
     guint8 *ptr = (guint8 *) frame->locals + index;
-    PixtronVM_ConvertValueToBuffer(variant, ptr);
+    memcpy(ptr, value, VM_VALUE_SIZE);
 }
 
-extern inline void PixtronVM_GetLocalTable(RuntimeContext *context, const uint16_t index, Variant *variant) {
+extern inline void PixtronVM_GetLocalTable(RuntimeContext *context, const uint16_t index, VMValue *value) {
     const VirtualStackFrame *frame = context->frame;
     const uint16_t maxLocals = frame->maxLocalsSize;
     if (index > maxLocals) {
         context->throwException(context, "Local index out if bound.");
     }
-    const VMValue tmp = frame->locals[index];
-    PixtronVM_ConvertValueToVariant(tmp, variant);
+    const VMValue *ptr = frame->locals + index;
+    memcpy(value, ptr, VM_VALUE_SIZE);
 }

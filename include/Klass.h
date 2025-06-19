@@ -13,14 +13,14 @@
  * @note Thread termination occurs if class loading fails - consider alternative
  *       error handling for production environments.
  */
-extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassName, GError **error);
+extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const char *klassName, GError **error);
 
 
-extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, guint16 index, Variant *variant);
+extern inline void PixtronVM_GetKlassFileValue(RuntimeContext *context, uint16_t index, VMValue *value);
 
 
-extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, guint16 index, const Variant *variant);
+extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, uint16_t index, const Variant *variant);
 
-extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const gchar *name);
+extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const char *name);
 
 #endif //KLASS_H

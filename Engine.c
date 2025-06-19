@@ -9,7 +9,8 @@
 #include "Memory.h"
 #include "VirtualStack.h"
 
-static inline void PixtronVM_CheckOperandType(RuntimeContext *context, Variant *targetOperand, Variant *sourceOperand) {
+static inline void PixtronVM_CheckOperandType(RuntimeContext *context, const VMValue *targetOperand,
+                                              const VMValue *sourceOperand) {
     const Type t0 = targetOperand->type;
     const Type t1 = sourceOperand->type;
     if (t0 == t1) {
@@ -20,33 +21,32 @@ static inline void PixtronVM_CheckOperandType(RuntimeContext *context, Variant *
 }
 
 
-static inline void PixtronVM_GetOpsData(RuntimeContext *context, Variant *variant) {
+static inline VMValue PixtronVM_GetOpsData(RuntimeContext *context, VMValue *value) {
     const guint8 subOps = PixtronVM_ReadByteCodeU8(context);
     const Type type = OPS_DATA_TYPE(subOps);
     const DataSource source = OPS_DATA_SOURCE(subOps);
-    variant->type = type;
     // Immediate
     if (source == IMMEDIATE) {
-        PixtronVM_ReadByteCodeImm(context, variant);
+        PixtronVM_ReadByteCodeImm(context, value);
     } else {
         const guint16 index = PixtronVM_ReadByteCodeU16(context);
         const bool local = source == LOCAL_VAR;
         // Local
         if (local) {
-            PixtronVM_GetLocalTable(context, index, variant);
+            PixtronVM_GetLocalTable(context, index, value);
         }
         // Klass field
         else {
-            PixtronVM_GetKlassFileValue(context, index, variant);
+            PixtronVM_GetKlassFileValue(context, index, value);
         }
     }
 }
 
 static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, Opcode opcode) {
-    Variant targetOperand;
-    Variant sourceOperand;
-    PixtronVM_PopOperand(context, &sourceOperand);
-    PixtronVM_PopOperand(context, &targetOperand);
+    VMValue targetOperand;
+    VMValue sourceOperand;
+    targetOperand = *PixtronVM_PopOperand(context);
+    sourceOperand = *PixtronVM_PopOperand(context);
     PixtronVM_CheckOperandType(context, &targetOperand, &sourceOperand);
     if (opcode == ADD) {
         APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, +, context);
@@ -65,11 +65,10 @@ static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *con
 static void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opcode) {
     const gint16 offset = (gint16) PixtronVM_ReadByteCodeU16(context);
     if (opcode != GOTO) {
-        Variant variant;
-        PixtronVM_PopOperand(context, &variant);
+        const VMValue *value = PixtronVM_PopOperand(context);
         const bool ifeq = opcode == IFEQ;
-        assert(VM_TYPE_BOOL(variant.type)&&"Ifeq or Ifnq only support boolean.");
-        if (!((ifeq && VM_FALSE(variant)) || !ifeq && VM_TRUE(variant))) {
+        assert(VM_TYPE_BOOL(value->type)&&"Ifeq or Ifnq only support boolean.");
+        if (!((ifeq && VM_FALSE(value->i8)) || !ifeq && VM_TRUE(value->i8))) {
             return;
         }
     }
@@ -80,24 +79,24 @@ static void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opcode) {
 
 
 extern inline void PixtronVM_Cmp(RuntimeContext *context, Opcode opcode) {
-    Variant top;
-    Variant next;
-    PixtronVM_PopOperand(context, &top);
-    PixtronVM_PopOperand(context, &next);
+    VMValue *top;
+    VMValue *next;
+    top = PixtronVM_PopOperand(context);
+    next = PixtronVM_PopOperand(context);
     switch (opcode) {
         case ICMP:
-            next.value.i = SIGN_CMP(next.value.i, top.value.i);
+            next->i32 = SIGN_CMP(next->i32, top->i32);
             break;
         case DCMP:
-            next.value.i = SIGN_CMP(next.value.d, top.value.d);
+            next->i32 = SIGN_CMP(next->f64, top->f64);
             break;
         case LCMP:
-            next.value.i = SIGN_CMP(next.value.l, top.value.l);
+            next->i32 = SIGN_CMP(next->f64, top->f64);
             break;
         default:
             context->throwException(context, "unsupported cmp opcode:%02x", opcode);
     }
-    PixtronVM_PushOperand(context, &next);
+    PixtronVM_PushOperand(context, next);
 }
 
 static void PixtronVM_CONV(RuntimeContext *context) {
@@ -138,9 +137,9 @@ static void PixtronVM_Store(RuntimeContext *context) {
 
 
 static void PixtronVM_Load(RuntimeContext *context) {
-    Variant variant;
-    PixtronVM_GetOpsData(context, &variant);
-    PixtronVM_PushOperand(context, &variant);
+    VMValue value;
+    PixtronVM_GetOpsData(context, &value);
+    PixtronVM_PushOperand(context, &value);
 }
 
 static void PixtronVM_ThrowException(RuntimeContext *context, gchar *fmt, ...) {

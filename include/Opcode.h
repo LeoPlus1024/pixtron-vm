@@ -95,8 +95,8 @@ typedef enum:uint16_t {
 #define VM_TYPE_SHORT(type) (type == TYPE_SHORT)
 #define VM_TYPE_INT(type) (type == TYPE_INT)
 #define VM_TYPE_BYTE(type) (type == TYPE_BYTE)
-#define VM_TRUE(variant) (variant.value.b == 1)
-#define VM_FALSE(variant) (variant.value.b == 0)
+#define VM_TRUE(value) (value == 1)
+#define VM_FALSE(value) (value == 0)
 /**
  * Cast c language long to PixotronVM long
  */

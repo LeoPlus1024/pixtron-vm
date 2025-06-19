@@ -31,13 +31,13 @@ do { \
         case TYPE_BYTE: \
         case TYPE_SHORT: \
         case TYPE_INT: \
-            (targetOperand).value.i compoundOp##= (sourceOperand).value.i; \
+            (targetOperand).i32 compoundOp##= (sourceOperand).i32; \
             break; \
         case TYPE_LONG: \
-            (targetOperand).value.l compoundOp##= (sourceOperand).value.l; \
+            (targetOperand).i64 compoundOp##= (sourceOperand).i64; \
             break; \
         case TYPE_DOUBLE: \
-            (targetOperand).value.d compoundOp##= (sourceOperand).value.d; \
+            (targetOperand).f64 compoundOp##= (sourceOperand).f64; \
             break; \
         default: \
             (executionContext)->throwException( \

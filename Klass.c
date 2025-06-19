@@ -252,11 +252,10 @@ static inline Klass *PixtronVM_KlassFieldOutOfBoundsCheck(RuntimeContext *contex
     return klass;
 }
 
-extern inline VMValue PixtronVM_GetKlassFileValue(RuntimeContext *context, const guint16 index, Variant *variant) {
+extern inline void PixtronVM_GetKlassFileValue(RuntimeContext *context, const uint16_t index, VMValue *value) {
     const Klass *klass = PixtronVM_KlassFieldOutOfBoundsCheck(context, index);
-    const VMValue value = klass->fieldVals[index];
-    PixtronVM_ConvertValueToVariant(value, variant);
-    return value;
+    const VMValue *ptr = klass->fieldVals + index;
+    memcpy(value, ptr, VM_VALUE_SIZE);
 }
 
 

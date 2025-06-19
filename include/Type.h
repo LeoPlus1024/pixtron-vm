@@ -5,7 +5,19 @@
 #include <stdint.h>
 #include <glib.h>
 
-typedef uint64_t VMValue;
+typedef union {
+    int8_t i8;
+    int16_t i16;
+    int32_t i32;
+    int64_t i64;
+    double f64;
+
+    struct {
+        uint64_t payload: 48;
+        Type type: 16;
+    };
+} VMValue;
+
 struct VM;
 
 typedef struct {
@@ -229,11 +241,11 @@ extern inline void PixtronVM_ConvertToLongValue(Variant *variant);
  */
 extern inline void PixtronVM_negative(Variant *variant);
 
-/**
- * Convert a VMValue to a Variant
- * @param value The VMValue to convert
- * @param variant Output buffer to store the converted Variant (modified in-place)
- */
-extern inline void PixtronVM_ConvertValueToVariant(VMValue value, Variant *variant);
+// /**
+//  * Convert a VMValue to a Variant
+//  * @param value The VMValue to convert
+//  * @param variant Output buffer to store the converted Variant (modified in-place)
+//  */
+// extern inline void PixtronVM_ConvertValueToVariant(VMValue value, Variant *variant);
 
 #endif //TYPE_H

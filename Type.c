@@ -3,7 +3,7 @@
 #include <assert.h>
 
 extern inline VMValue PixtronVM_CreateValueFromBuffer(const Type type, const guint8 *buf) {
-    VMValue value = 0;
+    VMValue value;
     memcpy(&value, buf, TYPE_SIZE[type]);
     if (type == TYPE_DOUBLE) {
         return value;
@@ -15,10 +15,10 @@ extern inline VMValue PixtronVM_CreateValueFromBuffer(const Type type, const gui
 }
 
 extern inline Type PixtronVM_GetValueType(const VMValue value) {
-    if ((value & 0x7FF0000000000000) != 0x7FF0000000000000) {
+    if ((value.i64 & 0x7FF0000000000000) != 0x7FF0000000000000) {
         return TYPE_DOUBLE;
     }
-    return (value >> 48) & 0x0f;
+    return value.type;
 }
 
 extern inline void PixtronVM_ConvertValueToBuffer(const Variant *variant, guint8 *buf) {
@@ -90,18 +90,18 @@ extern inline void PixtronVM_negative(Variant *variant) {
     }
 }
 
-extern inline void PixtronVM_ConvertValueToVariant(VMValue value, Variant *variant) {
-    const Type type = PixtronVM_GetValueType(value);
-    if (type == TYPE_DOUBLE) {
-        memcpy(&(variant->value), &value, TYPE_SIZE[type]);
-    }
-    // 对于long型使用48位填充最高位作为符号位
-    else if (type == TYPE_LONG) {
-        variant->value.l = VLONG_TO_CLONG(value);
-    }
-    // 对于 byte、short类型直接扩容到int类型
-    else {
-        variant->value.i = (int32_t) value;
-    }
-    variant->type = type;
-}
+// extern inline void PixtronVM_ConvertValueToVariant(VMValue value, Variant *variant) {
+//     const Type type = PixtronVM_GetValueType(value);
+//     if (type == TYPE_DOUBLE) {
+//         memcpy(&(variant->value), &value, TYPE_SIZE[type]);
+//     }
+//     // 对于long型使用48位填充最高位作为符号位
+//     else if (type == TYPE_LONG) {
+//         variant->value.l = VLONG_TO_CLONG(value);
+//     }
+//     // 对于 byte、short类型直接扩容到int类型
+//     else {
+//         variant->value.i = (int32_t) value;
+//     }
+//     variant->type = type;
+// }
