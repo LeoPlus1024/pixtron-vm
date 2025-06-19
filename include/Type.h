@@ -60,11 +60,11 @@ typedef struct _Klass {
     // Field value
     VMValue *fieldVals;
     //Class name
-    gchar *name;
+    char *name;
     // Field count
-    guint fieldCount;
+    uint32_t fieldCount;
     // Method count
-    guint methodCount;
+    uint32_t methodCount;
     const struct VM *vm;
 } Klass;
 
@@ -78,22 +78,14 @@ typedef struct _VirtualStackFrame {
     // Operand stack
     VMValue *operandStack;
     // Program counter
-    guint pc;
+    uint32_t pc;
     // Stack pointer
-    guint sp;
-    guint maxStackSize;
-    guint maxLocalsSize;
+    uint32_t sp;
+    uint32_t maxStackSize;
+    uint32_t maxLocalsSize;
     // Previous stack frame
     struct _VirtualStackFrame *pre;
 } VirtualStackFrame;
-
-typedef struct {
-    // 当前栈深度
-    size_t depth;
-    // 最大栈深度
-    size_t maxDepth;
-} VirtualStack, *VirtualStackPtr;
-
 
 typedef struct {
     // 魔数
@@ -112,34 +104,21 @@ typedef struct {
 typedef struct VM {
     // Klass path
     gchar *klassPath;
-    // Program count
-    uint64_t pc;
-    // VM Stack
-    VirtualStackPtr stack;
     // Classes
     GHashTable *klassTable;
-} PixtronVM, *PixtronVMPtr, **PixtronVMRef;
+} PixtronVM;
 
-struct _Variable;
-
-typedef struct _Variant {
-    Type type;
-
-    union {
-        int8_t b;
-        int16_t s;
-        int32_t i;
-        int64_t l;
-        double d;
-    } value;
-} Variant;
 
 struct _RuntimeContext;
 
 typedef struct _RuntimeContext {
-    VirtualStack *stack;
+    // Current stack depth
+    uint32_t stackDepth;
+    // Max stack depth
+    uint32_t maxStackDepth;
     // Stack top frame
     VirtualStackFrame *frame;
+    // VM pointer
     const PixtronVM *vm;
 
     void (*throwException)(struct _RuntimeContext *context, gchar *fmt, ...);
@@ -168,84 +147,21 @@ typedef struct _RuntimeContext {
  *          before invocation.
  *
  * @example
- * const guint8 packet[] = {0x01, 0x00, 0x00, 0x3F, 0x80};
+ * const uint8_t packet[] = {0x01, 0x00, 0x00, 0x3F, 0x80};
  * VMValue v = PixtronVM_CreateValueFromBuffer(DOUBLE, packet);
  */
-extern inline VMValue PixtronVM_CreateValueFromBuffer(Type type, const guint8 *buf);
-
-/**
- *<pre>
- * NaN-boxing pattern (64-bit):
- * [ Sign  |  Exponent   | Quiet NaN | Payload (Type + Data) ]
- *  1 bit    11 bits       1 bit          51 bits
- *          0x7FF           1
- *
- * Type tag occupies bits 61-58 (0xA000000000000000 >> 48 = 0xA)
- * 0x7FF0000000000000 mask isolates NaN control bits
- *</pre>
- * @brief Extracts type information from VMValue's binary representation
- *
- * Decodes the VMValue's type using its internal bit pattern:
- * - Values not matching the NaN boxing pattern (0x7FF0_0000_0000_0000 mask)
- *   are considered primitive doubles (TYPE_DOUBLE)
- * - NaN-boxed values store type tags in bits [61:48] (0x0F mask after shifting)
- * <pre>
- *
- * @param value VM value to inspect. Passed by const-value for optimization.
- * @return Type Decoded type tag, either TYPE_DOUBLE or a NaN-boxed type ID
- *
- * @note Implementation relies on:
- * 1. IEEE 754 NaN boxing implementation details
- * 2. Little-endian memory layout
- * 3. 48-bit type tag storage (values 0-15)
- *
- * @warning Platform-dependent:
- * - Assumes 64-bit VMValue representation
- * - Depends on specific NaN quiet bit patterns
- * - Type tags may change across VM versions
- *
- * @see VMValue Encoding Specification Section 3.2
- *      "NaN-boxed Type Tagging"
- *
- * @example
- * VMValue num = 3.1415926; // Raw double
- * Type t = PixtronVM_GetValueType(num); // Returns TYPE_DOUBLE
- *
- * VMValue obj = 0x7FF1A00000000000; // NaN-boxed type 0xA
- * Type t = PixtronVM_GetValueType(obj); // Returns 0xA
- */
-extern inline Type PixtronVM_GetValueType(VMValue value);
-
-/**
- * Convert a Variant to its raw VMValue representation
- * @param variant Pointer to the source Variant to convert
- * @param value Output buffer to store the raw VMValue bytes (must have enough space)
- */
-extern inline void PixtronVM_ConvertValueToBuffer(const Variant *variant, guint8 *buf);
+extern inline VMValue PixtronVM_CreateValueFromBuffer(Type type, const uint8_t *buf);
 
 /**
  * Convert a Variant to double-precision floating point representation
- * @param variant Pointer to the Variant to convert (modified in-place)
+ * @param value Pointer to the value to convert (modified in-place)
  */
-extern inline void PixtronVM_ConvertToDoubleValue(Variant *variant);
+extern inline void PixtronVM_ConvertToDoubleValue(VMValue *value);
 
 /**
  * Convert a Variant to 64-bit integer (long) representation
- * @param variant Pointer to the Variant to convert (modified in-place)
+ * @param value Pointer to the value to convert (modified in-place)
  */
-extern inline void PixtronVM_ConvertToLongValue(Variant *variant);
-
-/**
- * Perform arithmetic negation on a Variant's value
- * @param variant Pointer to the Variant to negate (modified in-place)
- */
-extern inline void PixtronVM_negative(Variant *variant);
-
-// /**
-//  * Convert a VMValue to a Variant
-//  * @param value The VMValue to convert
-//  * @param variant Output buffer to store the converted Variant (modified in-place)
-//  */
-// extern inline void PixtronVM_ConvertValueToVariant(VMValue value, Variant *variant);
+extern inline void PixtronVM_ConvertToLongValue(VMValue *value);
 
 #endif //TYPE_H

@@ -19,7 +19,7 @@ extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const char *klassNa
 extern inline void PixtronVM_GetKlassFileValue(RuntimeContext *context, uint16_t index, VMValue *value);
 
 
-extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, uint16_t index, const Variant *variant);
+extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, uint16_t index, const VMValue *value);
 
 extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const char *name);
 

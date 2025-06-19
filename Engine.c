@@ -21,33 +21,11 @@ static inline void PixtronVM_CheckOperandType(RuntimeContext *context, const VMV
 }
 
 
-static inline VMValue PixtronVM_GetOpsData(RuntimeContext *context, VMValue *value) {
-    const guint8 subOps = PixtronVM_ReadByteCodeU8(context);
-    const Type type = OPS_DATA_TYPE(subOps);
-    const DataSource source = OPS_DATA_SOURCE(subOps);
-    // Immediate
-    if (source == IMMEDIATE) {
-        PixtronVM_ReadByteCodeImm(context, value);
-    } else {
-        const guint16 index = PixtronVM_ReadByteCodeU16(context);
-        const bool local = source == LOCAL_VAR;
-        // Local
-        if (local) {
-            PixtronVM_GetLocalTable(context, index, value);
-        }
-        // Klass field
-        else {
-            PixtronVM_GetKlassFileValue(context, index, value);
-        }
-    }
-}
-
 static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, Opcode opcode) {
-    VMValue targetOperand;
-    VMValue sourceOperand;
-    targetOperand = *PixtronVM_PopOperand(context);
-    sourceOperand = *PixtronVM_PopOperand(context);
-    PixtronVM_CheckOperandType(context, &targetOperand, &sourceOperand);
+    const VMValue *sourceOperand = PixtronVM_PopOperand(context);
+    VMValue *targetOperand = PixtronVM_PopOperand(context);
+
+    PixtronVM_CheckOperandType(context, targetOperand, sourceOperand);
     if (opcode == ADD) {
         APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, +, context);
     } else if (opcode == SUB) {
@@ -59,10 +37,10 @@ static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *con
     } else {
         context->throwException(context, "Canonical binary operation '%02x' is not supported.", opcode);
     }
-    PixtronVM_PushOperand(context, &targetOperand);
+    PixtronVM_PushOperand(context, NULL);
 }
 
-static void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opcode) {
+static inline void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opcode) {
     const gint16 offset = (gint16) PixtronVM_ReadByteCodeU16(context);
     if (opcode != GOTO) {
         const VMValue *value = PixtronVM_PopOperand(context);
@@ -101,44 +79,68 @@ extern inline void PixtronVM_Cmp(RuntimeContext *context, Opcode opcode) {
 
 static void PixtronVM_CONV(RuntimeContext *context) {
     const Type type = PixtronVM_ReadByteCodeU16(context);
-    Variant variant;
-    PixtronVM_PopOperand(context, &variant);
-    const Type src = variant.type;
+    VMValue *value = PixtronVM_PopOperand(context);
+    const Type src = value->type;
     if (src == type) {
         return;
     }
-    assert(VM_TYPE_NUMBER(src)&&"Only support cast conv basic type.");
-    assert(VM_TYPE_NUMBER(type));
+    g_assert(VM_TYPE_NUMBER(src));
+    g_assert(VM_TYPE_NUMBER(type));
     if (type == TYPE_DOUBLE) {
-        PixtronVM_ConvertToDoubleValue(&variant);
+        PixtronVM_ConvertToDoubleValue(value);
     } else if (type == TYPE_LONG) {
-        PixtronVM_ConvertToLongValue(&variant);
+        PixtronVM_ConvertToLongValue(value);
     } else {
-        variant.type = type;
+        value->type = type;
     }
-    PixtronVM_PushOperand(context, &variant);
+    PixtronVM_PushOperand(context, NULL);
 }
 
 static void PixtronVM_Store(RuntimeContext *context) {
-    Variant variant;
-    PixtronVM_PopOperand(context, &variant);
+    const VMValue *value = PixtronVM_PopOperand(context);
     const uint8_t subOps = PixtronVM_ReadByteCodeU8(context);
     const DataSource s = OPS_DATA_SOURCE(subOps);
-    const guint16 index = PixtronVM_ReadByteCodeU16(context);
+    const uint16_t index = PixtronVM_ReadByteCodeU16(context);
     // Global variable
     if (s == GLOBAL_VAR) {
-        PixtronVM_SetKlassFileValue(context, index, &variant);
+        PixtronVM_SetKlassFileValue(context, index, value);
     }
     // Local variable
     else if (s == LOCAL_VAR) {
-        PixtronVM_SetLocalTable(context, index, &variant);
+        PixtronVM_SetLocalTable(context, index, value);
     }
 }
 
 
-static void PixtronVM_Load(RuntimeContext *context) {
+static inline void PixtronVM_Load(RuntimeContext *context) {
     VMValue value;
-    PixtronVM_GetOpsData(context, &value);
+    const uint8_t subOps = PixtronVM_ReadByteCodeU8(context);
+    const DataSource source = OPS_DATA_SOURCE(subOps);
+    const Type type = OPS_DATA_TYPE(subOps);
+    // Immediate
+    if (source == IMMEDIATE) {
+        value.type = type;
+        PixtronVM_ReadByteCodeImm(context, &value);
+    } else {
+        const uint16_t index = PixtronVM_ReadByteCodeU16(context);
+        const bool local = source == LOCAL_VAR;
+        // Local
+        if (local) {
+            PixtronVM_GetLocalTable(context, index, &value);
+        }
+        // Klass field
+        else {
+            PixtronVM_GetKlassFileValue(context, index, &value);
+        }
+        if (type != value.type) {
+            context->throwException(
+                context,
+                "Load value type mismatch the expected type is:'%s' and the actual type is:'%s'.",
+                TYPE_NAME[type],
+                TYPE_NAME[value.type]
+            );
+        }
+    }
     PixtronVM_PushOperand(context, &value);
 }
 
@@ -174,7 +176,7 @@ static void PixtronVM_ThrowException(RuntimeContext *context, gchar *fmt, ...) {
         frame->pc, // pc
         frame->pc, // pc
         frame->sp, // sp
-        frame->sp, // stack deep
+        context->stackDepth, // stack deep
         frame->maxStackSize, // max stack deep
         (void *) frame->locals, // local
         (void *) frame->operandStack // operand stack address
@@ -185,13 +187,11 @@ static void PixtronVM_ThrowException(RuntimeContext *context, gchar *fmt, ...) {
 }
 
 
-extern Variant *PixtronVM_CallMethod(const Method *method) {
+extern VMValue *PixtronVM_CallMethod(const Method *method) {
     RuntimeContext *context = PixotronVM_calloc(sizeof(RuntimeContext));
     context->vm = method->klass->vm;
-    VirtualStack *stack = PixotronVM_calloc(sizeof(VirtualStack));
-    stack->maxDepth = VM_MAX_STACK_DEPTH;
-    stack->depth = 0;
-    context->stack = stack;
+    context->maxStackDepth = VM_MAX_STACK_DEPTH;
+    context->stackDepth = 0;
     context->throwException = PixtronVM_ThrowException;
     PixtronVM_PushStackFrame(context, method);
 
@@ -228,7 +228,7 @@ extern Variant *PixtronVM_CallMethod(const Method *method) {
                 PixtronVM_PopStackFrame(context);
                 break;
             case POP:
-                PixtronVM_PopOperand(context,NULL);
+                PixtronVM_PopOperand(context);
                 break;
             case CALL:
                 break;

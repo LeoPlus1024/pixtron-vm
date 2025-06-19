@@ -27,13 +27,13 @@ extern inline guint8 PixtronVM_ReadByteCodeU8(RuntimeContext *context) {
 
 
 extern inline void PixtronVM_ReadByteCodeImm(RuntimeContext *context, VMValue *value) {
-    const guint8 size = TYPE_SIZE[value->type];
+    const uint8_t size = TYPE_SIZE[value->type];
     VirtualStackFrame *frame = context->frame;
     const Method *method = frame->method;
     const Klass *klass = method->klass;
     PixtronVM_ByteCodeIndexOutOfBoundsCheck(context, frame, method, size);
-    const guint pc = frame->pc;
-    const guint8 *buffer = klass->byteCode + pc;
+    const uint32_t pc = frame->pc;
+    const uint8_t *buffer = klass->byteCode + pc;
     memcpy(value, buffer, size);
     frame->pc = pc + size;
 }

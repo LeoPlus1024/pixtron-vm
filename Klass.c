@@ -259,15 +259,15 @@ extern inline void PixtronVM_GetKlassFileValue(RuntimeContext *context, const ui
 }
 
 
-extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, const guint16 index, const Variant *variant) {
+extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, const guint16 index, const VMValue *value) {
     const Klass *klass = PixtronVM_KlassFieldOutOfBoundsCheck(context, index);
     const Field *field = klass->fields + index;
     // Type check
-    if (field->type != variant->type) {
-        context->throwException(context, "Klass field type is:%d but value type is:%d.", field->type, variant->type);
+    if (field->type != value->type) {
+        context->throwException(context, "Klass field type is:%d but value type is:%d.", field->type, value->type);
     }
-    guint8 *buffer = (guint8 *) klass->fieldVals + index;
-    PixtronVM_ConvertValueToBuffer(variant, buffer);
+    uint8_t *buffer = (guint8 *) klass->fieldVals + index;
+    memcpy(buffer, value, VM_VALUE_SIZE);
 }
 
 extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const gchar *name) {

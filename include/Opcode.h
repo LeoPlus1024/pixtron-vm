@@ -51,7 +51,7 @@ typedef enum {
     IMMEDIATE
 } DataSource;
 
-static const uint16_t TYPE_SIZE[] = {
+static const uint8_t TYPE_SIZE[] = {
     [NIL] = 0,
     [TYPE_BYTE] = 1,
     [TYPE_SHORT] = 2,
@@ -97,16 +97,6 @@ typedef enum:uint16_t {
 #define VM_TYPE_BYTE(type) (type == TYPE_BYTE)
 #define VM_TRUE(value) (value == 1)
 #define VM_FALSE(value) (value == 0)
-/**
- * Cast c language long to PixotronVM long
- */
-#define CLONG_TO_VLONG(value) ((int64_t)((uint64_t)value << 16) >> 16)
-/**
- * Cast PixotronVM long to c language long type
- */
-#define VLONG_TO_CLONG(value) ((int64_t) ((uint64_t)value << 16) >> 16)
-
-#define SIGN_CMP(a, b) ((typeof(a))((a) > (b)) - ((typeof(a))((a) < (b))))
 
 
 #endif

@@ -2,6 +2,8 @@
 #define ENGINE_H
 #include "VM.h"
 
+#define SIGN_CMP(a, b) ((typeof(a))((a) > (b)) - ((typeof(a))((a) < (b))))
+
 
 /**
  * @brief Applies type-aware compound assignment operation with automatic type resolution
@@ -27,29 +29,29 @@
     executionContext \
 ) \
 do { \
-    switch ((targetOperand).type) { \
+    switch ((targetOperand)->type) { \
         case TYPE_BYTE: \
         case TYPE_SHORT: \
         case TYPE_INT: \
-            (targetOperand).i32 compoundOp##= (sourceOperand).i32; \
+            (targetOperand)->i32 compoundOp##= (sourceOperand)->i32; \
             break; \
         case TYPE_LONG: \
-            (targetOperand).i64 compoundOp##= (sourceOperand).i64; \
+            (targetOperand)->i64 compoundOp##= (sourceOperand)->i64; \
             break; \
         case TYPE_DOUBLE: \
-            (targetOperand).f64 compoundOp##= (sourceOperand).f64; \
+            (targetOperand)->f64 compoundOp##= (sourceOperand)->f64; \
             break; \
         default: \
             (executionContext)->throwException( \
                 (executionContext), \
                 "Type mismatch. Target type: %d, Value type: %d", \
-                (targetOperand).type, \
-                (sourceOperand).type \
+                (targetOperand)->type, \
+                (sourceOperand)->type \
             ); \
             break; \
     } \
 } while(0)
 
-extern Variant *PixtronVM_CallMethod(const Method *method);
+extern VMValue *PixtronVM_CallMethod(const Method *method);
 
 #endif //ENGINE_H

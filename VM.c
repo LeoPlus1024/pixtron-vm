@@ -49,9 +49,5 @@ extern void PixtronVM_DestroyVM(PixtronVM **vm) {
     if (vm == NULL || *vm == NULL) {
         return;
     }
-    PixtronVMPtr ptr = *vm;
-    // PixotronVM_free(TO_REF(vm->header));
-    PixotronVM_free(TO_REF(ptr->stack));
-    //    PixotronVM_free(TO_REF(vm->buffer));
     PixotronVM_free(CAST_REF(vm));
 }
