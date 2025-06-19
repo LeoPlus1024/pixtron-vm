@@ -108,8 +108,9 @@ typedef struct VM {
     GHashTable *klassTable;
 } PixtronVM, *PixtronVMPtr, **PixtronVMRef;
 
+struct _Variable;
 
-typedef struct {
+typedef struct _Variant {
     Type type;
 
     union {

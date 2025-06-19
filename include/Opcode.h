@@ -8,7 +8,7 @@ typedef enum:uint8_t {
     STORE, // 弹栈（操作数含类型）
     // 算术运算
     ADD, // 加法（操作数含类型）
-    SBC, // 减法
+    SUB, // 减法
     MUL,
     DIV,
     // 无条件跳转
@@ -27,6 +27,7 @@ typedef enum:uint8_t {
     // 类型转换
     CONV, // 转换（如 i2l、f2d）
     CALL,
+    POP,
     // 扩展预留
     RESERVED_START = 0x80
 } Opcode;

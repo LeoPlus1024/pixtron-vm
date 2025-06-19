@@ -9,8 +9,18 @@
 #include "Memory.h"
 #include "VirtualStack.h"
 
+static inline void PixtronVM_CheckOperandType(RuntimeContext *context, Variant *targetOperand, Variant *sourceOperand) {
+    const Type t0 = targetOperand->type;
+    const Type t1 = sourceOperand->type;
+    if (t0 == t1) {
+        return;
+    }
+    context->throwException(context, "Operand type mismatch the first operand is:'%s' and the second operand is:'%s'.",
+                            TYPE_NAME[t0], TYPE_NAME[t1]);
+}
 
-static void PixtronVM_GetOpsData(RuntimeContext *context, Variant *variant) {
+
+static inline void PixtronVM_GetOpsData(RuntimeContext *context, Variant *variant) {
     const guint8 subOps = PixtronVM_ReadByteCodeU8(context);
     const Type type = OPS_DATA_TYPE(subOps);
     const DataSource source = OPS_DATA_SOURCE(subOps);
@@ -32,65 +42,24 @@ static void PixtronVM_GetOpsData(RuntimeContext *context, Variant *variant) {
     }
 }
 
-static void PixotronVM_AddSub(RuntimeContext *context, Opcode opcode) {
-    Variant top;
-    Variant next;
-
-    PixtronVM_PopOperand(context, &top);
-    PixtronVM_PopOperand(context, &next);
-
-    assert(VM_TYPE_NUMBER(top.type) && "Top operand must be number.");
-    assert(VM_TYPE_NUMBER(next.type) && "Next operand must be number.");
-
-    if (opcode == SBC) {
-        PixtronVM_negative(&top);
+static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, Opcode opcode) {
+    Variant targetOperand;
+    Variant sourceOperand;
+    PixtronVM_PopOperand(context, &sourceOperand);
+    PixtronVM_PopOperand(context, &targetOperand);
+    PixtronVM_CheckOperandType(context, &targetOperand, &sourceOperand);
+    if (opcode == ADD) {
+        APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, +, context);
+    } else if (opcode == SUB) {
+        APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, -, context);
+    } else if (opcode == MUL) {
+        APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, *, context);
+    } else if (opcode == DIV) {
+        APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, /, context);
+    } else {
+        context->throwException(context, "Canonical binary operation '%02x' is not supported.", opcode);
     }
-
-    // Same type direct operator
-    if (top.type == next.type) {
-        switch (top.type) {
-#define HANDLE_CASE(type, op) \
-        case type: { \
-            next.value.op += top.value.op; \
-            break; \
-        }
-            HANDLE_CASE(TYPE_BYTE, b)
-            HANDLE_CASE(TYPE_SHORT, s)
-            HANDLE_CASE(TYPE_INT, i)
-            case TYPE_LONG:
-                next.value.l = CLONG_TO_VLONG(next.value.l + top.value.l);
-                break;
-            HANDLE_CASE(TYPE_DOUBLE, d)
-#undef HANDLE_CASE
-            default:
-                assert(false && "Unhandled numeric type");
-        }
-    }
-    // Auto extension to double
-    else if (VM_TYPE_DOUBLE(top.type) || VM_TYPE_DOUBLE(next.type)) {
-        PixtronVM_ConvertToDoubleValue(&top);
-        PixtronVM_ConvertToDoubleValue(&next);
-        const double sum = next.value.d + top.value.d;
-        next.value.d = sum;
-    }
-    // Auto extension to long
-    else if (VM_TYPE_LONG(top.type) || VM_TYPE_LONG(next.type)) {
-        PixtronVM_ConvertToLongValue(&top);
-        PixtronVM_ConvertToLongValue(&next);
-        next.value.l = CLONG_TO_VLONG(next.value.l + top.value.l);
-    }
-    // Byte、Short、Int
-    else {
-        next.value.i = next.value.i + top.value.i;
-        if (VM_TYPE_BYTE(top.type) || VM_TYPE_BYTE(next.type)) {
-            next.type = TYPE_BYTE;
-        } else if (VM_TYPE_SHORT(top.type) || VM_TYPE_SHORT(next.type)) {
-            next.type = TYPE_SHORT;
-        } else {
-            next.type = TYPE_INT;
-        }
-    }
-    PixtronVM_PushOperand(context, &next);
+    PixtronVM_PushOperand(context, &targetOperand);
 }
 
 static void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opcode) {
@@ -126,7 +95,7 @@ extern inline void PixtronVM_Cmp(RuntimeContext *context, Opcode opcode) {
             next.value.i = SIGN_CMP(next.value.l, top.value.l);
             break;
         default:
-            assert(false && "Unhandled cmp opcode.");
+            context->throwException(context, "unsupported cmp opcode:%02x", opcode);
     }
     PixtronVM_PushOperand(context, &next);
 }
@@ -228,9 +197,9 @@ extern Variant *PixtronVM_CallMethod(const Method *method) {
     PixtronVM_PushStackFrame(context, method);
 
     while (context->frame != NULL) {
-        const Opcode ops = PixtronVM_ReadByteCodeU8(context);
+        const Opcode opcode = PixtronVM_ReadByteCodeU8(context);
 
-        switch (ops) {
+        switch (opcode) {
             case LOAD:
                 PixtronVM_Load(context);
                 break;
@@ -238,18 +207,20 @@ extern Variant *PixtronVM_CallMethod(const Method *method) {
                 PixtronVM_Store(context);
                 break;
             case ADD:
-            case SBC:
-                PixotronVM_AddSub(context, ops);
+            case SUB:
+            case MUL:
+            case DIV:
+                PixtronVM_executeCanonicalBinaryOperation(context, opcode);
                 break;
             case GOTO:
             case IFEQ:
             case IFNE:
-                PixtronVM_CheckCon(context, ops);
+                PixtronVM_CheckCon(context, opcode);
                 break;
             case ICMP:
             case DCMP:
             case LCMP:
-                PixtronVM_Cmp(context, ops);
+                PixtronVM_Cmp(context, opcode);
                 break;
             case CONV:
                 PixtronVM_CONV(context);
@@ -257,10 +228,13 @@ extern Variant *PixtronVM_CallMethod(const Method *method) {
             case RET:
                 PixtronVM_PopStackFrame(context);
                 break;
+            case POP:
+                PixtronVM_PopOperand(context,NULL);
+                break;
             case CALL:
                 break;
             default:
-                context->throwException(context, "Unsupported opcode: %02x", ops);
+                context->throwException(context, "Unsupported opcode: %02x", opcode);
         }
     }
 }

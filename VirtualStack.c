@@ -28,6 +28,11 @@ extern inline void PixtronVM_PopOperand(RuntimeContext *context, Variant *varian
     if (sp + 1 == frame->maxStackSize) {
         context->throwException(context, "Stack overflow.");
     }
+    // If variant is null trash it
+    if (variant == NULL) {
+        frame->sp = sp + 1;
+        return;
+    }
     VMValue value = 0;
     const void *stackTop = frame->operandStack + sp;
     memcpy(&value, stackTop, VM_VALUE_SIZE);

@@ -1,4 +1,4 @@
-#include "PixotronVM.h"
+#include "VM.h"
 #include "Type.h"
 
 int main(int argc, char *argv[]) {

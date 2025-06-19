@@ -1,5 +1,5 @@
-#ifndef PIXOTRONVM_H
-#define PIXOTRONVM_H
+#ifndef VM_H
+#define VM_H
 #include "Type.h"
 
 /**
@@ -24,4 +24,4 @@ extern void PixtronVM_LaunchVM(const PixtronVM *vm, const gchar *clazzName);
  */
 extern void PixtronVM_DestroyVM(PixtronVM **vm);
 
-#endif //PIXOTRONVM_H
+#endif //VM_H

@@ -1,45 +1,54 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-#include "PixotronVM.h"
-// /**
-//  * Exec add or sbc operate
-//  * @param vm {@link PixtronVMPtr}
-//  * @param sbc sbc?
-//  */
-// extern inline void PixotronVM_exec_add_sbc(PixtronVMPtr vm, Opcode opcode);
-//
-// /**
-//  * Exec a <b>ifeq</b> 、<b>ifnq</b> 、<b>goto</b> operate
-//  * @param vm {@link PixtronVMPtr}
-//  * @param pc Progress count
-//  * @return Program counter
-//  */
-// extern inline void PixtronVM_exec_jmp(PixtronVMPtr vm, Opcode opcode);
-//
-// /**
-//  * Exec cmp operate <b>icmp</b>,<b>lcmp</b>,<b>dcmp</b> etc.
-//  */
-// extern inline void PixtronVM_exec_cmp(PixtronVMPtr vm, Opcode opcode);
-//
-// /**
-//  * Exec <b>conv</b> operate for stack top value
-//  */
-// extern inline void PixtronVM_exec_conv(PixtronVMPtr vm);
-//
-// /**
-//  * Exec stack pop operation
-//  * @param vm {@link PixtronVMPtr} - Pointer to the virtual machine instance
-//  * Removes the top value from the virtual machine's operand stack
-//  */
-// extern inline void PixtronVM_exec_pop(PixtronVMPtr vm);
-//
-// /**
-//  * Exec stack push operation
-//  * @param vm {@link PixtronVMPtr} - Pointer to the virtual machine instance
-//  * Pushes a value onto the virtual machine's operand stack
-//  */
-// extern inline void PixtronVM_exec_push(PixtronVMPtr vm);
-//
+#include "VM.h"
+
+
+/**
+ * @brief Applies type-aware compound assignment operation with automatic type resolution
+ * @param targetOperand [IN/OUT] Target operand object to be modified.
+ *           Must contain 'type' field and 'value' union (i, l, d members)
+ * @param sourceOperand [IN] Source operand object providing values.
+ *           Must have compatible type with target operand
+ * @param compoundOp Compound assignment operator token (e.g +=, -=, *=)
+ * @param executionContext Runtime context for error handling
+ *
+ * @note Type handling rules:
+ *   - Integral types (BYTE/SHORT/INT) use 32-bit integer operations
+ *   - LONG uses 64-bit integer operations
+ *   - DOUBLE uses double-precision floating point
+ *   - Type mismatch throws exception with actual type code
+ *
+ * @warning Target operand modification has no rollback mechanism on failure
+ */
+#define APPLY_COMPOUND_OPERATOR( \
+    targetOperand, \
+    sourceOperand, \
+    compoundOp, \
+    executionContext \
+) \
+do { \
+    switch ((targetOperand).type) { \
+        case TYPE_BYTE: \
+        case TYPE_SHORT: \
+        case TYPE_INT: \
+            (targetOperand).value.i compoundOp##= (sourceOperand).value.i; \
+            break; \
+        case TYPE_LONG: \
+            (targetOperand).value.l compoundOp##= (sourceOperand).value.l; \
+            break; \
+        case TYPE_DOUBLE: \
+            (targetOperand).value.d compoundOp##= (sourceOperand).value.d; \
+            break; \
+        default: \
+            (executionContext)->throwException( \
+                (executionContext), \
+                "Type mismatch. Target type: %d, Value type: %d", \
+                (targetOperand).type, \
+                (sourceOperand).type \
+            ); \
+            break; \
+    } \
+} while(0)
 
 extern Variant *PixtronVM_CallMethod(const Method *method);
 

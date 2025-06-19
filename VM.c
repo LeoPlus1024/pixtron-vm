@@ -1,4 +1,4 @@
-#include "PixotronVM.h"
+#include "VM.h"
 
 
 #include <stdio.h>
