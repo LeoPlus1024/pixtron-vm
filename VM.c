@@ -11,10 +11,10 @@
 #include "Engine.h"
 
 
-extern PixtronVM *PixtronVM_CreateVM(const gchar *workDir) {
+extern PixtronVM *PixtronVM_CreateVM(const gchar *klassPath) {
     PixtronVM *vm = PixotronVM_calloc(sizeof(PixtronVM));
 
-    vm->workdir = g_strdup(workDir);
+    vm->klassPath = g_strdup(klassPath);
 
     GHashTable *klassTable = g_hash_table_new(g_str_hash, g_str_equal);
     if (klassTable == NULL) {

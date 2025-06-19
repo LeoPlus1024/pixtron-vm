@@ -8,7 +8,7 @@
  * @return Pointer to the newly created PixtronVM instance
  * @note The VM takes ownership of the buffer and will free it when destroyed
  */
-extern PixtronVM *PixtronVM_CreateVM(const gchar *workDir);
+extern PixtronVM *PixtronVM_CreateVM(const gchar *klassPath);
 
 /**
  * Execute the loaded bytecode in the virtual machine

@@ -98,8 +98,8 @@ typedef struct {
 
 
 typedef struct VM {
-    // Working directory
-    gchar *workdir;
+    // Klass path
+    gchar *klassPath;
     // Program count
     uint64_t pc;
     // VM Stack

@@ -189,7 +189,7 @@ static Klass *PixtronVM_KlassLoad(const PixtronVM *vm, const gchar *KlassName, G
     GFileInfo *fileInfo = NULL;
     GFileEnumerator *enumerator = NULL;
 
-    dir = g_file_new_for_path(vm->workdir);
+    dir = g_file_new_for_path(vm->klassPath);
     enumerator = g_file_enumerate_children(dir,
                                            G_FILE_ATTRIBUTE_STANDARD_NAME,
                                            G_FILE_QUERY_INFO_NONE,
