@@ -5,7 +5,8 @@ import java.util.Arrays;
 public enum Pseudo {
     FUNC("@func"),
     END("@end"),
-    VAR("@field"),
+    FIELD("@field"),
+    NATIVE("@native"),
     NAMESPACE("@namespace"),
     ;
     private final String code;

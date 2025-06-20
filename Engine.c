@@ -8,6 +8,9 @@
 #include "Klass.h"
 #include "Memory.h"
 #include "Stack.h"
+#include <dlfcn.h>
+#include <FFI.h>
+
 
 static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, const Opcode opcode) {
     const VMValue *sourceOperand = PixtronVM_PopOperand(context);
@@ -136,14 +139,14 @@ static inline void PixtronVM_Load(RuntimeContext *context) {
     PixtronVM_PushOperand(context, &value);
 }
 
-static void PixtronVM_ThrowException(RuntimeContext *context, gchar *fmt, ...) {
+extern void PixtronVM_ThrowException(RuntimeContext *context, char *fmt, ...) {
     const VirtualStackFrame *frame = context->frame;
     const Method *method = frame->method;
     const gchar *threadName = g_thread_get_name(g_thread_self());
     gchar *methodName = method->toString(method);
     va_list vaList;
     va_start(vaList, fmt);
-    const gchar *message = g_strdup_printf(fmt, &vaList);
+    const char *message = g_strdup_vprintf(fmt, vaList);
     va_end(vaList);
     g_printerr(
         "\n*******************************************************************************\n"
@@ -202,6 +205,30 @@ static inline VMValue *PixtronVM_Ret(RuntimeContext *context) {
     return retVal;
 }
 
+static inline void PixtronVM_Call(RuntimeContext *context) {
+    const char *methodName = PixtronVM_ReadByteCodeString(context);
+    const Method *method = PixtronVM_GetKlassMethod(context->frame->method->klass, methodName);
+    if (method == NULL) {
+        context->throwException(context, "Method '%s' not found.", methodName);
+    }
+    if (!method->nativeFunc) {
+        PixtronVM_PushStackFrame0(context, method);
+    } else {
+        void *handle = dlsym(RTLD_DEFAULT, method->name);
+        const bool callWithRet = method->retType != TYPE_VOID;
+        PixtronVM_MoveStackFrameSp(context, method->argv);
+        if (callWithRet) {
+            const FFIResultOperation ffiFunc = (FFIResultOperation) (handle);
+            VMValue retVal;
+            ffiFunc(context, &retVal);
+            PixtronVM_PushOperand(context, &retVal);
+        } else {
+            const FFIBaseOperation ffiFunc = (FFIBaseOperation) (handle);
+            ffiFunc(context);
+        }
+    }
+}
+
 
 extern void PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
     const Method *method = callMethodParam->method;
@@ -256,6 +283,7 @@ extern void PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
                 PixtronVM_PopOperand(context);
                 break;
             case CALL:
+                PixtronVM_Call(context);
                 break;
             default:
                 context->throwException(context, "Unsupported opcode: %02x", opcode);

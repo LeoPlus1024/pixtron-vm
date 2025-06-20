@@ -1,4 +1,4 @@
-#include "VM.h"
+#include "../include/api/VM.h"
 
 int main(int argc, char *argv[]) {
     const char *klassPath = "/home/leo/CLionProjects/PixotronVM/assembler/example/build";

@@ -10,7 +10,8 @@ public enum Type {
     LONG("long", 4, 8),
     FLOAT("float", 5, 8),
     BOOL("bool", 6, 1),
-    STRING("str", 7, 8);
+    REF("ref", 7, 8),
+    VOID("void", 8, 0);
 
     private final String symbol;
     private final int id;
@@ -34,7 +35,7 @@ public enum Type {
     }
 
     public boolean isPrimitive() {
-        return this != STRING;
+        return this != REF && this != VOID;
     }
 
     public int getId() {

@@ -1,4 +1,4 @@
-#include "VM.h"
+#include "include/api/VM.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

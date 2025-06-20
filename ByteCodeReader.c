@@ -1,5 +1,7 @@
 #include "ByteCodeReader.h"
 
+#include "StringUtil.h"
+
 static inline void PixtronVM_ByteCodeIndexOutOfBoundsCheck(RuntimeContext *context,
                                                            const VirtualStackFrame *frame,
                                                            const Method *method,
@@ -41,8 +43,8 @@ extern inline guint32 PixtronVM_ReadByteCodeU32(RuntimeContext *context) {
     const Klass *klass = method->klass;
     PixtronVM_ByteCodeIndexOutOfBoundsCheck(context, frame, method, 4);
     const uint64_t pc = frame->pc;
-    const guint8 *byteCode = klass->byteCode;
-    const guint32 *value = (guint32 *) (byteCode + pc);
+    const uint8_t *byteCode = klass->byteCode;
+    const uint32_t *value = (guint32 *) (byteCode + pc);
     frame->pc = pc + 4;
     return *value;
 }
@@ -53,8 +55,18 @@ extern inline guint16 PixtronVM_ReadByteCodeU16(RuntimeContext *context) {
     const Klass *klass = method->klass;
     PixtronVM_ByteCodeIndexOutOfBoundsCheck(context, frame, method, 2);
     const uint64_t pc = frame->pc;
-    const guint8 *byteCode = klass->byteCode;
-    const guint16 *value = (uint16_t *) (byteCode + pc);
+    const uint8_t *byteCode = klass->byteCode;
+    const uint16_t *value = (uint16_t *) (byteCode + pc);
     frame->pc = pc + 2;
     return *value;
+}
+
+extern inline char *PixtronVM_ReadByteCodeString(RuntimeContext *context) {
+    VirtualStackFrame *frame = context->frame;
+    const Method *method = frame->method;
+    const Klass *klass = method->klass;
+    const uint32_t pc = frame->pc;
+    char *str = (char *) klass->byteCode + pc;
+    frame->pc = pc + PixtronVM_GetStrFullLen(str);
+    return str;
 }

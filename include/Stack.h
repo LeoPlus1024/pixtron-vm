@@ -88,6 +88,7 @@ extern inline VMValue *PixtronVM_PopOperand(RuntimeContext *context);
 extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method, uint16_t argv,
                                             const VMValue **args);
 
+extern inline void PixtronVM_PushStackFrame0(RuntimeContext *context, const Method *method);
 
 /**
  * Pop the current stack frame from the call stack
@@ -110,5 +111,8 @@ extern inline void PixtronVM_SetLocalTable(RuntimeContext *context, uint16_t ind
 * @param variant Pointer to store the retrieved variant value
 */
 extern inline void PixtronVM_GetLocalTable(RuntimeContext *context, uint16_t index, VMValue *value);
+
+
+extern inline void PixtronVM_MoveStackFrameSp(RuntimeContext *context, int32_t offset);
 
 #endif //VIRTUALSTACK_H

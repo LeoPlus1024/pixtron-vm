@@ -4,8 +4,37 @@
 #include <Config.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "Memory.h"
+
+static inline VirtualStackFrame *PixtronVM_IPushStackFrame(RuntimeContext *context, const Method *method,
+                                                           const uint16_t argv) {
+    if (argv != method->argv) {
+        context->throwException(context, "Invalid number of arguments expect argv is %d but is %d", method->argv, argv);
+    }
+    const uint32_t stackDepth = context->stackDepth;
+    if (stackDepth + 1 == VM_MAX_STACK_DEPTH) {
+        fprintf(stderr, "PixotronVM_stack_push: stack overflow.\n");
+        exit(-1);
+    }
+    VirtualStackFrame *frame = PixotronVM_calloc(sizeof(VirtualStackFrame));
+    frame->method = method;
+    frame->pc = method->offset;
+    if (stackDepth == 0) {
+        frame->pre = NULL;
+        context->frame = frame;
+    } else {
+        frame->pre = context->frame;
+        context->frame = frame;
+    }
+    frame->sp = method->maxStackSize;
+    frame->maxStackSize = method->maxStackSize;
+    frame->maxLocalsSize = method->maxLocalsSize;
+    frame->locals = PixotronVM_calloc(VM_VALUE_SIZE * method->maxLocalsSize);
+    frame->operandStack = PixotronVM_calloc(VM_VALUE_SIZE * method->maxStackSize);
+    context->stackDepth = stackDepth + 1;
+
+    return frame;
+}
 
 extern inline void PixtronVM_PushOperand(RuntimeContext *context, const VMValue *value) {
     VirtualStackFrame *frame = context->frame;
@@ -37,37 +66,31 @@ extern inline VMValue *PixtronVM_PopOperand(RuntimeContext *context) {
 
 extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method, const uint16_t argv,
                                             const VMValue **args) {
-    if (argv != method->argv) {
-        context->throwException(context, "Invalid number of arguments expect argv is %d but is %d", method->argv, argv);
-    }
-    const uint32_t stackDepth = context->stackDepth;
-    if (stackDepth + 1 == VM_MAX_STACK_DEPTH) {
-        fprintf(stderr, "PixotronVM_stack_push: stack overflow.\n");
-        exit(-1);
-    }
-    VirtualStackFrame *frame = PixotronVM_calloc(sizeof(VirtualStackFrame));
-    frame->method = method;
-    frame->pc = method->offset;
-    if (stackDepth == 0) {
-        frame->pre = NULL;
-        context->frame = frame;
-    } else {
-        frame->pre = context->frame;
-        context->frame = frame;
-    }
-    frame->sp = method->maxStackSize;
-    frame->maxStackSize = method->maxStackSize;
-    frame->maxLocalsSize = method->maxLocalsSize;
-    frame->locals = PixotronVM_calloc(VM_VALUE_SIZE * method->maxLocalsSize);
-    frame->operandStack = PixotronVM_calloc(VM_VALUE_SIZE * method->maxStackSize);
-    context->stackDepth = stackDepth + 1;
-
+    const VirtualStackFrame *frame = PixtronVM_IPushStackFrame(context, method, argv);
     for (uint16_t i = 0; i < argv; i++) {
         const VMValue *arg = args[i];
         if (arg->type != (method->args + i)->type) {
             context->throwException(context, "Invalid argument.");
         }
         memcpy(frame->locals + i, arg, VM_VALUE_SIZE);
+    }
+}
+
+extern inline void PixtronVM_PushStackFrame0(RuntimeContext *context, const Method *method) {
+    const uint16_t argv = method->argv;
+    const VirtualStackFrame *newFrame = PixtronVM_IPushStackFrame(context, method, argv);
+    if (argv == 0) {
+        return;
+    }
+    const VirtualStackFrame *frame = context->frame;
+    const uint16_t sp = frame->sp;
+    const uint16_t stackDepth = frame->maxStackSize - sp;
+    if (stackDepth < method->argv) {
+        context->throwException(context, "Stack depth too min.");
+    }
+    const VMValue *args = frame->operandStack + sp + argv;
+    for (int i = 0; i < argv; ++i) {
+        newFrame->locals[i] = args[i];
     }
 }
 
@@ -105,4 +128,16 @@ extern inline void PixtronVM_GetLocalTable(RuntimeContext *context, const uint16
     }
     const VMValue *ptr = frame->locals + index;
     memcpy(value, ptr, VM_VALUE_SIZE);
+}
+
+extern inline void PixtronVM_MoveStackFrameSp(RuntimeContext *context, int32_t offset) {
+    if (offset == 0) {
+        return;
+    }
+    VirtualStackFrame *frame = context->frame;
+    const int32_t sp = (int32_t) (frame->sp + offset);
+    if (sp > frame->maxStackSize || sp < 0) {
+        context->throwException(context, "Stack index out of bound.");
+    }
+    frame->sp = sp;
 }

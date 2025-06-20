@@ -13,7 +13,7 @@
 static gchar *PixtronVM_MethodToString(const Method *method) {
     GString *str = g_string_new(NULL);
     const Type retType = method->retType;
-    const gchar *retTypeName;
+    const char *retTypeName;
     if (retType == NIL) {
         retTypeName = "void";
     } else {
@@ -26,7 +26,7 @@ static gchar *PixtronVM_MethodToString(const Method *method) {
     const uint16_t argv = method->argv;
     for (gushort i = 0; i < argv; i++) {
         const MethodParam *param = method->args + i;
-        const gchar *typeName = TYPE_NAME[param->type];
+        const char *typeName = TYPE_NAME[param->type];
         g_string_append(str, typeName);
         g_string_append(str, " ");
         g_string_append(str, param->name);
@@ -45,12 +45,12 @@ static void PixtronVM_FreeKlass(Klass **klass) {
     const Klass *self = *klass;
     PixotronVM_free(TO_REF(self->name));
     PixotronVM_free(TO_REF(self->byteCode));
-    gint fieldCount = (gint) self->fieldCount;
+    int32_t fieldCount = (int32_t) self->fieldCount;
     while ((fieldCount--) >= 0) {
         Field *field = self->fields + fieldCount;
         PixotronVM_free(TO_REF(field->name));
     }
-    gint methodCount = (gint) self->methodCount;
+    int32_t methodCount = (int32_t) self->methodCount;
     while ((methodCount--) >= 0) {
         Method *method = self->methods + methodCount;
         PixotronVM_free(TO_REF(method->name));
@@ -129,6 +129,23 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
     uint32_t j = 0;
     while (j < klass->methodCount) {
         Method *method = klass->methods + j;
+        method->nativeFunc = *((uint8_t *) (buf + position));
+        position++;
+        if (method->nativeFunc) {
+            const char *libs = (char *) (buf + position);
+            if (g_str_equal(libs, "")) {
+                method->libCount = 0;
+            } else {
+                char **arr = g_strsplit(libs, "|", 1024);
+                uint16_t libCount = 0;
+                while (arr[libCount] != NULL) {
+                    libCount++;
+                }
+                method->libName = arr;
+                method->libCount = libCount;
+                position += PixtronVM_GetStrFullLen(libs);
+            }
+        }
         method->maxLocalsSize = *((uint16_t *) (buf + position));
         position += 2;
         method->maxStackSize = *((uint16_t *) (buf + position));

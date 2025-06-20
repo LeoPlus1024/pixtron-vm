@@ -1,8 +1,10 @@
 @namespace HelloWorld
 ; count
 @field int count 10
+@func @native("libc") VM_CurrentTimeNano() : long @end
 ; main
 @func main(int i,byte b) : float
+  call VM_CurrentTimeNano
   %locals 10
   %stack 10
   load.i #10

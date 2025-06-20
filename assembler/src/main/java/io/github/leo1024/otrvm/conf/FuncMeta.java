@@ -6,12 +6,14 @@ import io.github.leo1024.otrvm.util.ByteUtil;
 import io.github.leo1024.otrvm.util.CLanguageUtil;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class FuncMeta implements ISerializable {
     public static class Param {
         private final Id name;
         private final Type type;
+
 
         public Param(Id name, Type type) {
             this.name = name;
@@ -23,21 +25,26 @@ public class FuncMeta implements ISerializable {
     private final Type retType;
     private final List<Param> params;
     private final String namespace;
+    private final String libNames;
+    private final boolean nativeFunc;
     private int offset;
     // Bytecode size
     private int byteCodeSize;
     private int locals;
     private int stacks;
 
-    public FuncMeta(String namespace, Id name, Type retType, List<Param> params) {
+
+    public FuncMeta(String namespace, Id name, Type retType, List<Param> params, boolean nativeFunc, String libNames) {
         this.name = name;
         this.retType = retType;
         this.params = params;
         this.namespace = namespace;
+        this.libNames = libNames;
+        this.nativeFunc = nativeFunc;
     }
 
     public FuncMeta(Id name, Type retType, List<Param> params) {
-        this(null, name, retType, params);
+        this(null, name, retType, params, false, null);
     }
 
     public int getOffset() {
@@ -60,6 +67,7 @@ public class FuncMeta implements ISerializable {
         this.stacks = stacks;
     }
 
+
     @Override
     public byte[] toBytes() {
         // offset(4) +byteCodeSize(4)+ typeId(2)+locals(2)+stacks(2)
@@ -76,9 +84,24 @@ public class FuncMeta implements ISerializable {
             paramsLength += (2 + CLanguageUtil.toCStyleStr(param.name.getValue()).length);
         }
 
+        int libNameLen = 0;
+        byte[] libNameBytes = null;
+        if (this.nativeFunc) {
+            final String tmp;
+            tmp = Objects.requireNonNullElse(libNames, "");
+            libNameBytes = CLanguageUtil.toCStyleStr(tmp);
+            libNameLen = libNameBytes.length;
+        }
+
         // alloc precise size
-        byte[] data = new byte[totalLength + paramsLength + 2];
+        byte[] data = new byte[1 + totalLength + libNameLen + paramsLength + 2];
         int pos = 0;
+        // Is native func
+        data[pos++] = (byte) (this.nativeFunc ? 1 : 0);
+        if (this.nativeFunc) {
+            System.arraycopy(libNameBytes, 0, data, pos, libNameLen);
+            pos += libNameLen;
+        }
         // Writer locals
         pos = ByteUtil.appendShort2Bytes(data, pos, (short) this.locals);
         // Writer stacks

@@ -22,6 +22,7 @@ public enum Opcode {
     L2F("l2f", 11),
     F2I("f2i", 12),
     F2L("f2l", 13),
+    CALL("call", 14),
     ;
 
 

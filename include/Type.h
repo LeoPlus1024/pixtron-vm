@@ -46,6 +46,9 @@ typedef struct _Method {
     uint16_t argv;
     MethodParam *args;
     struct _Klass *klass;
+    bool nativeFunc;
+    char **libName;
+    uint16_t libCount;
 
     char * (*toString)(const struct _Method *);
 } Method;

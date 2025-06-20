@@ -62,7 +62,7 @@ public class Parser {
     private void parsePseudo(Context context) {
         Token token = this.tokenSequence.consume();
         Pseudo pseudo = token.toPseudo();
-        if (pseudo == Pseudo.VAR) {
+        if (pseudo == Pseudo.FIELD) {
             this.parseVar(context);
         } else {
             Expr expr = switch (pseudo) {
@@ -85,6 +85,18 @@ public class Parser {
 
 
     private Expr parseFunc(final Context context) {
+        boolean isNativeFunc = false;
+        String libNames = null;
+        if (this.tokenSequence.currentKind() == TokenKind.PSEUDO) {
+            Token token = this.tokenSequence.consume();
+            isNativeFunc = Helper.checkPseudoToken(token, Pseudo.NATIVE);
+            if (!isNativeFunc) {
+                throw ParserException.create(token, "Except a @native in function define.");
+            }
+            Helper.expect(this.tokenSequence, Constants.LEFT_PAREN);
+            libNames = Helper.expect(this.tokenSequence, TokenKind.STRING).getValue();
+            Helper.expect(this.tokenSequence, Constants.RIGHT_PAREN);
+        }
         Token name = Helper.expect(tokenSequence, TokenKind.IDENTIFIER);
         Helper.expect(tokenSequence, Constants.LEFT_PAREN);
         boolean emptyParam = this.tokenSequence.checkToken(token -> {
@@ -92,22 +104,24 @@ public class Parser {
             return token.valEqual(Constants.RIGHT_PAREN);
         });
         List<FuncMeta.Param> paramList = new ArrayList<>();
-        while (!emptyParam) {
-            Token paramType = Helper.expect(tokenSequence, TokenKind.TYPE);
-            Token paramName = Helper.expect(tokenSequence, TokenKind.IDENTIFIER);
-            FuncMeta.Param param = new FuncMeta.Param(paramName.toId(), paramType.toType());
-            paramList.add(param);
-            if (!this.tokenSequence.checkToken(token -> token.valEqual(Constants.COMMA))) {
-                emptyParam = true;
+        if (!emptyParam) {
+            while (!emptyParam) {
+                Token paramType = Helper.expect(tokenSequence, TokenKind.TYPE);
+                Token paramName = Helper.expect(tokenSequence, TokenKind.IDENTIFIER);
+                FuncMeta.Param param = new FuncMeta.Param(paramName.toId(), paramType.toType());
+                paramList.add(param);
+                if (!this.tokenSequence.checkToken(token -> token.valEqual(Constants.COMMA))) {
+                    emptyParam = true;
+                }
             }
+            Helper.expect(tokenSequence, Constants.RIGHT_PAREN);
         }
-        Helper.expect(tokenSequence, Constants.RIGHT_PAREN);
         boolean declareRetType = this.tokenSequence.checkToken(token -> token != null && token.valEqual(Constants.COLON));
         Type retType = null;
         if (declareRetType) {
             retType = Helper.expect(tokenSequence, TokenKind.TYPE).toType();
         }
-        FuncMeta funcMeta = new FuncMeta(null, name.toId(), retType, paramList);
+        FuncMeta funcMeta = new FuncMeta(null, name.toId(), retType, paramList, isNativeFunc, libNames);
         Func func = new Func(context, funcMeta);
         while (!this.tokenSequence.checkToken(it -> Helper.checkPseudoToken(it, Pseudo.END))) {
             parseExpr(func);
@@ -132,6 +146,7 @@ public class Parser {
             case STORE, GSTORE -> parseStoreExpr(opcode);
             case ADD, SBC, MUL, DIV -> new Math(opcode);
             case F2I, F2L, I2L, I2F, L2I, L2F -> new Cast(opcode);
+            case CALL -> parserCallExpr();
             case GOTO -> {
                 String label = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
                 yield new Redirect(opcode, label);
@@ -173,11 +188,16 @@ public class Parser {
         return new Load(type, from, immValue, index);
     }
 
-    public Expr parseStoreExpr(Opcode opcode) {
+    private Expr parseStoreExpr(Opcode opcode) {
         Helper.expect(this.tokenSequence, Constants.DOT);
         Type type = Helper.convertOperandType(this.tokenSequence);
         DataFrom from = opcode == Opcode.STORE ? DataFrom.LC : DataFrom.GL;
         int index = Helper.convertVarRefIndex(this.tokenSequence.consume());
         return new Store(from, index, type);
+    }
+
+    private Expr parserCallExpr() {
+        Token methodName = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);
+        return new Call(methodName.getValue());
     }
 }

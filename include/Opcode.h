@@ -20,6 +20,7 @@ typedef enum:uint8_t {
     L2F,
     F2I,
     F2L,
+    CALL,
     // 如果栈顶数字为0则跳转
     IFEQ,
     // 如果栈顶数字不为0则跳转
@@ -30,7 +31,6 @@ typedef enum:uint8_t {
     LCMP,
     // 浮点数比较
     DCMP,
-    CALL,
     POP,
     // 扩展预留
     RESERVED_START = 0x80

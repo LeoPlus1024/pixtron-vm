@@ -32,17 +32,21 @@ public class TokenSequence {
     }
 
     public boolean checkToken(Predicate<Token> predicate) {
+        return checkToken(predicate, true);
+    }
+
+    public boolean checkToken(Predicate<Token> predicate, boolean move2Next) {
         final Token token;
         if (isEof()) {
             token = null;
         } else {
             token = this.tokenList.get(index);
         }
-        boolean move2Next = predicate.test(token);
-        if (move2Next) {
+        boolean success = predicate.test(token);
+        if (success && move2Next) {
             this.index++;
         }
-        return move2Next;
+        return success;
     }
 
     public boolean isEof() {

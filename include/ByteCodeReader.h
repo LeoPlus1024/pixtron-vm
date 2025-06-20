@@ -45,7 +45,10 @@ extern inline guint32 PixtronVM_ReadByteCodeU32(RuntimeContext *context);
  * @param context Runtime context containing code segment pointer and VM state
  * @return guint16 The 16-bit unsigned integer value read
  */
-extern inline guint16 PixtronVM_ReadByteCodeU16(RuntimeContext *context);
+extern inline uint16_t PixtronVM_ReadByteCodeU16(RuntimeContext *context);
+
+
+extern inline char *PixtronVM_ReadByteCodeString(RuntimeContext *context);
 
 
 #endif //BYTECODEREADER_H
