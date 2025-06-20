@@ -23,14 +23,14 @@ static gchar *PixtronVM_MethodToString(const Method *method) {
     g_string_append(str, " ");
     g_string_append(str, method->name);
     g_string_append_c(str, '(');
-    const gushort paramCount = method->paramCount;
-    for (gushort i = 0; i < paramCount; i++) {
-        const MethodParam *param = method->params + i;
+    const uint16_t argv = method->argv;
+    for (gushort i = 0; i < argv; i++) {
+        const MethodParam *param = method->args + i;
         const gchar *typeName = TYPE_NAME[param->type];
         g_string_append(str, typeName);
         g_string_append(str, " ");
         g_string_append(str, param->name);
-        if (i != paramCount - 1) {
+        if (i != argv - 1) {
             g_string_append_c(str, ',');
         }
     }
@@ -54,9 +54,9 @@ static void PixtronVM_FreeKlass(Klass **klass) {
     while ((methodCount--) >= 0) {
         Method *method = self->methods + methodCount;
         PixotronVM_free(TO_REF(method->name));
-        gint paramCount = method->paramCount;
-        while ((paramCount--) >= 0) {
-            MethodParam *param = method->params + paramCount;
+        int16_t argv = (int16_t) method->argv;
+        while ((argv--) >= 0) {
+            MethodParam *param = method->args + argv;
             PixotronVM_free(TO_REF(param->name));
             PixotronVM_free(TO_REF(param));
         }
@@ -123,23 +123,23 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
         index++;
     }
     klass->fields = files;
-    klass->methodCount = *((guint *) (buf + position));
+    klass->methodCount = *((uint32_t *) (buf + position));
     position += 4;
     klass->methods = PixotronVM_calloc(sizeof(Method) * klass->methodCount);
     uint32_t j = 0;
     while (j < klass->methodCount) {
         Method *method = klass->methods + j;
-        method->maxLocalsSize = *((gushort *) (buf + position));
+        method->maxLocalsSize = *((uint16_t *) (buf + position));
         position += 2;
-        method->maxStackSize = *((gushort *) (buf + position));
+        method->maxStackSize = *((uint16_t *) (buf + position));
         position += 2;
-        method->offset = *((guint *) (buf + position));
+        method->offset = *((uint32_t *) (buf + position));
         position += 4;
-        method->endOffset = *((guint *) (buf + position));
+        method->endOffset = *((uint32_t *) (buf + position));
         position += 4;
         method->retType = *((Type *) (buf + position));
         position += 2;
-        const gchar *selfKlass = (gchar *) (buf + position);
+        const char *selfKlass = (char *) (buf + position);
         if (g_str_equal(selfKlass, "")) {
             position++;
             method->klass = klass;
@@ -154,13 +154,13 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
         }
         gchar *funcName = g_strdup((gchar *)(buf+position));
         position += PixtronVM_GetStrFullLen(funcName);
-        const gushort paramCount = *((gushort *) (buf + position));
+        const uint16_t argv = *((gushort *) (buf + position));
         position += 2;
-        MethodParam *params = NULL;
-        if (paramCount > 0) {
-            params = PixotronVM_calloc(sizeof(MethodParam) * paramCount);
-            for (int i = 0; i < paramCount; ++i) {
-                MethodParam *param = params + i;
+        MethodParam *args = NULL;
+        if (argv > 0) {
+            args = PixotronVM_calloc(sizeof(MethodParam) * argv);
+            for (int i = 0; i < argv; ++i) {
+                MethodParam *param = args + i;
                 param->type = *((Type *) (buf + position));
                 position += 2;
                 param->name = g_strdup((gchar *)(buf+position));
@@ -168,9 +168,9 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const gchar *klassName,
             }
         }
         method->name = funcName;
-        method->params = params;
+        method->args = args;
         method->toString = PixtronVM_MethodToString;
-        method->paramCount = paramCount;
+        method->argv = argv;
         j++;
     }
     const glong byteCodeSize = fileSize - position;

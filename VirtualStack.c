@@ -4,8 +4,6 @@
 #include <Config.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
 
 #include "Memory.h"
 
@@ -37,7 +35,11 @@ extern inline VMValue *PixtronVM_PopOperand(RuntimeContext *context) {
     return value;
 }
 
-extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method) {
+extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method, const uint16_t argv,
+                                            const VMValue *args) {
+    if (argv != method->argv) {
+        context->throwException(context, "Invalid number of arguments expect argv is %d but is %d", method->argv, argv);
+    }
     const uint32_t stackDepth = context->stackDepth;
     if (stackDepth + 1 == VM_MAX_STACK_DEPTH) {
         fprintf(stderr, "PixotronVM_stack_push: stack overflow.\n");
@@ -59,6 +61,14 @@ extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Metho
     frame->locals = PixotronVM_calloc(VM_VALUE_SIZE * method->maxLocalsSize);
     frame->operandStack = PixotronVM_calloc(VM_VALUE_SIZE * method->maxStackSize);
     context->stackDepth = stackDepth + 1;
+
+    for (uint16_t i = 0; i < argv; i++) {
+        const VMValue *arg = args + i;
+        if (arg->type != (method->args + i)->type) {
+            context->throwException(context, "Invalid argument.");
+        }
+        memcpy(frame->locals+i, arg, VM_VALUE_SIZE);
+    }
 }
 
 extern inline void PixtronVM_PopStackFrame(RuntimeContext *context) {

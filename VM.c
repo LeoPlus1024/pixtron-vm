@@ -1,6 +1,4 @@
 #include "VM.h"
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,8 +8,78 @@
 #include "Klass.h"
 #include "Engine.h"
 
+extern Value *PixtronVM_CreateByte(const int8_t i8) {
+    VMValue *value = PixotronVM_calloc(VM_VALUE_SIZE);
+    value->i8 = i8;
+    value->type = TYPE_BYTE;
+    return (Value *) value;
+}
 
-extern PixtronVM *PixtronVM_CreateVM(const gchar *klassPath) {
+extern Value *PixtronVM_CreateShort(const int16_t i16) {
+    VMValue *value = PixotronVM_calloc(VM_VALUE_SIZE);
+    value->i16 = i16;
+    value->type = TYPE_SHORT;
+    return (Value *) value;
+}
+
+extern Value *PixtronVM_CreateInt(const int32_t i32) {
+    VMValue *value = PixotronVM_calloc(VM_VALUE_SIZE);
+    value->i32 = i32;
+    value->type = TYPE_INT;
+    return (Value *) value;
+}
+
+extern Value *PixtronVM_CreateLong(const int64_t i64) {
+    VMValue *value = PixotronVM_calloc(VM_VALUE_SIZE);
+    value->i64 = i64;
+    value->type = TYPE_LONG;
+    return (Value *) value;
+}
+
+extern Value *PixtronVM_CreateFloat(const double f64) {
+    VMValue *value = PixotronVM_calloc(VM_VALUE_SIZE);
+    value->f64 = f64;
+    value->type = TYPE_FLOAT;
+    return (Value *) value;
+}
+
+extern int8_t PixtronVM_GetByte(Value *value) {
+    g_assert(value != NULL);
+    const VMValue *val = (VMValue *) value;
+    g_assert(val->type == TYPE_BYTE);
+    return val->i8;
+}
+
+extern int16_t PixtronVM_GetShort(Value *value) {
+    g_assert(value != NULL);
+    const VMValue *val = (VMValue *) value;
+    g_assert(val->type == TYPE_SHORT);
+    return val->i16;
+}
+
+extern int32_t PixtronVM_GetInt(Value *value) {
+    g_assert(value != NULL);
+    const VMValue *val = (VMValue *) value;
+    g_assert(val->type == TYPE_INT);
+    return val->i32;
+}
+
+extern int64_t PixtronVM_GetLong(Value *value) {
+    g_assert(value != NULL);
+    const VMValue *val = (VMValue *) value;
+    g_assert(val->type == TYPE_LONG);
+    return val->i64;
+}
+
+extern double PixtronVM_GetFloat(Value *value) {
+    g_assert(value != NULL);
+    const VMValue *val = (VMValue *) value;
+    g_assert(val->type == TYPE_FLOAT);
+    return val->f64;
+}
+
+
+extern VM *PixtronVM_CreateVM(const char *klassPath) {
     PixtronVM *vm = PixotronVM_calloc(sizeof(PixtronVM));
 
     vm->klassPath = g_strdup(klassPath);
@@ -26,34 +94,39 @@ extern PixtronVM *PixtronVM_CreateVM(const gchar *klassPath) {
 }
 
 
-extern VMValue *PixtronVM_LaunchVM(const PixtronVM *vm, const gchar *clazzName) {
+extern VM *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const uint16_t argv, Value *args) {
     GError *error = NULL;
-    const Klass *klass = PixtronVM_GetKlass(vm, clazzName, &error);
+    const Klass *klass = PixtronVM_GetKlass(vm, klassName, &error);
     if (klass == NULL) {
         if (error != NULL) {
             g_error_free(error);
         }
         g_thread_exit(NULL);
     }
-    const Method *method = PixtronVM_GetKlassMethod(klass, "main");
+    Method *method = PixtronVM_GetKlassMethod(klass, "main");
     if (method == NULL) {
         g_printerr("Main method not found in klass:%s", klass->name);
         g_thread_exit(NULL);
     }
-    GThread *thread = g_thread_new("Main", (GThreadFunc) PixtronVM_CallMethod, (gpointer) method);
+    CallMethodParam *calMethodParam = PixotronVM_calloc(sizeof(CallMethodParam));
+    calMethodParam->method = method;
+    calMethodParam->args = (VMValue *) args;
+    calMethodParam->argv = argv;
+    GThread *thread = g_thread_new("Main", (GThreadFunc) PixtronVM_CallMethod, (gpointer) calMethodParam);
     return g_thread_join(thread);
 }
 
-extern void PixtronVM_DestroyVM(PixtronVM **vm) {
+extern void PixtronVM_DestroyVM(VM **vm) {
     if (vm == NULL || *vm == NULL) {
         return;
     }
     PixotronVM_free(CAST_REF(vm));
 }
 
-extern void PixtronVM_FreeVMValue(VMValue **value) {
+extern void PixtronVM_FreeValue(Value **value) {
     if (value == NULL) {
         return;
     }
-    PixotronVM_free(CAST_REF(value));
+    VMValue *_value = (VMValue *) *value;
+    PixotronVM_free(CAST_REF(_value));
 }

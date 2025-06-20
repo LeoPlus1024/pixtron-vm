@@ -1,5 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
+#include "Type.h"
 #include "VM.h"
 
 #define SIGN_CMP(a, b) ((typeof(a))((a) > (b)) - ((typeof(a))((a) < (b))))
@@ -44,6 +45,6 @@ do { \
     } \
 } while(0)
 
-extern VMValue PixtronVM_CallMethod(const Method *method);
+extern VMValue PixtronVM_CallMethod(const CallMethodParam *callMethodParam);
 
 #endif //ENGINE_H

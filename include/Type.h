@@ -29,27 +29,27 @@ struct VM;
 
 typedef struct {
     Type type;
-    gchar *name;
+    char *name;
 } MethodParam;
 
 struct _Method;
 
 typedef struct _Method {
-    gchar *name;
+    char *name;
     Type retType;
-    gushort maxStackSize;
+    uint16_t maxStackSize;
     gushort maxLocalsSize;
     uint32_t offset;
     uint32_t endOffset;
-    gushort paramCount;
-    MethodParam *params;
+    uint16_t argv;
+    MethodParam *args;
     struct _Klass *klass;
 
-    gchar * (*toString)(const struct _Method *);
+    char * (*toString)(const struct _Method *);
 } Method;
 
 typedef struct {
-    gchar *name;
+    char *name;
     VMValue *value;
 } Field;
 
@@ -128,6 +128,13 @@ typedef struct _RuntimeContext {
 
     void (*throwException)(struct _RuntimeContext *context, gchar *fmt, ...);
 } RuntimeContext;
+
+
+typedef struct {
+    Method *method;
+    VMValue *args;
+    uint16_t argv;
+} CallMethodParam;
 
 
 #define VM_VALUE_SIZE (sizeof(VMValue))

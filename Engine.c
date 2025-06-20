@@ -56,25 +56,24 @@ static inline void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opco
 }
 
 
-extern inline void PixtronVM_Cmp(RuntimeContext *context, Opcode opcode) {
-    VMValue *top;
-    VMValue *next;
-    top = PixtronVM_PopOperand(context);
-    next = PixtronVM_PopOperand(context);
+extern inline void PixtronVM_Cmp(RuntimeContext *context, const Opcode opcode) {
+    const VMValue *sourceOperand = PixtronVM_PopOperand(context);
+    VMValue *targetOperand = PixtronVM_PopOperand(context);
     switch (opcode) {
         case ICMP:
-            next->i32 = SIGN_CMP(next->i32, top->i32);
+            targetOperand->i32 = SIGN_CMP(targetOperand->i32, sourceOperand->i32);
             break;
         case DCMP:
-            next->i32 = SIGN_CMP(next->f64, top->f64);
+            targetOperand->i32 = SIGN_CMP(targetOperand->f64, sourceOperand->f64);
             break;
         case LCMP:
-            next->i32 = SIGN_CMP(next->f64, top->f64);
+            targetOperand->i32 = SIGN_CMP(targetOperand->i64, sourceOperand->i64);
             break;
         default:
             context->throwException(context, "unsupported cmp opcode:%02x", opcode);
     }
-    PixtronVM_PushOperand(context, next);
+    targetOperand->type = TYPE_BOOL;
+    PixtronVM_PushOperand(context, NULL);
 }
 
 static void PixtronVM_CONV(RuntimeContext *context, Opcode opcode) {
@@ -198,13 +197,14 @@ static inline void PixtronVM_Ret(RuntimeContext *context) {
 }
 
 
-extern VMValue PixtronVM_CallMethod(const Method *method) {
+extern VMValue PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
+    const Method *method = callMethodParam->method;
     RuntimeContext *context = PixotronVM_calloc(sizeof(RuntimeContext));
     context->vm = method->klass->vm;
     context->maxStackDepth = VM_MAX_STACK_DEPTH;
     context->stackDepth = 0;
     context->throwException = PixtronVM_ThrowException;
-    PixtronVM_PushStackFrame(context, method);
+    PixtronVM_PushStackFrame(context, method, callMethodParam->argv, callMethodParam->args);
 
     for (;;) {
         const Opcode opcode = PixtronVM_ReadByteCodeU8(context);
