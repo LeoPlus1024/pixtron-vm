@@ -95,7 +95,7 @@ extern VM *PixtronVM_CreateVM(const char *klassPath);
  * @param vm Pointer to the PixtronVM instance to execute
  * @note This will run the VM until completion or until an error occurs
  */
-extern VM *PixtronVM_LaunchVM(const VM *vm, const char *klassName, uint16_t argv, Value *args);
+extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, uint16_t argv, const Value *args[]);
 
 /**
  * Destroy a PixtronVM instance and release all its resources

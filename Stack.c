@@ -1,4 +1,4 @@
-#include "VirtualStack.h"
+#include "Stack.h"
 
 #include <assert.h>
 #include <Config.h>

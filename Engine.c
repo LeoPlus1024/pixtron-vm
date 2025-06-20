@@ -7,7 +7,7 @@
 #include "ByteCodeReader.h"
 #include "Klass.h"
 #include "Memory.h"
-#include "VirtualStack.h"
+#include "Stack.h"
 
 static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, const Opcode opcode) {
     const VMValue *sourceOperand = PixtronVM_PopOperand(context);

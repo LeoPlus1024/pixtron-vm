@@ -37,10 +37,3 @@ case type: value->i32 = (int32_t)(value->field);  break;
     }
     value->type = TYPE_INT;
 }
-
-extern inline Type PixtronVM_GetValueType(const VMValue *value) {
-    if ((value->i64 & 0x7FF0000000000000) != 0x7FF0000000000000) {
-        return TYPE_FLOAT;
-    }
-    return (value->i64 >> 48) & 0x0f;
-}

@@ -46,6 +46,7 @@ typedef enum:uint16_t {
     TYPE_FLOAT,
     TYPE_BOOL,
     TYPE_REF,
+    TYPE_VOID
 } Type;
 
 typedef enum {
@@ -74,7 +75,8 @@ static const char *const TYPE_NAME[] = {
     "long",
     "double",
     "bool",
-    "object"
+    "object",
+    "void"
 };
 
 typedef enum:uint16_t {
@@ -88,16 +90,8 @@ typedef enum:uint16_t {
     V1_7,
 } Version;
 
-#define OPS_COMPOSE(type,source) (source | (type << 4))
 #define OPS_DATA_TYPE(value) ((value >> 4) & 0x0f)
 #define OPS_DATA_SOURCE(value) (value & 0x0f)
-#define VM_TYPE_DOUBLE(type) (type == TYPE_DOUBLE)
-#define VM_TYPE_LONG(type) (type == TYPE_LONG)
-#define VM_TYPE_BOOL(type) (type == TYPE_BOOL)
-#define VM_TYPE_REF(type) (type == TYPE_REF)
-#define VM_TYPE_SHORT(type) (type == TYPE_SHORT)
-#define VM_TYPE_INT(type) (type == TYPE_INT)
-#define VM_TYPE_BYTE(type) (type == TYPE_BYTE)
 #define VM_TRUE(value) (value == 1)
 #define VM_FALSE(value) (value == 0)
 

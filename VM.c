@@ -94,7 +94,7 @@ extern VM *PixtronVM_CreateVM(const char *klassPath) {
 }
 
 
-extern VM *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const uint16_t argv, Value *args) {
+extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const uint16_t argv, const Value *args[]) {
     GError *error = NULL;
     const Klass *klass = PixtronVM_GetKlass(vm, klassName, &error);
     if (klass == NULL) {
@@ -108,12 +108,22 @@ extern VM *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const uint16_
         g_printerr("Main method not found in klass:%s", klass->name);
         g_thread_exit(NULL);
     }
-    CallMethodParam *calMethodParam = PixotronVM_calloc(sizeof(CallMethodParam));
-    calMethodParam->method = method;
-    calMethodParam->args = (VMValue *) args;
-    calMethodParam->argv = argv;
-    GThread *thread = g_thread_new("Main", (GThreadFunc) PixtronVM_CallMethod, (gpointer) calMethodParam);
-    return g_thread_join(thread);
+    CallMethodParam *callMethodParam = PixotronVM_calloc(sizeof(CallMethodParam));
+    callMethodParam->method = method;
+    callMethodParam->argv = argv;
+    if (argv > 0) {
+        callMethodParam->args = PixotronVM_calloc(sizeof(Value *) * argv);
+        for (int i = 0; i < argv; ++i) {
+            callMethodParam->args[i] = (VMValue *) args[i];
+        }
+    }
+    GThread *thread = g_thread_new("Main", (GThreadFunc) PixtronVM_CallMethod, (gpointer) callMethodParam);
+    Value *value = g_thread_join(thread);
+    if (argv > 0) {
+        PixotronVM_free(CAST_REF(callMethodParam->args));
+    }
+    PixotronVM_free(CAST_REF(callMethodParam));
+    return value;
 }
 
 extern void PixtronVM_DestroyVM(VM **vm) {

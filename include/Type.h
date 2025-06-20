@@ -133,7 +133,7 @@ typedef struct _RuntimeContext {
 
 typedef struct {
     Method *method;
-    VMValue *args;
+    VMValue **args;
     uint16_t argv;
 } CallMethodParam;
 
@@ -154,49 +154,4 @@ extern inline void PixtronVM_ConvertToLongValue(VMValue *value);
 
 
 extern inline void PixtronVM_ConvertToIntValue(VMValue *value);
-
-
-/**
- *<pre>
- * NaN-boxing pattern (64-bit):
- * [ Sign  |  Exponent   | Quiet NaN | Payload (Type + Data) ]
- *  1 bit    11 bits       1 bit          51 bits
- *          0x7FF           1
- *
- * Type tag occupies bits 61-58 (0xA000000000000000 >> 48 = 0xA)
- * 0x7FF0000000000000 mask isolates NaN control bits
- *</pre>
- * @brief Extracts type information from VMValue's binary representation
- *
- * Decodes the VMValue's type using its internal bit pattern:
- * - Values not matching the NaN boxing pattern (0x7FF0_0000_0000_0000 mask)
- *   are considered primitive doubles (TYPE_DOUBLE)
- * - NaN-boxed values store type tags in bits [61:48] (0x0F mask after shifting)
- * <pre>
- *
- * @param value VM value to inspect. Passed by const-value for optimization.
- * @return Type Decoded type tag, either TYPE_DOUBLE or a NaN-boxed type ID
- *
- * @note Implementation relies on:
- * 1. IEEE 754 NaN boxing implementation details
- * 2. Little-endian memory layout
- * 3. 48-bit type tag storage (values 0-15)
- *
- * @warning Platform-dependent:
- * - Assumes 64-bit VMValue representation
- * - Depends on specific NaN quiet bit patterns
- * - Type tags may change across VM versions
- *
- * @see VMValue Encoding Specification Section 3.2
- *      "NaN-boxed Type Tagging"
- *
- * @example
- * VMValue num = 3.1415926; // Raw double
- * Type t = PixtronVM_GetValueType(num); // Returns TYPE_DOUBLE
- *
- * VMValue obj = 0x7FF1A00000000000; // NaN-boxed type 0xA
- * Type t = PixtronVM_GetValueType(obj); // Returns 0xA
- */
-extern inline Type PixtronVM_GetValueType(const VMValue *value);
-
 #endif //TYPE_H
