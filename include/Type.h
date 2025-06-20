@@ -4,6 +4,7 @@
 #include "Opcode.h"
 #include <stdint.h>
 #include <glib.h>
+#include <stdbool.h>
 
 typedef struct {
     union {
@@ -104,7 +105,7 @@ typedef struct {
     uint32_t dataLength;
     // 代码偏移量
     uint32_t codeOffset;
-} BinaryHeader, *BinaryHeaderPtr;
+} BinaryHeader;
 
 
 typedef struct VM {
@@ -118,6 +119,7 @@ typedef struct VM {
 struct _RuntimeContext;
 
 typedef struct _RuntimeContext {
+    volatile bool exit;
     // Current stack depth
     uint32_t stackDepth;
     // Max stack depth
@@ -127,14 +129,15 @@ typedef struct _RuntimeContext {
     // VM pointer
     const PixtronVM *vm;
 
+    // Exception throw callback
     void (*throwException)(struct _RuntimeContext *context, gchar *fmt, ...);
 } RuntimeContext;
 
 
 typedef struct {
-    Method *method;
-    VMValue **args;
+    const Method *method;
     uint16_t argv;
+    const VMValue **args;
 } CallMethodParam;
 
 

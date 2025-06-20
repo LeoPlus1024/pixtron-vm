@@ -36,7 +36,7 @@ extern inline VMValue *PixtronVM_PopOperand(RuntimeContext *context) {
 }
 
 extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method, const uint16_t argv,
-                                            const VMValue *args) {
+                                            const VMValue **args) {
     if (argv != method->argv) {
         context->throwException(context, "Invalid number of arguments expect argv is %d but is %d", method->argv, argv);
     }
@@ -63,11 +63,11 @@ extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Metho
     context->stackDepth = stackDepth + 1;
 
     for (uint16_t i = 0; i < argv; i++) {
-        const VMValue *arg = args + i;
+        const VMValue *arg = args[i];
         if (arg->type != (method->args + i)->type) {
             context->throwException(context, "Invalid argument.");
         }
-        memcpy(frame->locals+i, arg, VM_VALUE_SIZE);
+        memcpy(frame->locals + i, arg, VM_VALUE_SIZE);
     }
 }
 

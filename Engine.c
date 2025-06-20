@@ -178,35 +178,44 @@ static void PixtronVM_ThrowException(RuntimeContext *context, gchar *fmt, ...) {
     g_thread_exit(NULL);
 }
 
-static inline void PixtronVM_Ret(RuntimeContext *context) {
+static inline VMValue *PixtronVM_Ret(RuntimeContext *context) {
     const VirtualStackFrame *frame = context->frame;
     const Type retType = frame->method->retType;
-    VMValue value;
-    if (retType != NIL) {
-        value = *PixtronVM_PopOperand(context);
-    } else {
-        value.type = NIL;
+    VMValue *value = NULL;
+    const bool hasRetVal = retType != TYPE_VOID;
+    if (hasRetVal) {
+        value = PixtronVM_PopOperand(context);
     }
     PixtronVM_PopStackFrame(context);
-    if (frame->pre == NULL) {
-        VMValue *retVal = PixotronVM_calloc(VM_VALUE_SIZE);
-        memcpy(retVal, &value, VM_VALUE_SIZE);
-        g_thread_exit(retVal);
+    if (frame->pre != NULL) {
+        if (hasRetVal) {
+            PixtronVM_PushOperand(context, value);
+        }
+        return NULL;
     }
-    PixtronVM_PushOperand(context, &value);
+    context->exit = true;
+    if (!hasRetVal) {
+        return NULL;
+    }
+    VMValue *retVal = PixotronVM_calloc(VM_VALUE_SIZE);
+    memcpy(retVal, value, VM_VALUE_SIZE);
+    return retVal;
 }
 
 
-extern VMValue PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
+extern void PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
     const Method *method = callMethodParam->method;
     RuntimeContext *context = PixotronVM_calloc(sizeof(RuntimeContext));
     context->vm = method->klass->vm;
+    context->exit = false;
     context->maxStackDepth = VM_MAX_STACK_DEPTH;
     context->stackDepth = 0;
     context->throwException = PixtronVM_ThrowException;
-    PixtronVM_PushStackFrame(context, method, callMethodParam->argv, callMethodParam->args);
+    const VMValue **args = callMethodParam->args;
+    PixtronVM_PushStackFrame(context, method, callMethodParam->argv, args);
 
-    for (;;) {
+    VMValue *retVal = NULL;
+    while (!context->exit) {
         const Opcode opcode = PixtronVM_ReadByteCodeU8(context);
 
         switch (opcode) {
@@ -241,7 +250,7 @@ extern VMValue PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
                 PixtronVM_CONV(context, opcode);
                 break;
             case RET:
-                PixtronVM_Ret(context);
+                retVal = PixtronVM_Ret(context);
                 break;
             case POP:
                 PixtronVM_PopOperand(context);
@@ -252,4 +261,5 @@ extern VMValue PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
                 context->throwException(context, "Unsupported opcode: %02x", opcode);
         }
     }
+    g_thread_exit(retVal);
 }

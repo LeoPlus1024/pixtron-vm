@@ -90,13 +90,13 @@ extern VM *PixtronVM_CreateVM(const char *klassPath) {
         exit(-1);
     }
     vm->klassTable = klassTable;
-    return vm;
+    return (VM *) vm;
 }
 
 
 extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const uint16_t argv, const Value *args[]) {
     GError *error = NULL;
-    const Klass *klass = PixtronVM_GetKlass(vm, klassName, &error);
+    const Klass *klass = PixtronVM_GetKlass((PixtronVM *) vm, klassName, &error);
     if (klass == NULL) {
         if (error != NULL) {
             g_error_free(error);
@@ -109,8 +109,8 @@ extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const uint
         g_thread_exit(NULL);
     }
     CallMethodParam *callMethodParam = PixotronVM_calloc(sizeof(CallMethodParam));
-    callMethodParam->method = method;
     callMethodParam->argv = argv;
+    callMethodParam->method = method;
     if (argv > 0) {
         callMethodParam->args = PixotronVM_calloc(sizeof(Value *) * argv);
         for (int i = 0; i < argv; ++i) {
@@ -120,9 +120,9 @@ extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const uint
     GThread *thread = g_thread_new("Main", (GThreadFunc) PixtronVM_CallMethod, (gpointer) callMethodParam);
     Value *value = g_thread_join(thread);
     if (argv > 0) {
-        PixotronVM_free(CAST_REF(callMethodParam->args));
+        PixotronVM_free(CAST_REF(&(callMethodParam->args)));
     }
-    PixotronVM_free(CAST_REF(callMethodParam));
+    PixotronVM_free(TO_REF(callMethodParam));
     return value;
 }
 
@@ -137,6 +137,5 @@ extern void PixtronVM_FreeValue(Value **value) {
     if (value == NULL) {
         return;
     }
-    VMValue *_value = (VMValue *) *value;
-    PixotronVM_free(CAST_REF(_value));
+    PixotronVM_free(CAST_REF(value));
 }

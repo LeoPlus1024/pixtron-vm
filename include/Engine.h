@@ -21,7 +21,6 @@
 #define SIGN_CMP(a, b) ((typeof(a))((a) > (b)) - ((typeof(a))((a) < (b))))
 
 
-
 /**
  * @brief Applies type-aware compound assignment operation with automatic type resolution
  * @param targetOperand [IN/OUT] Target operand object to be modified.
@@ -61,6 +60,6 @@ do { \
     } \
 } while(0)
 
-extern VMValue PixtronVM_CallMethod(const CallMethodParam *callMethodParam);
+extern void PixtronVM_CallMethod(const CallMethodParam *callMethodParam);
 
 #endif //ENGINE_H
