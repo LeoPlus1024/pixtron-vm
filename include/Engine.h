@@ -3,7 +3,23 @@
 #include "Type.h"
 #include "VM.h"
 
+/**
+ * @brief Safe sign-aware comparison macro for two values of the same type.
+ *
+ * This macro compares two values (a, b) and returns:
+ *   - 1 if (a > b),
+ *   - -1 if (a < b),
+ *   - 0 if (a == b).
+ *
+ * The result is type-cast to match the input type for safe comparison operations,
+ * avoiding potential implicit type conversion issues.
+ *
+ * @param a First value to compare (any comparable type)
+ * @param b Second value to compare (must be same type as 'a')
+ * @return (typeof(a)) - The comparison result in the input value's type
+ */
 #define SIGN_CMP(a, b) ((typeof(a))((a) > (b)) - ((typeof(a))((a) < (b))))
+
 
 
 /**
