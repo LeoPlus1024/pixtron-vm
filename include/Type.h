@@ -12,6 +12,7 @@ typedef struct {
         int32_t i32;
         int64_t i64;
         double f64;
+        void *obj;
     };
 
     Type type;
