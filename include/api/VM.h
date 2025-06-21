@@ -40,7 +40,7 @@ extern Value *PixtronVM_CreateLong(int64_t i64);
  * @see PixtronVM_GetFloat() for retrieval
  * @note NaN/infinite values preserve their bit patterns
  */
-extern Value *PixtronVM_CreateFloat(double f64);
+extern Value *PixtronVM_CreateDouble(double f64);
 
 
 /**
@@ -72,7 +72,7 @@ extern int64_t PixtronVM_GetLong(Value *value);
  * @param value VMValue created with CreateFloat()
  * @note Returns bit-identical NaN values if present
  */
-extern double PixtronVM_GetFloat(Value *value);
+extern double PixtronVM_GetDouble(Value *value);
 
 /**
  * Releases a VMValue and its resources

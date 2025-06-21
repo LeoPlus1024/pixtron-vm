@@ -139,7 +139,7 @@ extern void FFI_SetByte(FFIResult *result, int8_t value);
  *
  * Note: Single-precision floats will be automatically promoted
  */
-extern void FFI_SetFloat(FFIResult *result, double value);
+extern void FFI_SetDouble(FFIResult *result, double value);
 
 /**
  * Sets a boolean value in FFI result container.
@@ -158,27 +158,14 @@ extern void FFI_SetFloat(FFIResult *result, double value);
  */
 extern void FFI_SetBool(FFIResult *result, bool value);
 
-/**
- * Retrieves a parameter from runtime context by index.
- *
- * @param context Runtime execution context containing parameter stack
- * @param index Zero-based parameter index (0 = first parameter)
- * @return FFIParam structure containing typed parameter value
- *
- * Memory safety:
- *   - Returned structure is valid until context is reset
- *   - For pointer types, memory lifetime managed by context
- *
- * Error handling:
- *   - Returns FFI_PARAM_INVALID for out-of-range indices
- *   - Accessing invalid index sets context error state
- *
- * Usage example:
- *   FFIParam param = FFI_GetParam(context, 0);
- *   if (param.type == FFI_TYPE_STRING) {
- *       const char* str = param.value.string_value;
- *   }
- */
-extern FFIParam *FFI_GetParam(RuntimeContext *context, uint16_t index);
+extern uint8_t FFI_GetByteParam(RuntimeContext *context, uint8_t index);
+
+extern uint16_t FFI_GetShortParam(RuntimeContext *context, uint8_t index);
+
+extern uint32_t FFI_GetIntParam(RuntimeContext *context, uint8_t index);
+
+extern uint64_t FFI_GetLongParam(RuntimeContext *context, uint8_t index);
+
+extern double FFI_GetDoubleParam(RuntimeContext *context, uint8_t index);
 
 #endif //FFI_H

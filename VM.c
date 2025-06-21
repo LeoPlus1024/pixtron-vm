@@ -39,7 +39,7 @@ extern Value *PixtronVM_CreateLong(const int64_t i64) {
 extern Value *PixtronVM_CreateFloat(const double f64) {
     VMValue *value = PixotronVM_calloc(VM_VALUE_SIZE);
     value->f64 = f64;
-    value->type = TYPE_FLOAT;
+    value->type = TYPE_DOUBLE;
     return (Value *) value;
 }
 
@@ -71,10 +71,10 @@ extern int64_t PixtronVM_GetLong(Value *value) {
     return val->i64;
 }
 
-extern double PixtronVM_GetFloat(Value *value) {
+extern double PixtronVM_GetDouble(Value *value) {
     g_assert(value != NULL);
     const VMValue *val = (VMValue *) value;
-    g_assert(val->type == TYPE_FLOAT);
+    g_assert(val->type == TYPE_DOUBLE);
     return val->f64;
 }
 

@@ -43,7 +43,7 @@ typedef enum:uint16_t {
     TYPE_SHORT,
     TYPE_INT,
     TYPE_LONG,
-    TYPE_FLOAT,
+    TYPE_DOUBLE,
     TYPE_BOOL,
     TYPE_REF,
     TYPE_VOID
@@ -62,7 +62,7 @@ static const uint8_t TYPE_SIZE[] = {
     [TYPE_SHORT] = 2,
     [TYPE_INT] = 4,
     [TYPE_LONG] = 8,
-    [TYPE_FLOAT] = 8,
+    [TYPE_DOUBLE] = 8,
     [TYPE_BOOL] = 1,
     [TYPE_REF] = 8
 };
