@@ -6,7 +6,7 @@
 #include <glib.h>
 #include <stdbool.h>
 
-typedef struct _VMValue{
+typedef struct _VMValue {
     union {
         int8_t i8;
         int16_t i16;
@@ -113,7 +113,9 @@ typedef struct {
 
 typedef struct VM {
     // Klass path
-    gchar *klassPath;
+    char *klassPath;
+    // Environments
+    GHashTable *envs;
     // Classes
     GHashTable *klassTable;
 } PixtronVM;

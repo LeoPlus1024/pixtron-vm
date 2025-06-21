@@ -9,6 +9,8 @@
 #include "StringUtil.h"
 
 #define MAGIC (0xFFAABBCC)
+#define FILE_SUFFIX_LEN (strlen(".klass"))
+#define IS_KLASS_FILE(fileName) (g_str_has_suffix(fileName, ".klass"))
 
 static gchar *PixtronVM_MethodToString(const Method *method) {
     GString *str = g_string_new(NULL);
@@ -169,7 +171,7 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klassName, 
             }
             method->klass = methodKlass;
         }
-        gchar *funcName = g_strdup((gchar *)(buf+position));
+        char *funcName = g_strdup((gchar *)(buf+position));
         position += PixtronVM_GetStrFullLen(funcName);
         const uint16_t argv = *((gushort *) (buf + position));
         position += 2;
@@ -220,7 +222,7 @@ static Klass *PixtronVM_KlassLoad(const PixtronVM *vm, const char *klassName, GE
     }
     while ((fileInfo = g_file_enumerator_next_file(enumerator, NULL, error)) != NULL) {
         const char *fileName = g_file_info_get_name(fileInfo);
-        if (!g_str_has_suffix(fileName, ".klass")) {
+        if (!IS_KLASS_FILE(fileName)) {
             continue;
         }
         const size_t strLen = strlen(fileName) - 6;
@@ -283,8 +285,8 @@ extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, const gu
     memcpy(field->value, value, VM_VALUE_SIZE);
 }
 
-extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const gchar *name) {
-    const guint methodCount = klass->methodCount;
+extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const char *name) {
+    const uint32_t methodCount = klass->methodCount;
     for (int i = 0; i < methodCount; ++i) {
         Method *method = klass->methods + i;
         if (g_str_equal(method->name, name)) {
@@ -292,4 +294,56 @@ extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const gchar *
         }
     }
     return NULL;
+}
+
+extern inline void PixtronVM_InitSystemKlass(const PixtronVM *vm, GError **error) {
+    const char *klassPath = g_hash_table_lookup(vm->envs, "KlassPath");
+    if (klassPath == NULL) {
+        return;
+    }
+    GFile *klassPathDir = NULL;
+    GFileInfo *fileInfo = NULL;
+    GFileEnumerator *enumerator = NULL;
+    klassPathDir = g_file_new_for_path(klassPath);
+    enumerator = g_file_enumerate_children(klassPathDir,
+                                           G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                           G_FILE_QUERY_INFO_NONE,
+                                           NULL,
+                                           error);
+    if (*error != NULL) {
+        g_clear_object(&klassPathDir);
+        return;
+    }
+
+    for (;;) {
+        if (fileInfo != NULL) {
+            g_clear_object(&fileInfo);
+        }
+        fileInfo = g_file_enumerator_next_file(enumerator, NULL, error);
+        if (fileInfo == NULL) {
+            break;
+        }
+        const char *name = g_file_info_get_name(fileInfo);
+        if (!IS_KLASS_FILE(name)) {
+            continue;
+        }
+        GFile *klassFile = g_file_get_child(klassPathDir, name);
+        const size_t t = strlen(name) - FILE_SUFFIX_LEN + 1;
+        char klassName[t];
+        snprintf(klassName, t, "%s", name);
+        const bool exist = g_hash_table_contains(vm->klassTable, klassName);
+        if (exist) {
+            g_clear_object(&klassFile);
+            continue;
+        }
+        Klass *klass = PixtronVM_CreateKlass(vm, klassName, klassFile, error);
+        g_clear_object(&klassFile);
+        if (klass == NULL) {
+            goto finally;
+        }
+        g_hash_table_insert(vm->klassTable, klass->name, klass);
+    }
+finally:
+    g_clear_object(&enumerator);
+    g_clear_object(&klassPathDir);
 }

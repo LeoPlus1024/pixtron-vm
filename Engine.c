@@ -207,7 +207,8 @@ static inline VMValue *PixtronVM_Ret(RuntimeContext *context) {
 
 static inline void PixtronVM_Call(RuntimeContext *context) {
     const char *methodName = PixtronVM_ReadByteCodeString(context);
-    const Method *method = PixtronVM_GetKlassMethod(context->frame->method->klass, methodName);
+    const VirtualStackFrame *frame = context->frame;
+    const Method *method = PixtronVM_GetKlassMethod(frame->method->klass, methodName);
     if (method == NULL) {
         context->throwException(context, "Method '%s' not found.", methodName);
     }

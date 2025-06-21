@@ -84,12 +84,36 @@ extern VM *PixtronVM_CreateVM(const char *klassPath) {
 
     vm->klassPath = g_strdup(klassPath);
 
+    GHashTable *envTable = g_hash_table_new(g_str_hash, g_str_equal);
     GHashTable *klassTable = g_hash_table_new(g_str_hash, g_str_equal);
-    if (klassTable == NULL) {
-        fprintf(stderr, "Classes HashTable init fail.");
+    if (klassTable == NULL || envTable == NULL) {
+        fprintf(stderr, "VM init fail.");
         exit(-1);
     }
+    char **envs = g_listenv();
+    int32_t index = 0;
+    while (true) {
+        const char *env = envs[index++];
+        if (env == NULL) {
+            break;
+        }
+        char *value = g_getenv(env);
+        if (value == NULL) {
+            continue;
+        }
+        g_hash_table_insert(envTable, g_strdup(env), value);
+    }
+    vm->envs = envTable;
     vm->klassTable = klassTable;
+    PixotronVM_free(CAST_REF(envs));
+    GError *error = NULL;
+    PixtronVM_InitSystemKlass(vm, &error);
+    if (error != NULL) {
+        PixtronVM_DestroyVM((VM **) &vm);
+        g_printerr("VM System klass init fail:%s\n", error->message);
+        g_error_free(error);
+        exit(-1);
+    }
     return (VM *) vm;
 }
 
