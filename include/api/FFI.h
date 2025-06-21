@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef void *FFIParam;
-typedef void *FFIResult;
+typedef struct _VMValue FFIParam;
+typedef struct _VMValue FFIResult;
 typedef struct _RuntimeContext RuntimeContext;
 /**
  * Base function pointer type for all context-aware FFI operations.
@@ -49,7 +49,7 @@ typedef void (*FFIBaseOperation)(RuntimeContext *context);
  *   - Implementation must not retain result reference
  *   - Caller responsible for result memory lifecycle
  */
-typedef void (*FFIResultOperation)(RuntimeContext *context, FFIResult result);
+typedef void (*FFIResultOperation)(RuntimeContext *context, FFIResult *result);
 
 /**
  * Throws a runtime exception with formatted error message.
@@ -179,6 +179,6 @@ extern void FFI_SetBool(FFIResult *result, bool value);
  *       const char* str = param.value.string_value;
  *   }
  */
-extern FFIParam FFI_GetParam(RuntimeContext *context, uint16_t index);
+extern FFIParam *FFI_GetParam(RuntimeContext *context, uint16_t index);
 
 #endif //FFI_H

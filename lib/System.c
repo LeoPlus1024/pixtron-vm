@@ -4,7 +4,7 @@
 #include <string.h>
 #include "Type.h"
 
-void VM_CurrentTimeNano(RuntimeContext *context, FFIResult result) {
+void VM_CurrentTimeNano(RuntimeContext *context, FFIResult *result) {
     struct timespec ts;
     if (timespec_get(&ts, TIME_UTC) != TIME_UTC) {
         context->throwException(context, "Failed to get current time:%s.", strerror(errno));

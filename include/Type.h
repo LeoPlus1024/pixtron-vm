@@ -6,7 +6,7 @@
 #include <glib.h>
 #include <stdbool.h>
 
-typedef struct {
+typedef struct _VMValue{
     union {
         int8_t i8;
         int16_t i16;
