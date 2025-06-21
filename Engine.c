@@ -58,7 +58,7 @@ static inline void PixtronVM_Ifeqne(RuntimeContext *context, const Opcode opcode
     }
 }
 
-extern inline void PixtronVM_LessGranterThanEqual(RuntimeContext *context, Opcode opcode) {
+static inline void PixtronVM_LessGranterThanEqual(RuntimeContext *context, Opcode opcode) {
     const int16_t offset = (int16_t) PixtronVM_ReadByteCodeU16(context);
     const VMValue *value = PixtronVM_PopOperand(context);
     const int32_t flag = value->i32;

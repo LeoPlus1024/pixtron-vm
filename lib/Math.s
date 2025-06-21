@@ -6,22 +6,10 @@
     load.i $0
     load.i $1
     icmp
-    ifeq equal
-    load.i $0
-    load.i $1
-    icmp
-    ifgt label0
-    load.i $0
-    load.i $1
-    icmp
-    iflt label1
-label0:
+    iflt blarger
     load.i $0
     ret
-label1:
+blarger:
     load.i $1
     ret
-equal:
-   load.i $0
-   ret
 @end
