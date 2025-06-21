@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern void *PixotronVM_calloc(size_t size) {
-    void *ptr = malloc(size);
+extern void *PixotronVM_calloc(const size_t size) {
+    void *ptr = calloc(1, size);
     if (ptr == NULL) {
         fprintf(stderr, "Out of memory.\n");
         exit(-1);

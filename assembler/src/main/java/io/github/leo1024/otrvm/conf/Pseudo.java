@@ -6,6 +6,7 @@ public enum Pseudo {
     FUNC("@func"),
     END("@end"),
     FIELD("@field"),
+    IMPORT("@import"),
     NATIVE("@native"),
     NAMESPACE("@namespace"),
     ;

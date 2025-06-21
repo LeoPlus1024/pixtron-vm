@@ -27,13 +27,17 @@ public class Helper {
     }
 
     public static Token expect(TokenSequence tokenSequence, char chr) {
+        return expect(tokenSequence, String.valueOf(chr));
+    }
+
+    public static Token expect(TokenSequence tokenSequence, String value) {
         if (tokenSequence.isEof()) {
-            throw new ParserException("Expected token value '%c' but reached end of input.".formatted(chr));
+            throw new ParserException("Expected token value '%s' but reached end of input.".formatted(value));
         }
 
         Token token = tokenSequence.consume();
-        if (!token.getValue().equals(String.valueOf(chr))) {
-            throw new ParserException("[%s] Expected token value '%c' but found '%s'".formatted(token.getPosition(), chr, token.getValue()));
+        if (!token.getValue().equals(value)) {
+            throw new ParserException("[%s] Expected token value '%s' but found '%s'".formatted(token.getPosition(), value, token.getValue()));
         }
         return token;
     }

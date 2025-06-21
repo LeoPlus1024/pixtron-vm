@@ -99,14 +99,14 @@ extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const uint
     const Klass *klass = PixtronVM_GetKlass((PixtronVM *) vm, klassName, &error);
     if (klass == NULL) {
         if (error != NULL) {
-            g_error_free(error);
+            g_printerr("Launcher VM instance fail:%s\n", error->message);
         }
-        g_thread_exit(NULL);
+        exit(-1);
     }
-    Method *method = PixtronVM_GetKlassMethod(klass, "main");
+    const Method *method = PixtronVM_GetKlassMethod(klass, "main");
     if (method == NULL) {
         g_printerr("Main method not found in klass:%s", klass->name);
-        g_thread_exit(NULL);
+        exit(-1);
     }
     CallMethodParam *callMethodParam = PixotronVM_calloc(sizeof(CallMethodParam));
     callMethodParam->argv = argv;

@@ -19,8 +19,10 @@ public class Constants {
     public static final char COLON = ':';
     public static final char PERCENT = '%';
     public static final char SEMICOLON = ';';
-
+    public static final char LEFT_BRACKET = '{';
+    public static final char RIGHT_BRACKET = '}';
+    public static final String FROM = "from";
     public static char[] DELIMITERS = new char[]{
-            CR, LF, TAB, SPACE, DOT, COMMA, LEFT_PAREN, RIGHT_PAREN, DOUBLE_QUOTE, COLON
+            CR, LF, TAB, SPACE, DOT, COMMA, LEFT_PAREN, RIGHT_PAREN, DOUBLE_QUOTE, COLON, LEFT_BRACKET, RIGHT_BRACKET
     };
 }

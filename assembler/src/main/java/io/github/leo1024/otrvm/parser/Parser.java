@@ -63,7 +63,9 @@ public class Parser {
         Token token = this.tokenSequence.consume();
         Pseudo pseudo = token.toPseudo();
         if (pseudo == Pseudo.FIELD) {
-            this.parseVar(context);
+            this.parseField(context);
+        } else if (pseudo == Pseudo.IMPORT) {
+            this.parseImport(context);
         } else {
             Expr expr = switch (pseudo) {
                 case FUNC -> parseFunc(context);
@@ -74,8 +76,34 @@ public class Parser {
         }
     }
 
+    public void parseImport(Context context) {
+        Helper.expect(this.tokenSequence, Constants.LEFT_BRACKET);
+        List<String> methods = new ArrayList<>();
+        for (; ; ) {
+            Token token = this.tokenSequence.consume();
+            Helper.requireTokenNotNull(token, "Import can't normal enclose.");
+            if (token.valEqual(Constants.RIGHT_BRACKET)) {
+                break;
+            }
+            if (token.getKind() != TokenKind.IDENTIFIER) {
+                throw ParserException.create(token, "Import body only support identifier.");
+            }
+            methods.add(token.getValue());
+            this.tokenSequence.checkToken(it -> {
+                Helper.requireTokenNotNull(it, "Except a ',' or '}'");
+                return it.valEqual(Constants.COMMA);
+            });
+        }
+        Helper.expect(this.tokenSequence, Constants.FROM);
+        Token nameSpaceToken = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);
+        for (String method : methods) {
+            FuncMeta funcMeta = new FuncMeta(nameSpaceToken.getValue(), new Id(method), Type.VOID, List.of(), false, null);
+            context.addExpr(new Func(context, funcMeta));
+        }
+    }
 
-    private void parseVar(Context context) {
+
+    private void parseField(Context context) {
         Type type = Helper.expect(this.tokenSequence, TokenKind.TYPE).toType();
         String name = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
         Object value = Helper.convertLiteral(Helper.expect(this.tokenSequence, TokenKind.immediate()));
