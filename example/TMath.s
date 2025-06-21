@@ -1,9 +1,9 @@
 @namespace TMath
 @import {   VM_CurrentTimeNano , VM_PrintNanoDiff  } from System
-@import {   Max                                  } from Math
+@import {   Max                                    } from Math
 
 
-@func testMax(int a,int b) : long
+@func testMax(int a,int b) : int
     %locals 4
     %stack 3
     call VM_CurrentTimeNano
