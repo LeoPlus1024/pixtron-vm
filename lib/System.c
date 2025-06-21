@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <time.h>
 #include <FFI.h>
+#include <stdio.h>
 #include <string.h>
 #include "Type.h"
 
@@ -10,4 +11,10 @@ void VM_CurrentTimeNano(RuntimeContext *context, FFIResult *result) {
         context->throwException(context, "Failed to get current time:%s.", strerror(errno));
     }
     FFI_SetLong(result, ts.tv_nsec);
+}
+
+void VM_PrintNanoDiff(RuntimeContext *context) {
+    const long pre = FFI_GetLongParam(context, 0);
+    const long now = FFI_GetLongParam(context, 1);
+    printf("%ld ns\n", (now - pre));
 }

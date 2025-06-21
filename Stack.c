@@ -117,7 +117,7 @@ extern inline void PixtronVM_SetLocalTable(RuntimeContext *context, const uint16
     if (index > maxLocalsSize) {
         context->throwException(context, "Local index out of bounds.");
     }
-    uint8_t *ptr = (uint8_t *) frame->locals + index;
+    uint8_t *ptr = (uint8_t *) (frame->locals + index);
     memcpy(ptr, value, VM_VALUE_SIZE);
 }
 
@@ -131,7 +131,7 @@ extern inline void PixtronVM_GetLocalTable(RuntimeContext *context, const uint16
     memcpy(value, ptr, VM_VALUE_SIZE);
 }
 
-extern inline void PixtronVM_MoveStackFrameSp(RuntimeContext *context, int32_t offset) {
+extern inline void PixtronVM_MoveStackFrameSp(RuntimeContext *context, const int32_t offset) {
     if (offset == 0) {
         return;
     }

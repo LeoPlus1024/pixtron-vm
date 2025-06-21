@@ -13,6 +13,8 @@ pkg_check_modules(GLIB_DEP REQUIRED glib-2.0 gobject-2.0 gio-2.0)
 configure_file(${PROJECT_SOURCE_DIR}/Config.h.in ${CMAKE_BINARY_DIR}/include/Config.h)
 
 file(GLOB SOURCES *.c lib/*.c)
+file(COPY example/build DESTINATION ${CMAKE_BINARY_DIR}/tests)
+
 
 enable_testing()
 

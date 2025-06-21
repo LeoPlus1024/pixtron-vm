@@ -158,13 +158,13 @@ extern void FFI_SetDouble(FFIResult *result, double value);
  */
 extern void FFI_SetBool(FFIResult *result, bool value);
 
-extern uint8_t FFI_GetByteParam(RuntimeContext *context, uint8_t index);
+extern int8_t FFI_GetByteParam(RuntimeContext *context, uint8_t index);
 
-extern uint16_t FFI_GetShortParam(RuntimeContext *context, uint8_t index);
+extern int16_t FFI_GetShortParam(RuntimeContext *context, uint8_t index);
 
-extern uint32_t FFI_GetIntParam(RuntimeContext *context, uint8_t index);
+extern int32_t FFI_GetIntParam(RuntimeContext *context, uint8_t index);
 
-extern uint64_t FFI_GetLongParam(RuntimeContext *context, uint8_t index);
+extern int64_t FFI_GetLongParam(RuntimeContext *context, uint8_t index);
 
 extern double FFI_GetDoubleParam(RuntimeContext *context, uint8_t index);
 

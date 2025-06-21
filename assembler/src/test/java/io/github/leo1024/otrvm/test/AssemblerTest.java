@@ -19,8 +19,8 @@ public class AssemblerTest {
     @Test
     public void testCompilerHelloWorld() {
         Configure configure = Configure.newBuilder()
-                .workDir(Path.of("example"))
-                .outputDir(Path.of("example/build"))
+                .workDir(Path.of("../example"))
+                .outputDir(Path.of("../example/build"))
                 .build();
         Assembler.create(configure);
     }

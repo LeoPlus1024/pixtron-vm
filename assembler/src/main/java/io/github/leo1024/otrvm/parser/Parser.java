@@ -172,7 +172,7 @@ public class Parser {
             case RET -> new Ret();
             case LOAD, GLOAD -> parseLoadExpr(opcode);
             case STORE, GSTORE -> parseStoreExpr(opcode);
-            case ADD, SBC, MUL, DIV -> new Math(opcode);
+            case ADD, SUB, MUL, DIV -> new Math(opcode);
             case F2I, F2L, I2L, I2F, L2I, L2F -> new Cast(opcode);
             case ICMP, LCMP, DCMP -> new XCmp(opcode);
             case CALL -> parserCallExpr();

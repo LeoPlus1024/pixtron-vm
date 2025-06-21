@@ -11,7 +11,7 @@ public enum Opcode {
     STORE("store", 1),
     GSTORE("gstore", 1),
     ADD("add", 2),
-    SBC("sbc", 3),
+    SUB("sub", 3),
     MUL("mul", 4),
     DIV("div", 5),
     GOTO("goto", 6),

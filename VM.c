@@ -81,8 +81,9 @@ extern double PixtronVM_GetDouble(Value *value) {
 
 extern VM *PixtronVM_CreateVM(const char *klassPath) {
     PixtronVM *vm = PixotronVM_calloc(sizeof(PixtronVM));
-
-    vm->klassPath = g_strdup(klassPath);
+    if (klassPath != NULL) {
+        vm->klassPath = g_strdup(klassPath);
+    }
 
     GHashTable *envTable = g_hash_table_new(g_str_hash, g_str_equal);
     GHashTable *klassTable = g_hash_table_new(g_str_hash, g_str_equal);
@@ -118,7 +119,8 @@ extern VM *PixtronVM_CreateVM(const char *klassPath) {
 }
 
 
-extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const uint16_t argv, const Value *args[]) {
+extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const char *methodName, uint16_t argv,
+                                       const Value *args[]) {
     GError *error = NULL;
     const Klass *klass = PixtronVM_GetKlass((PixtronVM *) vm, klassName, &error);
     if (klass == NULL) {
@@ -127,7 +129,7 @@ extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const uint
         }
         exit(-1);
     }
-    const Method *method = PixtronVM_GetKlassMethod(klass, "main");
+    const Method *method = PixtronVM_GetKlassMethod(klass, methodName);
     if (method == NULL) {
         g_printerr("Main method not found in klass:%s", klass->name);
         exit(-1);

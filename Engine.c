@@ -38,7 +38,7 @@ static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *con
     } else {
         context->throwException(context, "Canonical binary operation '%02x' is not supported.", opcode);
     }
-    PixtronVM_PushOperand(context, NULL);
+    PixtronVM_MoveStackFrameSp(context, -1);
 }
 
 static inline void PixtronVM_Goto(RuntimeContext *context) {
@@ -152,7 +152,7 @@ static inline void PixtronVM_Load(RuntimeContext *context) {
         if (type != value.type) {
             context->throwException(
                 context,
-                "Load value type mismatch the expected type is:'%s' and the actual type is:'%s'.",
+                "Load value type mismatch the expected type is:'%s' and the actual type is:'%s'",
                 TYPE_NAME[type],
                 TYPE_NAME[value.type]
             );
@@ -239,7 +239,10 @@ static inline void PixtronVM_Call(RuntimeContext *context) {
     } else {
         void *handle = dlsym(RTLD_DEFAULT, method->name);
         const bool callWithRet = method->retType != TYPE_VOID;
-        PixtronVM_MoveStackFrameSp(context, method->argv);
+        const int32_t argv = method->argv;
+        if (argv > 0) {
+            PixtronVM_MoveStackFrameSp(context, argv - 1);
+        }
         if (callWithRet) {
             const FFIResultOperation ffiFunc = (FFIResultOperation) (handle);
             VMValue retVal;

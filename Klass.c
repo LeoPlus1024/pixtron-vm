@@ -93,7 +93,7 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klassName, 
     if (*error != NULL) {
         goto finally;
     }
-    const guint magic = *((guint *) buf);
+    const int32_t magic = *((int32_t *) buf);
     if (magic != MAGIC) {
         g_set_error(error, KLASS_DOMAIN, MAGIC_ERROR, "Magic mistake.");
         goto finally;
@@ -141,6 +141,8 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klassName, 
             }
             Method *method = PixtronVM_GetKlassMethod(selfKlass, funcName);
             if (method == NULL) {
+                g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND, "Method %s not found in class %s", funcName,
+                            selfKlassName);
                 goto finally;
             }
             klass->methods[j] = method;
@@ -155,12 +157,8 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klassName, 
                     method->libCount = 0;
                 } else {
                     char **arr = g_strsplit(libs, "|", 1024);
-                    uint16_t libCount = 0;
-                    while (arr[libCount] != NULL) {
-                        libCount++;
-                    }
                     method->libName = arr;
-                    method->libCount = libCount;
+                    method->libCount = g_strv_length(arr);
                     position += PixtronVM_GetStrFullLen(libs);
                 }
             }
@@ -256,6 +254,10 @@ extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const char *klassNa
     Klass *klass = g_hash_table_lookup(vm->klassTable, klassName);
     if (klass != NULL) {
         return klass;
+    }
+    // If Klass path is null skip klass load
+    if (vm->klassPath == NULL) {
+        return NULL;
     }
     klass = PixtronVM_KlassLoad(vm, klassName, error);
     if (klass != NULL) {

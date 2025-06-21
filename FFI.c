@@ -58,32 +58,32 @@ extern void FFI_SetBool(FFIResult *result, const bool value) {
     result->i8 = (int8_t) value;
 }
 
-extern uint8_t FFI_GetByteParam(RuntimeContext *context, const uint8_t index) {
+extern int8_t FFI_GetByteParam(RuntimeContext *context, const uint8_t index) {
     const FFIParam *param = FFI_GetParam(context, index);
-    g_assert(param->type!=TYPE_BYTE);
+    g_assert(param->type==TYPE_BYTE);
     return param->i8;
 }
 
-extern uint16_t FFI_GetShortParam(RuntimeContext *context, const uint8_t index) {
+extern int16_t FFI_GetShortParam(RuntimeContext *context, const uint8_t index) {
     const FFIParam *param = FFI_GetParam(context, index);
-    g_assert(param->type!=TYPE_SHORT);
+    g_assert(param->type==TYPE_SHORT);
     return param->i16;
 }
 
-extern uint32_t FFI_GetIntParam(RuntimeContext *context, const uint8_t index) {
+extern int32_t FFI_GetIntParam(RuntimeContext *context, const uint8_t index) {
     const FFIParam *param = FFI_GetParam(context, index);
-    g_assert(param->type!=TYPE_INT);
+    g_assert(param->type==TYPE_INT);
     return param->i32;
 }
 
-extern uint64_t FFI_GetLongParam(RuntimeContext *context, const uint8_t index) {
+extern int64_t FFI_GetLongParam(RuntimeContext *context, const uint8_t index) {
     const FFIParam *param = FFI_GetParam(context, index);
-    g_assert(param->type!=TYPE_LONG);
-    return param->i32;
+    g_assert(param->type==TYPE_LONG);
+    return param->i64;
 }
 
 extern double FFI_GetDoubleParam(RuntimeContext *context, const uint8_t index) {
     const FFIParam *param = FFI_GetParam(context, index);
-    g_assert(param->type!=TYPE_DOUBLE);
+    g_assert(param->type==TYPE_DOUBLE);
     return param->f64;
 }
