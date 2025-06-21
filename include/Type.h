@@ -64,7 +64,7 @@ typedef struct _Klass {
     // Version
     Version version;
     // Class methods
-    Method *methods;
+    Method **methods;
     // Class bytecode
     uint8_t *byteCode;
     // Field meta data

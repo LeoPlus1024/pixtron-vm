@@ -23,6 +23,16 @@ public enum Opcode {
     F2I("f2i", 12),
     F2L("f2l", 13),
     CALL("call", 14),
+    IFEQ("ifeq", 15),
+    IFNE("ifne", 16),
+    IFLT("iflt", 17),
+    IFGE("ifge", 18),
+    IFGT("ifgt", 19),
+    IFLE("ifle", 20),
+    ICMP("icmp", 21),
+    LCMP("lcmp", 22),
+    DCMP("dcmp", 23),
+    POP("pop", 24),
     ;
 
 

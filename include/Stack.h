@@ -85,10 +85,10 @@ extern inline VMValue *PixtronVM_PopOperand(RuntimeContext *context);
  *   3) Operand stack empty in new frame
  *
  */
-extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method, uint16_t argv,
-                                            const VMValue **args);
+extern inline void PixtronVM_CreateStackFrame(RuntimeContext *context, const Method *method, uint16_t argv,
+                                              const VMValue **args);
 
-extern inline void PixtronVM_PushStackFrame0(RuntimeContext *context, const Method *method);
+extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method);
 
 /**
  * Pop the current stack frame from the call stack

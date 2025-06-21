@@ -21,15 +21,14 @@ typedef enum:uint8_t {
     F2I,
     F2L,
     CALL,
-    // 如果栈顶数字为0则跳转
     IFEQ,
-    // 如果栈顶数字不为0则跳转
     IFNE,
-    // 整数比较
+    IFLT,
+    IFGE,
+    IFGT,
+    IFLE,
     ICMP,
-    // 长整形比较
     LCMP,
-    // 浮点数比较
     DCMP,
     POP,
     // 扩展预留

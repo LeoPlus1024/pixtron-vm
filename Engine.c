@@ -41,23 +41,45 @@ static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *con
     PixtronVM_PushOperand(context, NULL);
 }
 
-static inline void PixtronVM_CheckCon(RuntimeContext *context, const Opcode opcode) {
-    const gint16 offset = (gint16) PixtronVM_ReadByteCodeU16(context);
-    if (opcode != GOTO) {
-        const VMValue *value = PixtronVM_PopOperand(context);
-        const bool ifeq = opcode == IFEQ;
-        if (value->type == TYPE_BOOL) {
-            context->throwException(context, "Ifeq and ifnq only support bool but it is:'%s'", TYPE_NAME[value->type]);
-        }
-        if (!((ifeq && VM_FALSE(value->i8)) || !ifeq && VM_TRUE(value->i8))) {
-            return;
-        }
-    }
+static inline void PixtronVM_Goto(RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
+    const int16_t offset = (int16_t) PixtronVM_ReadByteCodeU16(context);
     // Offset contain current opcode
     frame->pc = frame->pc + offset - 2;
 }
 
+static inline void PixtronVM_Ifeqne(RuntimeContext *context, const Opcode opcode) {
+    const VMValue *value = PixtronVM_PopOperand(context);
+    const bool ifeq = opcode == IFEQ;
+    const int16_t offset = (int16_t) PixtronVM_ReadByteCodeU16(context);
+    VirtualStackFrame *frame = context->frame;
+    if ((value->i32 == 0) == ifeq) {
+        frame->pc = frame->pc + offset - 2;
+    }
+}
+
+extern inline void PixtronVM_LessGranterThanEqual(RuntimeContext *context, Opcode opcode) {
+    const int16_t offset = (int16_t) PixtronVM_ReadByteCodeU16(context);
+    const VMValue *value = PixtronVM_PopOperand(context);
+    const int32_t flag = value->i32;
+    bool jump2Branch = false;
+
+    switch (opcode) {
+        case IFLE: jump2Branch = (flag <= 0);
+            break;
+        case IFLT: jump2Branch = (flag < 0);
+            break;
+        case IFGE: jump2Branch = (flag >= 0);
+            break;
+        case IFGT: jump2Branch = (flag > 0);
+            break;
+        default: break;
+    }
+
+    if (jump2Branch) {
+        context->frame->pc += (offset - 2);
+    }
+}
 
 extern inline void PixtronVM_Cmp(RuntimeContext *context, const Opcode opcode) {
     const VMValue *sourceOperand = PixtronVM_PopOperand(context);
@@ -75,8 +97,8 @@ extern inline void PixtronVM_Cmp(RuntimeContext *context, const Opcode opcode) {
         default:
             context->throwException(context, "unsupported cmp opcode:%02x", opcode);
     }
-    targetOperand->type = TYPE_BOOL;
-    PixtronVM_PushOperand(context, NULL);
+    targetOperand->type = TYPE_INT;
+    PixtronVM_MoveStackFrameSp(context, -1);
 }
 
 static void PixtronVM_CONV(RuntimeContext *context, Opcode opcode) {
@@ -213,7 +235,7 @@ static inline void PixtronVM_Call(RuntimeContext *context) {
         context->throwException(context, "Method '%s' not found.", methodName);
     }
     if (!method->nativeFunc) {
-        PixtronVM_PushStackFrame0(context, method);
+        PixtronVM_PushStackFrame(context, method);
     } else {
         void *handle = dlsym(RTLD_DEFAULT, method->name);
         const bool callWithRet = method->retType != TYPE_VOID;
@@ -240,7 +262,7 @@ extern void PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
     context->stackDepth = 0;
     context->throwException = PixtronVM_ThrowException;
     const VMValue **args = callMethodParam->args;
-    PixtronVM_PushStackFrame(context, method, callMethodParam->argv, args);
+    PixtronVM_CreateStackFrame(context, method, callMethodParam->argv, args);
 
     VMValue *retVal = NULL;
     while (!context->exit) {
@@ -260,9 +282,17 @@ extern void PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
                 PixtronVM_executeCanonicalBinaryOperation(context, opcode);
                 break;
             case GOTO:
+                PixtronVM_Goto(context);
+                break;
             case IFEQ:
             case IFNE:
-                PixtronVM_CheckCon(context, opcode);
+                PixtronVM_Ifeqne(context, opcode);
+                break;
+            case IFLE:
+            case IFLT:
+            case IFGE:
+            case IFGT:
+                PixtronVM_LessGranterThanEqual(context, opcode);
                 break;
             case ICMP:
             case DCMP:

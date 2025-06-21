@@ -8,7 +8,16 @@ import java.nio.file.Path;
 
 public class AssemblerTest {
     @Test
-    public void testHelloWorld() {
+    public void testCompilerStdLib() {
+        Configure configure = Configure.newBuilder()
+                .workDir(Path.of("../lib"))
+                .outputDir(Path.of("../lib"))
+                .build();
+        Assembler.create(configure);
+    }
+
+    @Test
+    public void testCompilerHelloWorld() {
         Configure configure = Configure.newBuilder()
                 .workDir(Path.of("example"))
                 .outputDir(Path.of("example/build"))

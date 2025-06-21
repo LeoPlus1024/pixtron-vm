@@ -64,8 +64,8 @@ extern inline VMValue *PixtronVM_PopOperand(RuntimeContext *context) {
     return value;
 }
 
-extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method, const uint16_t argv,
-                                            const VMValue **args) {
+extern inline void PixtronVM_CreateStackFrame(RuntimeContext *context, const Method *method, const uint16_t argv,
+                                              const VMValue **args) {
     const VirtualStackFrame *frame = PixtronVM_IPushStackFrame(context, method, argv);
     for (uint16_t i = 0; i < argv; i++) {
         const VMValue *arg = args[i];
@@ -76,22 +76,23 @@ extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Metho
     }
 }
 
-extern inline void PixtronVM_PushStackFrame0(RuntimeContext *context, const Method *method) {
+extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method) {
     const uint16_t argv = method->argv;
+    VirtualStackFrame *frame = context->frame;
     const VirtualStackFrame *newFrame = PixtronVM_IPushStackFrame(context, method, argv);
     if (argv == 0) {
         return;
     }
-    const VirtualStackFrame *frame = context->frame;
     const uint16_t sp = frame->sp;
-    const uint16_t stackDepth = frame->maxStackSize - sp;
-    if (stackDepth < method->argv) {
+    const uint16_t depth = frame->maxStackSize - sp;
+    if (depth < method->argv) {
         context->throwException(context, "Stack depth too min.");
     }
-    const VMValue *args = frame->operandStack + sp + argv;
+    const VMValue *operandStack = frame->operandStack + sp;
     for (int i = 0; i < argv; ++i) {
-        newFrame->locals[i] = args[i];
+        newFrame->locals[i] = operandStack[argv - i - 1];
     }
+    frame->sp = sp + argv;
 }
 
 extern inline void PixtronVM_PopStackFrame(RuntimeContext *context) {

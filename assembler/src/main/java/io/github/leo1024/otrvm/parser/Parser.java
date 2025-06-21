@@ -97,7 +97,7 @@ public class Parser {
         Helper.expect(this.tokenSequence, Constants.FROM);
         Token nameSpaceToken = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);
         for (String method : methods) {
-            FuncMeta funcMeta = new FuncMeta(nameSpaceToken.getValue(), new Id(method), Type.VOID, List.of(), false, null);
+            FuncMeta funcMeta = new FuncMeta(true, nameSpaceToken.getValue(), new Id(method), Type.VOID, List.of(), false, null);
             context.addExpr(new Func(context, funcMeta));
         }
     }
@@ -149,7 +149,7 @@ public class Parser {
         if (declareRetType) {
             retType = Helper.expect(tokenSequence, TokenKind.TYPE).toType();
         }
-        FuncMeta funcMeta = new FuncMeta(null, name.toId(), retType, paramList, isNativeFunc, libNames);
+        FuncMeta funcMeta = new FuncMeta(false, null, name.toId(), retType, paramList, isNativeFunc, libNames);
         Func func = new Func(context, funcMeta);
         while (!this.tokenSequence.checkToken(it -> Helper.checkPseudoToken(it, Pseudo.END))) {
             parseExpr(func);
@@ -174,8 +174,9 @@ public class Parser {
             case STORE, GSTORE -> parseStoreExpr(opcode);
             case ADD, SBC, MUL, DIV -> new Math(opcode);
             case F2I, F2L, I2L, I2F, L2I, L2F -> new Cast(opcode);
+            case ICMP, LCMP, DCMP -> new XCmp(opcode);
             case CALL -> parserCallExpr();
-            case GOTO -> {
+            case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT -> {
                 String label = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
                 yield new Redirect(opcode, label);
             }

@@ -54,7 +54,7 @@ static void PixtronVM_FreeKlass(Klass **klass) {
     }
     int32_t methodCount = (int32_t) self->methodCount;
     while ((methodCount--) >= 0) {
-        Method *method = self->methods + methodCount;
+        Method *method = self->methods[methodCount];
         PixotronVM_free(TO_REF(method->name));
         int16_t argv = (int16_t) method->argv;
         while ((--argv) >= 0) {
@@ -127,69 +127,72 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klassName, 
     klass->fields = files;
     klass->methodCount = *((uint32_t *) (buf + position));
     position += 4;
-    klass->methods = PixotronVM_calloc(sizeof(Method) * klass->methodCount);
+    klass->methods = PixotronVM_calloc(sizeof(Method *) * klass->methodCount);
     uint32_t j = 0;
     while (j < klass->methodCount) {
-        Method *method = klass->methods + j;
-        method->nativeFunc = *((bool *) (buf + position));
-        position++;
-        if (method->nativeFunc) {
-            const char *libs = (char *) (buf + position);
-            if (g_str_equal(libs, "")) {
-                method->libCount = 0;
-            } else {
-                char **arr = g_strsplit(libs, "|", 1024);
-                uint16_t libCount = 0;
-                while (arr[libCount] != NULL) {
-                    libCount++;
-                }
-                method->libName = arr;
-                method->libCount = libCount;
-                position += PixtronVM_GetStrFullLen(libs);
-            }
-        }
-        method->maxLocalsSize = *((uint16_t *) (buf + position));
-        position += 2;
-        method->maxStackSize = *((uint16_t *) (buf + position));
-        position += 2;
-        method->offset = *((uint32_t *) (buf + position));
-        position += 4;
-        method->endOffset = *((uint32_t *) (buf + position));
-        position += 4;
-        method->retType = *((Type *) (buf + position));
-        position += 2;
-        const char *selfKlass = (char *) (buf + position);
-        if (g_str_equal(selfKlass, "")) {
-            position++;
-            method->klass = klass;
-        } else {
-            position += PixtronVM_GetStrFullLen(selfKlass);
-            Klass *methodKlass = PixtronVM_GetKlass(vm, selfKlass, error);
-            // If other klass load fail exit current klass init
-            if (methodKlass == NULL) {
+        const char *selfKlassName = (char *) (buf + position);
+        position += PixtronVM_GetStrFullLen(selfKlassName);
+        const char *funcName = (char *) (buf + position);
+        position += PixtronVM_GetStrFullLen(funcName);
+        if (!g_str_equal(selfKlassName, "")) {
+            const Klass *selfKlass = PixtronVM_GetKlass(vm, selfKlassName, error);
+            if (selfKlass == NULL) {
                 goto finally;
             }
-            method->klass = methodKlass;
-        }
-        char *funcName = g_strdup((char *)(buf+position));
-        position += PixtronVM_GetStrFullLen(funcName);
-        const uint16_t argv = *((gushort *) (buf + position));
-        position += 2;
-        MethodParam *args = NULL;
-        if (argv > 0) {
-            args = PixotronVM_calloc(sizeof(MethodParam) * argv);
-            for (int i = 0; i < argv; ++i) {
-                MethodParam *param = args + i;
-                param->type = *((Type *) (buf + position));
-                position += 2;
-                param->name = g_strdup((gchar *)(buf+position));
-                position += PixtronVM_GetStrFullLen(param->name);
+            Method *method = PixtronVM_GetKlassMethod(selfKlass, funcName);
+            if (method == NULL) {
+                goto finally;
             }
+            klass->methods[j] = method;
+        } else {
+            Method *method = PixotronVM_calloc(sizeof(Method));
+            method->klass = klass;
+            method->nativeFunc = *((bool *) (buf + position));
+            position++;
+            if (method->nativeFunc) {
+                const char *libs = (char *) (buf + position);
+                if (g_str_equal(libs, "")) {
+                    method->libCount = 0;
+                } else {
+                    char **arr = g_strsplit(libs, "|", 1024);
+                    uint16_t libCount = 0;
+                    while (arr[libCount] != NULL) {
+                        libCount++;
+                    }
+                    method->libName = arr;
+                    method->libCount = libCount;
+                    position += PixtronVM_GetStrFullLen(libs);
+                }
+            }
+            method->maxLocalsSize = *((uint16_t *) (buf + position));
+            position += 2;
+            method->maxStackSize = *((uint16_t *) (buf + position));
+            position += 2;
+            method->offset = *((uint32_t *) (buf + position));
+            position += 4;
+            method->endOffset = *((uint32_t *) (buf + position));
+            position += 4;
+            method->retType = *((Type *) (buf + position));
+            position += 2;
+            const uint16_t argv = *((uint16_t *) (buf + position));
+            position += 2;
+            MethodParam *args = NULL;
+            if (argv > 0) {
+                args = PixotronVM_calloc(sizeof(MethodParam) * argv);
+                for (int i = 0; i < argv; ++i) {
+                    MethodParam *param = args + i;
+                    param->type = *((Type *) (buf + position));
+                    position += 2;
+                    param->name = g_strdup((gchar *)(buf+position));
+                    position += PixtronVM_GetStrFullLen(param->name);
+                }
+            }
+            method->argv = argv;
+            method->args = args;
+            klass->methods[j] = method;
+            method->name = g_strdup(funcName);
+            method->toString = PixtronVM_MethodToString;
         }
-        method->name = funcName;
-        method->args = args;
-        method->toString = PixtronVM_MethodToString;
-        method->argv = argv;
         j++;
     }
     const uint64_t byteCodeSize = fileSize - position;
@@ -249,7 +252,7 @@ finally:
     return klass;
 }
 
-extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const gchar *klassName, GError **error) {
+extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const char *klassName, GError **error) {
     Klass *klass = g_hash_table_lookup(vm->klassTable, klassName);
     if (klass != NULL) {
         return klass;
@@ -292,7 +295,7 @@ extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, const gu
 extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const char *name) {
     const uint32_t methodCount = klass->methodCount;
     for (int i = 0; i < methodCount; ++i) {
-        Method *method = klass->methods + i;
+        Method *method = klass->methods[i];
         if (g_str_equal(method->name, name)) {
             return method;
         }
