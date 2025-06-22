@@ -7,7 +7,7 @@
 #include "String.h"
 #include "Type.h"
 
-void VM_CurrentTimeNano(RuntimeContext *context, FFIResult *result) {
+void currentTimeNano(RuntimeContext *context, FFIResult *result) {
     struct timespec ts;
     if (timespec_get(&ts, TIME_UTC) != TIME_UTC) {
         context->throwException(context, "Failed to get current time:%s.", strerror(errno));
@@ -15,14 +15,14 @@ void VM_CurrentTimeNano(RuntimeContext *context, FFIResult *result) {
     FFI_SetLong(result, ts.tv_nsec);
 }
 
-void VM_PrintNanoDiff(RuntimeContext *context) {
+void printNanoDiff(RuntimeContext *context) {
     const long pre = FFI_GetLongParam(context, 0);
     const long now = FFI_GetLongParam(context, 1);
     printf("%ld ns\n", (now - pre));
 }
 
 
-void VM_Println(RuntimeContext *context) {
+void println(RuntimeContext *context) {
     const char *const str = FFI_GetStringParam(context, 0);
     if (str == NULL) {
         printf("%s\n", "null");

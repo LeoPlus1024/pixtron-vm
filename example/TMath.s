@@ -1,22 +1,21 @@
 @namespace TMath
-@import {   VM_CurrentTimeNano , VM_PrintNanoDiff  } from System
-@import {   Max                                    } from Math
-@constant "startTest"
+@import {   currentTimeNano , printNanoDiff        } from System
+@import {   max                                    } from Math
 
 @func testMax(int a,int b) : int
     %locals 4
     %stack 3
-    call VM_CurrentTimeNano
+    call currentTimeNano
     store.i64 $2
     load.i32 $0
     load.i32 $1
-    call Max
+    call max
     store.i32 $3
     ; base
     load.i64 $2
     ; now
-    call VM_CurrentTimeNano
-    call VM_PrintNanoDiff
+    call currentTimeNano
+    call printNanoDiff
     load.i32 $3
     ret
 @end

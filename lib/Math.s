@@ -1,6 +1,6 @@
 @namespace Math
 
-@func Max(int a,int b):int
+@func max(int a,int b):int
     %locals 2
     %stack 2
     load.i32 $0

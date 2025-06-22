@@ -1,6 +1,6 @@
 @namespace TString
 
-@import {   VM_Println  } from System
+@import {   println  } from System
 
 
 @constant "Hello,World."
@@ -10,7 +10,7 @@
     %locals 0
     %stack 1
     ldc.str 0
-    call VM_Println
+    call println
     ret
 @end
 

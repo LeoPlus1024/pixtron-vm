@@ -79,4 +79,15 @@ public class ASTBuilder extends Context {
     public List<Constant> getConstants() {
         return Collections.unmodifiableList(this.constants);
     }
+
+    public int getFuncIndex(String funcName) {
+        List<FuncMeta> funcList = getFuncList();
+        for (int i = 0; i < funcList.size(); i++) {
+            FuncMeta funcMeta = funcList.get(i);
+            if (funcMeta.getFuncName().equals(funcName)) {
+                return i;
+            }
+        }
+        throw new ParserException("Function '" + funcName + "' not found.");
+    }
 }

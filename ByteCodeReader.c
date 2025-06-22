@@ -5,8 +5,8 @@
 static inline void PixtronVM_ByteCodeIndexOutOfBoundsCheck(RuntimeContext *context,
                                                            const VirtualStackFrame *frame,
                                                            const Method *method,
-                                                           const guint size) {
-    const guint pc = frame->pc;
+                                                           const uint32_t size) {
+    const uint32_t pc = frame->pc;
     if (pc + size <= method->endOffset) {
         return;
     }
@@ -15,11 +15,11 @@ static inline void PixtronVM_ByteCodeIndexOutOfBoundsCheck(RuntimeContext *conte
 
 extern inline guint8 PixtronVM_ReadByteCodeU8(RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
-    const guint pc = frame->pc;
+    const uint32_t pc = frame->pc;
     const Method *method = frame->method;
     PixtronVM_ByteCodeIndexOutOfBoundsCheck(context, frame, method, 1);
     const Klass *klass = method->klass;
-    const guint8 byte = klass->byteCode[pc];
+    const uint8_t byte = klass->byteCode[pc];
     frame->pc = pc + 1;
     return byte;
 }

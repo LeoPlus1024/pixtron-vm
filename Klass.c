@@ -56,6 +56,9 @@ static inline void PixtronVM_FreeKlass(Klass **klass) {
     int32_t methodCount = (int32_t) self->methodCount;
     while ((methodCount--) >= 0) {
         Method *method = self->methods[methodCount];
+        if (method == NULL || method->klass != self) {
+            continue;
+        }
         PixotronVM_free(TO_REF(method->name));
         int16_t argv = (int16_t) method->argv;
         while ((--argv) >= 0) {
@@ -116,7 +119,7 @@ static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klas
         return NULL;
     }
     const goffset fileSize = g_file_info_get_size(fileInfo);
-    guint8 buf[fileSize];
+    uint8_t buf[fileSize];
     g_input_stream_read_all(G_INPUT_STREAM(inputStream), buf, fileSize, NULL, NULL, error);
     g_input_stream_close(G_INPUT_STREAM(inputStream), NULL, NULL);
     g_clear_object(&inputStream);
@@ -176,7 +179,7 @@ static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klas
             if (selfKlass == NULL) {
                 goto finally;
             }
-            Method *method = PixtronVM_GetKlassMethod(selfKlass, funcName);
+            Method *method = PixtronVM_GetKlassMethodByName(selfKlass, funcName);
             if (method == NULL) {
                 g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND, "Method %s not found in class %s", funcName,
                             selfKlassName);
@@ -346,7 +349,18 @@ extern inline void PixtronVM_GetKlassConstant(RuntimeContext *context, const uin
     memcpy(value, klass->constArray[index],VM_VALUE_SIZE);
 }
 
-extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const char *name) {
+extern inline Method *PixtronVM_GetKlassMethod(RuntimeContext *context, const uint16_t index) {
+    const Klass *klass = context->frame->method->klass;
+    const uint32_t methodCount = klass->methodCount;
+    if (index >= methodCount) {
+        context->throwException(context, "Method index out of range current index is [%d] but max index is [%d].",
+                                index, methodCount);
+        return NULL;
+    }
+    return klass->methods[index];
+}
+
+extern inline Method *PixtronVM_GetKlassMethodByName(const Klass *klass, const char *name) {
     const uint32_t methodCount = klass->methodCount;
     for (int i = 0; i < methodCount; ++i) {
         Method *method = klass->methods[i];

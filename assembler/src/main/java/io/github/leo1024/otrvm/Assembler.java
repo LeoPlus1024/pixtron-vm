@@ -30,7 +30,7 @@ public class Assembler {
         final List<FuncMeta> funcMetas = builder.getFuncList();
         final List<FieldMeta> fieldList = builder.getFieldList();
         BinaryHeader header = new BinaryHeader(Version.V1_0, builder.getConstants(), fieldList, funcMetas);
-        byte[] headerBytes = header.toBytes();
+        final byte[] headerBytes = header.toBytes();
         Path path = buildDir.resolve(String.format("%s.klass", builder.getNamespace()));
         try (FileOutputStream outputStream = new FileOutputStream(path.toFile())) {
             outputStream.write(headerBytes);
@@ -73,6 +73,9 @@ public class Assembler {
                 }
                 int tmp = offset - meta.getPosition();
                 buf = redirect.toBytes((short) tmp);
+            } else if (expr instanceof Call call) {
+                int funcIndex = builder.getFuncIndex(call.getMethodName());
+                buf = call.toBytes(funcIndex);
             } else {
                 buf = expr.toBytes();
             }

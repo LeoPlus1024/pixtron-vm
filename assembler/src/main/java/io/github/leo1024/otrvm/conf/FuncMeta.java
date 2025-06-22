@@ -140,4 +140,8 @@ public class FuncMeta implements ISerializable {
         }
         return data;
     }
+
+    public String getFuncName() {
+        return name.getValue();
+    }
 }

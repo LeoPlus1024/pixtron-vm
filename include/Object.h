@@ -1,9 +1,9 @@
-#ifndef RC_OBJECT_H
-#define RC_OBJECT_H
+#ifndef OBJECT_H
+#define OBJECT_H
 #include <stdint.h>
 
 #define CONVERT_TO_OBJECT(ptr) ((void *)(((uint8_t *)ptr) + sizeof(ObjectHeader)))
-#define GET_OBJECT_HEADER(ptr) ((ObjectHeader *)(uint8_t *)ptr - sizeof(ObjectHeader))
+#define GET_OBJECT_HEADER(ptr) ((ObjectHeader *)((uint8_t *)ptr - sizeof(ObjectHeader)))
 
 typedef void (*ObjectDestructor)(const void *);
 
@@ -54,6 +54,7 @@ typedef struct {
  *          Object must be freed through PixtronVM_Release mechanism.
  */
 extern inline void *PixtronVM_NewObject(uint64_t size, const ObjectDestructor destructor, uint64_t initRefCount);
+
 /**
  * @brief Increases the reference count of a managed object.
  *
@@ -69,7 +70,7 @@ extern inline void *PixtronVM_NewObject(uint64_t size, const ObjectDestructor de
  * @warning Calling with invalid pointers causes undefined behavior.
  *          Always pair with matching PixtronVM_Release calls.
  */
-extern inline void PixtronVM_Retain(void *object);
+extern inline void PixtronVM_ObjectRetain(void *object);
 
 /**
  * @brief Decreases the reference count and potentially destroys the object.
@@ -88,6 +89,6 @@ extern inline void PixtronVM_Retain(void *object);
  *
  * @concurrency Thread-safe: uses atomic operations with full memory barriers.
  */
-extern inline void PixtronVM_Release(void *object);
+extern inline void PixtronVM_ObjectRelease(void *object);
 
 #endif

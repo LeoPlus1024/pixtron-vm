@@ -132,7 +132,7 @@ extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const char
         }
         exit(-1);
     }
-    const Method *method = PixtronVM_GetKlassMethod(klass, methodName);
+    const Method *method = PixtronVM_GetKlassMethodByName(klass, methodName);
     if (method == NULL) {
         g_printerr("Main method not found in klass:%s", klass->name);
         exit(-1);

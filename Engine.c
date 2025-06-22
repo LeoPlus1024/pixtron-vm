@@ -222,13 +222,8 @@ static inline VMValue *PixtronVM_Ret(RuntimeContext *context) {
 }
 
 static inline VMValue *PixtronVM_Call(RuntimeContext *context) {
-    const char *methodName = PixtronVM_ReadByteCodeString(context);
-    const VirtualStackFrame *frame = context->frame;
-    const Method *method = PixtronVM_GetKlassMethod(frame->method->klass, methodName);
-    if (method == NULL) {
-        context->throwException(context, "Call method fail because method '%s' not found.", methodName);
-        return NULL;
-    }
+    const uint16_t index = PixtronVM_ReadByteCodeU16(context);
+    const Method *method = PixtronVM_GetKlassMethod(context, index);
 #if VM_DEBUG_ENABLE
     char *text = method->toString(method);
     g_debug("Prepare call method: (%p) %s\n", method, text);

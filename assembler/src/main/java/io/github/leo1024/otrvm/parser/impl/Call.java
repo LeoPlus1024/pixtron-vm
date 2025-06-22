@@ -3,6 +3,7 @@ package io.github.leo1024.otrvm.parser.impl;
 import io.github.leo1024.otrvm.ISerializable;
 import io.github.leo1024.otrvm.conf.Opcode;
 import io.github.leo1024.otrvm.parser.Expr;
+import io.github.leo1024.otrvm.util.ByteUtil;
 import io.github.leo1024.otrvm.util.CLanguageUtil;
 
 public class Call implements Expr, ISerializable {
@@ -16,12 +17,10 @@ public class Call implements Expr, ISerializable {
         return methodName;
     }
 
-    @Override
-    public byte[] toBytes() {
-        byte[] bytes = CLanguageUtil.toCStyleStr(this.methodName);
-        byte[] data = new byte[bytes.length + 1];
+    public byte[] toBytes(int index) {
+        byte[] data = new byte[3];
         data[0] = Opcode.CALL.getValue();
-        System.arraycopy(bytes, 0, data, 1, bytes.length);
+        ByteUtil.appendShort2Bytes(data, 1, (short) index);
         return data;
     }
 }

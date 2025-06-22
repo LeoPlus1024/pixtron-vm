@@ -1,4 +1,4 @@
-#include "RcObject.h"
+#include "Object.h"
 #include <glib.h>
 #include "Memory.h"
 #include <stdatomic.h>
@@ -16,14 +16,14 @@ extern inline void *PixtronVM_NewObject(uint64_t size,
     return CONVERT_TO_OBJECT(header);
 }
 
-extern inline void PixtronVM_Retain(void *object) {
+extern inline void PixtronVM_ObjectRetain(void *object) {
     g_assert(object!=NULL);
     ObjectHeader *header = GET_OBJECT_HEADER(object);
     _Atomic(uint64_t *) counter = &(header->rc);
     atomic_fetch_add(counter, 1);
 }
 
-extern inline void PixtronVM_Release(void *object) {
+extern inline void PixtronVM_ObjectRelease(void *object) {
     g_assert(object!=NULL);
     ObjectHeader *header = GET_OBJECT_HEADER(object);
     _Atomic(uint64_t *) counter = &(header->rc);

@@ -1,7 +1,7 @@
 #include "String.h"
 
 #include "Memory.h"
-#include "RcObject.h"
+#include "Object.h"
 
 static void PixtronVM_StringDestroy(const String *str) {
     char *ptr = str->str;
