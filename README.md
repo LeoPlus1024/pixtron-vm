@@ -1,7 +1,7 @@
 # PixtronVM - 轻量级类型安全栈式虚拟机
 
 <div align="center">
-    < img src="logo.svg" alt="PixtronVM Logo" width="200">
+    <img src="logo.svg" alt="PixtronVM Logo" width="200">
     <p><em>高效、安全、轻量级的字节码执行引擎</em></p >
 </div>
 
