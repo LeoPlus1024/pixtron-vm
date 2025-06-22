@@ -1,5 +1,5 @@
-#ifndef STRING_H
-#define STRING_H
+#ifndef STRING_UTIL_H
+#define STRING_UTIL_H
 #include <glib.h>
 /**
  * Calculates the full buffer size needed to store a null-terminated C string.
@@ -15,4 +15,4 @@
  *       due to signed return type. Consider gsize for pure size calculations.
  */
 extern inline gint PixtronVM_GetStrFullLen(const gchar *str);
-#endif //STRING_H
+#endif //STRING_UTIL_H

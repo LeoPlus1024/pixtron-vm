@@ -36,20 +36,26 @@ static inline VirtualStackFrame *PixtronVM_IPushStackFrame(RuntimeContext *conte
     return frame;
 }
 
+extern inline void PixtronVM_VirtualStackFrameDispose(VirtualStackFrame **frame) {
+    if (frame == NULL || *frame == NULL) {
+        return;
+    }
+    VirtualStackFrame *self = *frame;
+    PixotronVM_free(TO_REF(self->locals));
+    PixotronVM_free(TO_REF(self->operandStack));
+    PixotronVM_free(CAST_REF(frame));
+}
+
 extern inline void PixtronVM_PushOperand(RuntimeContext *context, const VMValue *value) {
+    g_assert(value!=NULL);
     VirtualStackFrame *frame = context->frame;
     const int32_t sp = (int32_t) (frame->sp - 1);
     if (sp < 0) {
         context->throwException(context, "Stack underflow.");
     }
     frame->sp = sp;
-    if (value == NULL) {
-        return;
-    }
     uint8_t *stackTop = (uint8_t *) (frame->operandStack + sp);
     memcpy(stackTop, value, VM_VALUE_SIZE);
-    uint32_t t[10];
-    memcpy(t, value, VM_VALUE_SIZE);
 }
 
 
@@ -101,12 +107,9 @@ extern inline void PixtronVM_PopStackFrame(RuntimeContext *context) {
         fprintf(stderr, "PixotronVM_stack_pop: stack underflow.\n");
         exit(-1);
     }
-    VirtualStackFrame *frame = context->frame;
+    const VirtualStackFrame *frame = context->frame;
     context->frame = frame->pre;
     context->stackDepth = depth - 1;
-    PixotronVM_free(TO_REF(frame->locals));
-    PixotronVM_free(TO_REF(frame->operandStack));
-    PixotronVM_free(TO_REF(frame));
 }
 
 

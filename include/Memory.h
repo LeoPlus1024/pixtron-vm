@@ -23,4 +23,7 @@ extern void *PixotronVM_calloc(size_t size);
  */
 extern void PixotronVM_free(void **ref);
 
+
+extern void *PixotronVM_MemCpy(const void *ptr, size_t size);
+
 #endif //MEMORY_H

@@ -45,14 +45,16 @@ typedef enum:uint16_t {
     TYPE_DOUBLE,
     TYPE_BOOL,
     TYPE_REF,
-    TYPE_VOID
+    TYPE_VOID,
+    TYPE_STRING
 } Type;
 
 typedef enum {
     IMPLIED = 0,
     LOCAL_VAR,
     GLOBAL_VAR,
-    IMMEDIATE
+    IMMEDIATE,
+    CONSTANT,
 } DataSource;
 
 static const uint8_t TYPE_SIZE[] = {
@@ -75,7 +77,8 @@ static const char *const TYPE_NAME[] = {
     "double",
     "bool",
     "object",
-    "void"
+    "void",
+    "string"
 };
 
 typedef enum:uint16_t {

@@ -5,6 +5,7 @@
 
 #include "Memory.h"
 #include "IError.h"
+#include "String.h"
 #include "Type.h"
 #include "StringUtil.h"
 
@@ -12,7 +13,7 @@
 #define FILE_SUFFIX_LEN (strlen(".klass"))
 #define IS_KLASS_FILE(fileName) (g_str_has_suffix(fileName, ".klass"))
 
-static gchar *PixtronVM_MethodToString(const Method *method) {
+static char *PixtronVM_MethodToString(const Method *method) {
     GString *str = g_string_new(NULL);
     const Type retType = method->retType;
     const char *retTypeName;
@@ -40,7 +41,7 @@ static gchar *PixtronVM_MethodToString(const Method *method) {
     return g_string_free(str, FALSE);
 }
 
-static void PixtronVM_FreeKlass(Klass **klass) {
+static inline void PixtronVM_FreeKlass(Klass **klass) {
     if (*klass == NULL) {
         return;
     }
@@ -67,7 +68,37 @@ static void PixtronVM_FreeKlass(Klass **klass) {
     PixotronVM_free(CAST_REF(klass));
 }
 
-static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klassName, GFile *file, GError **error) {
+static inline int32_t PixtronVM_BuilderConst(const PixtronVM *vm, Klass *klass, const uint16_t constSize,
+                                             const uint8_t *buf,
+                                             int32_t position) {
+    VMValue **constArr = PixotronVM_calloc(sizeof(VMValue *) * constSize);
+    for (uint16_t i = 0; i < constSize; i++) {
+        const Type type = *(Type *) (buf + position);
+        position += 2;
+        if (type != TYPE_STRING) {
+            g_warning("Constant pool only support current type is '%s' and it will be ignored.\n", TYPE_NAME[type]);
+            position += TYPE_SIZE[type];
+            continue;
+        }
+        const int32_t length = *((int32_t *) (buf + position));
+        position += 4;
+        String string = {
+            length,
+            (char *) (buf + position)
+        };
+        String *ptr = PixtronVM_StringCheckPool(vm, &string);
+        VMValue *constVal = PixotronVM_calloc(sizeof(VMValue));
+        constVal->type = TYPE_STRING;
+        constVal->obj = ptr;
+        constArr[i] = constVal;
+        position += length;
+    }
+    klass->constArray = constArr;
+
+    return position;
+}
+
+static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klassName, GFile *file, GError **error) {
     g_return_val_if_fail(klassName != NULL, NULL);
     g_return_val_if_fail(file != NULL, NULL);
     g_return_val_if_fail(error != NULL && *error == NULL, NULL);
@@ -99,13 +130,19 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klassName, 
         goto finally;
     }
     klass = PixotronVM_calloc(sizeof(Klass));
-    int32_t position = 4;
     klass->vm = vm;
     klass->magic = magic;
+    int32_t position = 4;
     klass->version = *((Version *) (buf + position));
     position += 2;
+    const uint16_t constSize = *((uint16_t *) (buf + position));
+    position += 2;
+    if (constSize > 0) {
+        position = PixtronVM_BuilderConst(vm, klass, constSize, buf, position);
+    }
+    klass->constSize = constSize;
     klass->name = g_strdup(klassName);
-    klass->fieldCount = *((gint *) (buf + position));
+    klass->fieldCount = *((int32_t *) (buf + position));
     position += 4;
     Field *files = PixotronVM_calloc(sizeof(Field) * klass->fieldCount);
     VMValue *values = PixotronVM_calloc(VM_VALUE_SIZE * klass->fieldCount);
@@ -190,6 +227,11 @@ static Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klassName, 
             klass->methods[j] = method;
             method->name = g_strdup(funcName);
             method->toString = PixtronVM_MethodToString;
+            // Native method automatic calculate stack size
+            if (method->nativeFunc) {
+                method->maxLocalsSize = argv;
+                method->maxStackSize = method->retType != TYPE_VOID;
+            }
         }
         j++;
     }
@@ -292,6 +334,16 @@ extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, const gu
         context->throwException(context, "Klass field type is:%d but value type is:%d.", _value->type, value->type);
     }
     memcpy(field->value, value, VM_VALUE_SIZE);
+}
+
+extern inline void PixtronVM_GetKlassConstant(RuntimeContext *context, const uint16_t index, VMValue *value) {
+    const Klass *klass = context->frame->method->klass;
+    const uint16_t constSize = klass->constSize;
+    if (index >= constSize) {
+        context->throwException(context, "Constant pool index out of bounds: requested #%d (valid range: 0-%d)", index,
+                                constSize);
+    }
+    memcpy(value, klass->constArray[index],VM_VALUE_SIZE);
 }
 
 extern inline Method *PixtronVM_GetKlassMethod(const Klass *klass, const char *name) {

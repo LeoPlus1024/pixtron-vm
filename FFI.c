@@ -1,15 +1,16 @@
 #include "FFI.h"
 #include "Engine.h"
+#include "String.h"
 
 static inline FFIParam *FFI_GetParam(RuntimeContext *context, const uint16_t index) {
     g_assert(context!=NULL);
     const VirtualStackFrame *frame = context->frame;
     const Method *method = frame->method;
-    if (index >= method->argv) {
+    const uint16_t argv = method->argv;
+    if (index >= argv) {
         FFI_ThrowException(context, "GetParam fail index exceed legal range.");
     }
-    const uint32_t sp = frame->sp - index;
-    return frame->operandStack + sp;
+    return frame->locals + index;
 }
 
 extern void FFI_ThrowException(RuntimeContext *context, char *fmt, ...) {
@@ -58,32 +59,42 @@ extern void FFI_SetBool(FFIResult *result, const bool value) {
     result->i8 = (int8_t) value;
 }
 
-extern int8_t FFI_GetByteParam(RuntimeContext *context, const uint8_t index) {
+extern int8_t FFI_GetByteParam(RuntimeContext *context, const uint16_t index) {
     const FFIParam *param = FFI_GetParam(context, index);
     g_assert(param->type==TYPE_BYTE);
     return param->i8;
 }
 
-extern int16_t FFI_GetShortParam(RuntimeContext *context, const uint8_t index) {
+extern int16_t FFI_GetShortParam(RuntimeContext *context, const uint16_t index) {
     const FFIParam *param = FFI_GetParam(context, index);
     g_assert(param->type==TYPE_SHORT);
     return param->i16;
 }
 
-extern int32_t FFI_GetIntParam(RuntimeContext *context, const uint8_t index) {
+extern int32_t FFI_GetIntParam(RuntimeContext *context, const uint16_t index) {
     const FFIParam *param = FFI_GetParam(context, index);
     g_assert(param->type==TYPE_INT);
     return param->i32;
 }
 
-extern int64_t FFI_GetLongParam(RuntimeContext *context, const uint8_t index) {
+extern int64_t FFI_GetLongParam(RuntimeContext *context, const uint16_t index) {
     const FFIParam *param = FFI_GetParam(context, index);
     g_assert(param->type==TYPE_LONG);
     return param->i64;
 }
 
-extern double FFI_GetDoubleParam(RuntimeContext *context, const uint8_t index) {
+extern double FFI_GetDoubleParam(RuntimeContext *context, const uint16_t index) {
     const FFIParam *param = FFI_GetParam(context, index);
     g_assert(param->type==TYPE_DOUBLE);
     return param->f64;
+}
+
+extern char *FFI_GetStringParam(RuntimeContext *context, const uint16_t index) {
+    const FFIParam *param = FFI_GetParam(context, index);
+    g_assert(param->type==TYPE_STRING);
+    const String *str = param->obj;
+    if (str == NULL) {
+        return NULL;
+    }
+    return str->str;
 }

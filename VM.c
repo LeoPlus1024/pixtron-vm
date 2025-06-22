@@ -1,12 +1,12 @@
 #include "include/api/VM.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "Memory.h"
 
 #include "Klass.h"
 #include "Engine.h"
+#include "String.h"
 
 extern Value *PixtronVM_CreateByte(const int8_t i8) {
     VMValue *value = PixotronVM_calloc(VM_VALUE_SIZE);
@@ -87,6 +87,8 @@ extern VM *PixtronVM_CreateVM(const char *klassPath) {
 
     GHashTable *envTable = g_hash_table_new(g_str_hash, g_str_equal);
     GHashTable *klassTable = g_hash_table_new(g_str_hash, g_str_equal);
+    GHashTable *strConstantPool =
+            g_hash_table_new((GHashFunc) PixtronVM_StringHash, (GEqualFunc) PixtronVM_StringEqual);
     if (klassTable == NULL || envTable == NULL) {
         fprintf(stderr, "VM init fail.");
         exit(-1);
@@ -106,6 +108,7 @@ extern VM *PixtronVM_CreateVM(const char *klassPath) {
     }
     vm->envs = envTable;
     vm->klassTable = klassTable;
+    vm->strConstantPool = strConstantPool;
     PixotronVM_free(CAST_REF(envs));
     GError *error = NULL;
     PixtronVM_InitSystemKlass(vm, &error);
@@ -120,7 +123,7 @@ extern VM *PixtronVM_CreateVM(const char *klassPath) {
 
 
 extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const char *methodName, uint16_t argv,
-                                       const Value *args[]) {
+                                 const Value *args[]) {
     GError *error = NULL;
     const Klass *klass = PixtronVM_GetKlass((PixtronVM *) vm, klassName, &error);
     if (klass == NULL) {

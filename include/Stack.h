@@ -2,6 +2,8 @@
 #define VIRTUALSTACK_H
 #include "Type.h"
 
+extern inline void PixtronVM_VirtualStackFrameDispose(VirtualStackFrame **frame);
+
 /**
  * Pushes a value onto the RuntimeContext's operand stack.
  *

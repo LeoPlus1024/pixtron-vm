@@ -28,8 +28,8 @@ public class Assembler {
     public File assemble(Path buildDir) throws IOException {
         OSUtil.mkdirs(buildDir);
         final List<FuncMeta> funcMetas = builder.getFuncList();
-        final List<FieldMeta> varList = builder.getFieldList();
-        BinaryHeader header = new BinaryHeader(Version.V1_0, builder.getNamespace(), varList, funcMetas);
+        final List<FieldMeta> fieldList = builder.getFieldList();
+        BinaryHeader header = new BinaryHeader(Version.V1_0, builder.getConstants(), fieldList, funcMetas);
         byte[] headerBytes = header.toBytes();
         Path path = buildDir.resolve(String.format("%s.klass", builder.getNamespace()));
         try (FileOutputStream outputStream = new FileOutputStream(path.toFile())) {
@@ -72,7 +72,7 @@ public class Assembler {
                     labelCorrectMap.put(offset + 1, meta);
                 }
                 int tmp = offset - meta.getPosition();
-                buf = redirect.toBytes((short)tmp);
+                buf = redirect.toBytes((short) tmp);
             } else {
                 buf = expr.toBytes();
             }
@@ -90,8 +90,8 @@ public class Assembler {
             }
             int i = entry.getKey();
             int tmp = meta.getPosition() - i;
-            bytes[i] = (byte)tmp;
-            bytes[i + 1] = (byte)(tmp >> 8);
+            bytes[i] = (byte) tmp;
+            bytes[i + 1] = (byte) (tmp >> 8);
         }
         return Arrays.copyOf(bytes, offset);
     }

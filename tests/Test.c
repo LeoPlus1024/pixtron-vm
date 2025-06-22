@@ -36,6 +36,13 @@ void testMathMax(const int a, const int b, const int expect) {
     PixtronVM_DestroyVM(&vm);
 }
 
+void testHelloWorld() {
+    VM *vm = PixtronVM_CreateVM("build");
+    PixtronVM_LaunchVM(vm, "TString", "printHelloWorld", 0, NULL);
+    PixtronVM_DestroyVM(&vm);
+}
+
 int main(int argc, char *argv[]) {
     testMathMax(10, 11, 11);
+    testHelloWorld();
 }

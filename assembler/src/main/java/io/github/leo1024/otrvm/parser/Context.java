@@ -1,6 +1,7 @@
 package io.github.leo1024.otrvm.parser;
 
 import io.github.leo1024.otrvm.conf.FieldMeta;
+import io.github.leo1024.otrvm.conf.Type;
 import io.github.leo1024.otrvm.conf.VMOption;
 import io.github.leo1024.otrvm.ex.ParserException;
 
@@ -45,5 +46,9 @@ public abstract class Context {
             return parent.getNamespace();
         }
         return null;
+    }
+
+    public void addConstant(Type type, Object value) {
+        throw new ParserException("Not support add constant.");
     }
 }

@@ -30,6 +30,12 @@ public class ByteUtil {
         return pos;
     }
 
+    public static int appendLong2Bytes(byte[] bytes, int pos, long value) {
+        byte[] longBytes = ByteUtil.long2Bytes(value);
+        System.arraycopy(longBytes, 0, bytes, pos, longBytes.length);
+        return pos + longBytes.length;
+    }
+
 
     public static byte[] long2Bytes(long value) {
         return new byte[]{
@@ -39,6 +45,8 @@ public class ByteUtil {
                 (byte) (value >> 24),
                 (byte) (value >> 32),
                 (byte) (value >> 40),
+                (byte) (value >> 48),
+                (byte) (value >> 56)
         };
     }
 

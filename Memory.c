@@ -6,6 +6,7 @@
 #endif
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 extern void *PixotronVM_calloc(const size_t size) {
     void *ptr = calloc(1, size);
@@ -23,4 +24,13 @@ extern void PixotronVM_free(void **ref) {
     void *ptr = *ref;
     free(ptr);
     *ref = NULL;
+}
+
+extern void *PixotronVM_MemCpy(const void *ptr, const size_t size) {
+    if (ptr == NULL || size == 0) {
+        return NULL;
+    }
+    void *dst = PixotronVM_calloc(size);
+    memcpy(dst, ptr, size);
+    return dst;
 }

@@ -6,13 +6,17 @@ public enum DataFrom {
      */
     LC(1),
     /**
-     * Global
+     * Field
      */
     GL(2),
     /**
      * Immediate
      */
-    IMM(3);
+    IMM(3),
+    /**
+     * Constant pool
+     */
+    CONSTANT(4);
 
     private final byte code;
 

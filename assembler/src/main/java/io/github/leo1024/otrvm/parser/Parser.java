@@ -66,6 +66,8 @@ public class Parser {
             this.parseField(context);
         } else if (pseudo == Pseudo.IMPORT) {
             this.parseImport(context);
+        } else if (pseudo == Pseudo.CONSTANT) {
+            this.parseConstant(context);
         } else {
             Expr expr = switch (pseudo) {
                 case FUNC -> parseFunc(context);
@@ -109,6 +111,20 @@ public class Parser {
         Object value = Helper.convertLiteral(Helper.expect(this.tokenSequence, TokenKind.immediate()));
         FieldMeta fieldMeta = FieldMeta.of(type, name, value);
         context.addField(fieldMeta);
+    }
+
+    /**
+     * Parse constant
+     *
+     * @apiNote Current only support string constant.
+     */
+    private void parseConstant(Context context) {
+        TokenKind tokenKind = this.tokenSequence.currentKind();
+        if (tokenKind != TokenKind.STRING) {
+            throw ParserException.create(this.tokenSequence.consume(), "Only support string constant.");
+        }
+        Object value = Helper.convertLiteral(this.tokenSequence.consume());
+        context.addConstant(Type.STRING, value);
     }
 
 
@@ -170,8 +186,8 @@ public class Parser {
         Opcode opcode = Opcode.of(token);
         Expr expr = switch (opcode) {
             case RET -> new Ret();
-            case LOAD, GLOAD -> parseLoadExpr(opcode);
-            case STORE, GSTORE -> parseStoreExpr(opcode);
+            case LOAD, GET_FIELD, LOAD_CONST -> parseLoadExpr(opcode);
+            case STORE, SET_FIELD -> parseStoreExpr(opcode);
             case ADD, SUB, MUL, DIV -> new Math(opcode);
             case F2I, F2L, I2L, I2F, L2I, L2F -> new Cast(opcode);
             case ICMP, LCMP, DCMP -> new XCmp(opcode);
@@ -195,11 +211,13 @@ public class Parser {
             throw ParserException.create(token, "Load instruct can't use immediate or ref var.");
         }
         final DataFrom from;
-        if (opcode == Opcode.GLOAD) {
+        if (opcode == Opcode.GET_FIELD) {
             if (immediate) {
                 throw new ParserException("Global variable can't use immediate.");
             }
             from = DataFrom.GL;
+        } else if (opcode == Opcode.LOAD_CONST) {
+            from = DataFrom.CONSTANT;
         } else {
             from = token.isImmediate() ? DataFrom.IMM : DataFrom.LC;
         }

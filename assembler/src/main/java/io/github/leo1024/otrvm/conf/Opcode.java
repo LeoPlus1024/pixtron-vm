@@ -7,9 +7,10 @@ import java.util.Arrays;
 
 public enum Opcode {
     LOAD("load", 0),
-    GLOAD("gload", 0),
+    GET_FIELD("getfield", 0),
+    LOAD_CONST("ldc", 0),
     STORE("store", 1),
-    GSTORE("gstore", 1),
+    SET_FIELD("setfield", 1),
     ADD("add", 2),
     SUB("sub", 3),
     MUL("mul", 4),

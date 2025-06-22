@@ -8,6 +8,7 @@ public enum Pseudo {
     FIELD("@field"),
     IMPORT("@import"),
     NATIVE("@native"),
+    CONSTANT("@constant"),
     NAMESPACE("@namespace"),
     ;
     private final String code;

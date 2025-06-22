@@ -11,7 +11,8 @@ public enum Type {
     FLOAT("float", 5, 8),
     BOOL("bool", 6, 1),
     REF("ref", 7, 8),
-    VOID("void", 8, 0);
+    VOID("void", 8, 0),
+    STRING("string", 9, 0);
 
     private final String symbol;
     private final int id;

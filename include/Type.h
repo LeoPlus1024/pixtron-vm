@@ -63,6 +63,10 @@ typedef struct _Klass {
     uint32_t magic;
     // Version
     Version version;
+    // Constants size
+    uint32_t constSize;
+    // Constants
+    VMValue **constArray;
     // Class methods
     Method **methods;
     // Class bytecode
@@ -118,6 +122,8 @@ typedef struct VM {
     GHashTable *envs;
     // Classes
     GHashTable *klassTable;
+    // String constant pool
+    GHashTable *strConstantPool;
 } PixtronVM;
 
 

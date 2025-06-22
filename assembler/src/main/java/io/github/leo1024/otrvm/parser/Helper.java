@@ -66,12 +66,14 @@ public class Helper {
         }
         String suffix = token.getValue();
         return switch (suffix) {
-            case "u" -> Type.BYTE;
-            case "s" -> Type.SHORT;
-            case "i" -> Type.INT;
-            case "l" -> Type.LONG;
-            case "f" -> Type.FLOAT;
-            case "b" -> Type.BOOL;
+            case "i8" -> Type.BYTE;
+            case "i16" -> Type.SHORT;
+            case "i32" -> Type.INT;
+            case "i64" -> Type.LONG;
+            case "f64" -> Type.FLOAT;
+            case "bool" -> Type.BOOL;
+            case "ptr" -> Type.REF;
+            case "str" -> Type.STRING;
             default -> throw new IllegalStateException("Unexpected value: " + suffix);
         };
     }

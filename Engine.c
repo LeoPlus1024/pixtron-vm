@@ -110,7 +110,7 @@ static void PixtronVM_CONV(RuntimeContext *context, Opcode opcode) {
     } else if (opcode == F2I || opcode == L2I) {
         PixtronVM_ConvertToIntValue(value);
     }
-    PixtronVM_PushOperand(context, NULL);
+    PixtronVM_MoveStackFrameSp(context, -1);
 }
 
 static void PixtronVM_Store(RuntimeContext *context) {
@@ -140,13 +140,12 @@ static inline void PixtronVM_Load(RuntimeContext *context) {
         PixtronVM_ReadByteCodeImm(context, &value);
     } else {
         const uint16_t index = PixtronVM_ReadByteCodeU16(context);
-        const bool local = source == LOCAL_VAR;
         // Local
-        if (local) {
+        if (source == LOCAL_VAR) {
             PixtronVM_GetLocalTable(context, index, &value);
-        }
-        // Klass field
-        else {
+        } else if (source == CONSTANT) {
+            PixtronVM_GetKlassConstant(context, index, &value);
+        } else {
             PixtronVM_GetKlassFileValue(context, index, &value);
         }
         if (type != value.type) {
@@ -204,45 +203,41 @@ extern void PixtronVM_ThrowException(RuntimeContext *context, char *fmt, ...) {
 }
 
 static inline VMValue *PixtronVM_Ret(RuntimeContext *context) {
-    const VirtualStackFrame *frame = context->frame;
-    const Type retType = frame->method->retType;
-    VMValue *value = NULL;
-    const bool hasRetVal = retType != TYPE_VOID;
+    VirtualStackFrame *frame = context->frame;
+    const VMValue *value = NULL;
+    const bool hasRetVal = frame->method->retType != TYPE_VOID;
     if (hasRetVal) {
         value = PixtronVM_PopOperand(context);
     }
+    VMValue *retVal = NULL;
     PixtronVM_PopStackFrame(context);
-    if (frame->pre != NULL) {
-        if (hasRetVal) {
-            PixtronVM_PushOperand(context, value);
-        }
-        return NULL;
+    if (frame->pre == NULL) {
+        context->exit = exit;
+        retVal = PixotronVM_MemCpy(value,VM_VALUE_SIZE);
+    } else if (value != NULL) {
+        PixtronVM_PushOperand(context, value);
     }
-    context->exit = true;
-    if (!hasRetVal) {
-        return NULL;
-    }
-    VMValue *retVal = PixotronVM_calloc(VM_VALUE_SIZE);
-    memcpy(retVal, value, VM_VALUE_SIZE);
+    PixtronVM_VirtualStackFrameDispose(&frame);
     return retVal;
 }
 
-static inline void PixtronVM_Call(RuntimeContext *context) {
+static inline VMValue *PixtronVM_Call(RuntimeContext *context) {
     const char *methodName = PixtronVM_ReadByteCodeString(context);
     const VirtualStackFrame *frame = context->frame;
     const Method *method = PixtronVM_GetKlassMethod(frame->method->klass, methodName);
     if (method == NULL) {
-        context->throwException(context, "Method '%s' not found.", methodName);
+        context->throwException(context, "Call method fail because method '%s' not found.", methodName);
+        return NULL;
     }
-    if (!method->nativeFunc) {
-        PixtronVM_PushStackFrame(context, method);
-    } else {
+#if VM_DEBUG_ENABLE
+    char *text = method->toString(method);
+    g_debug("Prepare call method: (%p) %s\n", method, text);
+    PixotronVM_free(TO_REF(text));
+#endif
+    PixtronVM_PushStackFrame(context, method);
+    if (method->nativeFunc) {
         void *handle = dlsym(RTLD_DEFAULT, method->name);
         const bool callWithRet = method->retType != TYPE_VOID;
-        const int32_t argv = method->argv;
-        if (argv > 0) {
-            PixtronVM_MoveStackFrameSp(context, argv - 1);
-        }
         if (callWithRet) {
             const FFIResultOperation ffiFunc = (FFIResultOperation) (handle);
             VMValue retVal;
@@ -252,7 +247,10 @@ static inline void PixtronVM_Call(RuntimeContext *context) {
             const FFIBaseOperation ffiFunc = (FFIBaseOperation) (handle);
             ffiFunc(context);
         }
+        // Native function execute after manual call ret instruction
+        return PixtronVM_Ret(context);
     }
+    return NULL;
 }
 
 
@@ -317,7 +315,7 @@ extern void PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
                 PixtronVM_PopOperand(context);
                 break;
             case CALL:
-                PixtronVM_Call(context);
+                retVal = PixtronVM_Call(context);
                 break;
             default:
                 context->throwException(context, "Unsupported opcode: %02x", opcode);

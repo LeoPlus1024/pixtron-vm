@@ -3,6 +3,8 @@
 #include <FFI.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "String.h"
 #include "Type.h"
 
 void VM_CurrentTimeNano(RuntimeContext *context, FFIResult *result) {
@@ -17,4 +19,14 @@ void VM_PrintNanoDiff(RuntimeContext *context) {
     const long pre = FFI_GetLongParam(context, 0);
     const long now = FFI_GetLongParam(context, 1);
     printf("%ld ns\n", (now - pre));
+}
+
+
+void VM_Println(RuntimeContext *context) {
+    const char *const str = FFI_GetStringParam(context, 0);
+    if (str == NULL) {
+        printf("%s\n", "null");
+        return;
+    }
+    printf("%s\n", str);
 }
