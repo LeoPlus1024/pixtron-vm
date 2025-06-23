@@ -1,6 +1,5 @@
-#ifndef STRING_H
-#define STRING_H
-#include <stdint.h>
+#ifndef VMSTRING_H
+#define VMSTRING_H
 #include "Type.h"
 
 #define g_string_hash0(ptr) (PixtronVM_StringHash(ptr))
@@ -22,4 +21,4 @@ extern uint32_t PixtronVM_StringHash(const String *str);
 
 extern String *PixtronVM_StringNew(const char *str, uint32_t len);
 
-#endif //STRING_H
+#endif //VMSTRING_H

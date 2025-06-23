@@ -1,4 +1,4 @@
-#include "StringUtil.h"
+#include "include/engine/StringUtil.h"
 
 extern inline gint PixtronVM_GetStrFullLen(const gchar *str) {
     g_assert(str != NULL);

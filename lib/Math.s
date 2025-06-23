@@ -13,3 +13,6 @@ blarger:
     load.i32 $1
     ret
 @end
+
+; Return the first argument raised to the power of the second argument
+@func @native("PixotronVM") pow(double a,double b) @end

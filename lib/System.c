@@ -1,32 +1,34 @@
 #include <errno.h>
 #include <time.h>
-#include <FFI.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "String.h"
 #include "Type.h"
+#include "Kni.h"
+#include "VMString.h"
 
-void currentTimeNano(RuntimeContext *context, FFIResult *result) {
+void System_currentTimeNano(RuntimeContext *context, KniValue *result) {
     struct timespec ts;
     if (timespec_get(&ts, TIME_UTC) != TIME_UTC) {
         context->throwException(context, "Failed to get current time:%s.", strerror(errno));
     }
-    FFI_SetLong(result, ts.tv_nsec);
+    Kni_SetLong(result, ts.tv_nsec);
 }
 
-void printNanoDiff(RuntimeContext *context) {
-    const long pre = FFI_GetLongParam(context, 0);
-    const long now = FFI_GetLongParam(context, 1);
+void System_printNanoDiff(RuntimeContext *context) {
+    const long pre = Kni_GetLongParam(context, 0);
+    const long now = Kni_GetLongParam(context, 1);
     printf("%ld ns\n", (now - pre));
 }
 
 
-void println(RuntimeContext *context) {
-    const char *const str = FFI_GetStringParam(context, 0);
-    if (str == NULL) {
-        printf("%s\n", "null");
+void System_println(RuntimeContext *context) {
+    const KniValue *value = Kni_GetObjectParam(context, 0);
+    g_assert(value->type == TYPE_STRING);
+    if (value->obj == NULL) {
+        printf("null\n");
         return;
     }
-    printf("%s\n", str);
+    const String *str = value->obj;
+    printf("%s\n", str->str);
 }

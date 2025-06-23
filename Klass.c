@@ -3,10 +3,10 @@
 #include <stdio.h>
 #include <gio/gio.h>
 
-#include "Memory.h"
+#include "include/engine/Memory.h"
 #include "IError.h"
-#include "String.h"
-#include "Type.h"
+#include "VMString.h"
+#include "include/engine/Type.h"
 #include "StringUtil.h"
 
 #define MAGIC (0xFFAABBCC)
@@ -346,7 +346,7 @@ extern inline void PixtronVM_GetKlassConstant(RuntimeContext *context, const uin
         context->throwException(context, "Constant pool index out of bounds: requested #%d (valid range: 0-%d)", index,
                                 constSize);
     }
-    memcpy(value, klass->constArray[index],VM_VALUE_SIZE);
+    memcpy(value, klass->constArray[index], VM_VALUE_SIZE);
 }
 
 extern inline Method *PixtronVM_GetKlassMethod(RuntimeContext *context, const uint16_t index) {

@@ -2,11 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "Memory.h"
+#include "include/engine/Memory.h"
 
 #include "Klass.h"
-#include "Engine.h"
-#include "String.h"
+#include "include/engine/Engine.h"
+#include "VMString.h"
 
 extern Value *PixtronVM_CreateByte(const int8_t i8) {
     VMValue *value = PixotronVM_calloc(VM_VALUE_SIZE);

@@ -1,15 +1,15 @@
-#include "Engine.h"
+#include "include/engine/Engine.h"
 
 #include <assert.h>
 #include <Config.h>
 #include <stdbool.h>
 
 #include "ByteCodeReader.h"
-#include "Klass.h"
+#include "include/engine/Klass.h"
 #include "Memory.h"
-#include "Stack.h"
+#include "include/engine/Stack.h"
 #include <dlfcn.h>
-#include <FFI.h>
+#include <Kni.h>
 
 
 static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, const Opcode opcode) {
@@ -234,12 +234,12 @@ static inline VMValue *PixtronVM_Call(RuntimeContext *context) {
         void *handle = dlsym(RTLD_DEFAULT, method->name);
         const bool callWithRet = method->retType != TYPE_VOID;
         if (callWithRet) {
-            const FFIResultOperation ffiFunc = (FFIResultOperation) (handle);
+            const KniResultOperation ffiFunc = (KniResultOperation) (handle);
             VMValue retVal;
             ffiFunc(context, &retVal);
             PixtronVM_PushOperand(context, &retVal);
         } else {
-            const FFIBaseOperation ffiFunc = (FFIBaseOperation) (handle);
+            const KniBaseOperation ffiFunc = (KniBaseOperation) (handle);
             ffiFunc(context);
         }
         // Native function execute after manual call ret instruction

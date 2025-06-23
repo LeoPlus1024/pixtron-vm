@@ -1,6 +1,6 @@
-#include "ByteCodeReader.h"
+#include "include/engine/ByteCodeReader.h"
 
-#include "StringUtil.h"
+#include "include/engine/StringUtil.h"
 
 static inline void PixtronVM_ByteCodeIndexOutOfBoundsCheck(RuntimeContext *context,
                                                            const VirtualStackFrame *frame,

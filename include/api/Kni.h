@@ -1,13 +1,18 @@
-#ifndef FFI_H
-#define FFI_H
+#ifndef KNI_H
+#define KNI_H
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct _VMValue FFIParam;
-typedef struct _VMValue FFIResult;
+typedef struct _VMValue KniValue;
 typedef struct _RuntimeContext RuntimeContext;
+
+typedef struct {
+    uint64_t len;
+    char *buf;
+} KniString;
+
 /**
- * Base function pointer type for all context-aware FFI operations.
+ * Base function pointer type for all context-aware Kni operations.
  *
  * Represents the minimal operation signature that requires runtime context
  * but produces no result and accepts no parameters. All operations must
@@ -24,12 +29,12 @@ typedef struct _RuntimeContext RuntimeContext;
  *   2. MUST report errors via context's error system
  *   3. SHOULD be reentrant and thread-safe
  */
-typedef void (*FFIBaseOperation)(RuntimeContext *context);
+typedef void (*KniBaseOperation)(RuntimeContext *context);
 
 /**
  * Extended function pointer type for operations requiring result output.
  *
- * Inherits all requirements from FFIBaseOperation while adding result
+ * Inherits all requirements from KniBaseOperation while adding result
  * handling capabilities.
  *
  * @param context Mandatory runtime execution environment
@@ -49,7 +54,7 @@ typedef void (*FFIBaseOperation)(RuntimeContext *context);
  *   - Implementation must not retain result reference
  *   - Caller responsible for result memory lifecycle
  */
-typedef void (*FFIResultOperation)(RuntimeContext *context, FFIResult *result);
+typedef void (*KniResultOperation)(RuntimeContext *context, KniValue *result);
 
 /**
  * Throws a runtime exception with formatted error message.
@@ -72,83 +77,83 @@ typedef void (*FFIResultOperation)(RuntimeContext *context, FFIResult *result);
  *   - Stores formatted message in context->exception_message
  *   - Preserves stack trace at throw point
  */
-extern void FFI_ThrowException(RuntimeContext *context, char *fmt, ...);
+extern void Kni_ThrowException(RuntimeContext *context, char *fmt, ...);
 
 /**
- * Sets a 64-bit signed integer value in FFI result container.
+ * Sets a 64-bit signed integer value in Kni result container.
  *
- * @param result Pointer to preallocated FFIResult structure
+ * @param result Pointer to preallocated KniResult structure
  * @param value 64-bit integer value to store
  *
  * Postconditions:
- *   - result->type = FFI_TYPE_LONG
+ *   - result->type = Kni_TYPE_LONG
  *   - result->value.long_value = value
  *   - result->size = sizeof(int64_t)
  */
-extern void FFI_SetLong(FFIResult *result, int64_t value);
+extern void Kni_SetLong(KniValue *result, int64_t value);
 
 /**
- * Sets a 32-bit signed integer value in FFI result container.
+ * Sets a 32-bit signed integer value in Kni result container.
  *
- * @param result Pointer to initialized FFIResult structure
+ * @param result Pointer to initialized KniResult structure
  * @param value 32-bit integer value to store
  *
  * Postconditions:
- *   - result->type = FFI_TYPE_INT
+ *   - result->type = Kni_TYPE_INT
  *   - result->value.int_value = value
  *   - result->size = sizeof(int32_t)
  */
-extern void FFI_SetInt(FFIResult *result, int32_t value);
+extern void Kni_SetInt(KniValue *result, int32_t value);
 
 /**
- * Sets a 16-bit signed integer value in FFI result container.
+ * Sets a 16-bit signed integer value in Kni result container.
  *
- * @param result Pointer to initialized FFIResult structure
+ * @param result Pointer to initialized KniResult structure
  * @param value 16-bit integer value to store
  *
  * Postconditions:
- *   - result->type = FFI_TYPE_SHORT
+ *   - result->type = Kni_TYPE_SHORT
  *   - result->value.short_value = value
  *   - result->size = sizeof(int16_t)
  */
-extern void FFI_SetShort(FFIResult *result, int16_t value);
+extern void Kni_SetShort(KniValue *result, int16_t value);
 
 /**
- * Sets an 8-bit signed integer value in FFI result container.
+ * Sets an 8-bit signed integer value in Kni result container.
  *
- * @param result Pointer to initialized FFIResult structure
+ * @param result Pointer to initialized KniResult structure
  * @param value 8-bit integer value to store
  *
  * Postconditions:
- *   - result->type = FFI_TYPE_BYTE
+ *   - result->type = Kni_TYPE_BYTE
  *   - result->value.byte_value = value
  *   - result->size = sizeof(int8_t)
  */
-extern void FFI_SetByte(FFIResult *result, int8_t value);
+extern void Kni_SetByte(KniValue *result, int8_t value);
 
 /**
- * Sets a double-precision floating point value in FFI result container.
+ * Sets a double-precision floating point value in Kni result container.
  *
- * @param result Pointer to initialized FFIResult structure
+ * @param result Pointer to initialized KniResult structure
  * @param value Double-precision floating point value to store
  *
  * Postconditions:
- *   - result->type = FFI_TYPE_DOUBLE
+ *   - result->type = Kni_TYPE_DOUBLE
  *   - result->value.double_value = value
  *   - result->size = sizeof(double)
  *
  * Note: Single-precision floats will be automatically promoted
  */
-extern void FFI_SetDouble(FFIResult *result, double value);
+extern void Kni_SetDouble(KniValue *result, double value);
 
 /**
- * Sets a boolean value in FFI result container.
+ * Sets a boolean value in Kni result container.
  *
- * @param result Pointer to initialized FFIResult structure
+ * @param result Pointer to initialized KniResult structure
  * @param value Boolean value to store (true/false)
  *
  * Postconditions:
- *   - result->type = FFI_TYPE_BOOL
+ *   - result->type = Kni_TYPE_BOOL
  *   - result->value.bool_value = value
  *   - result->size = sizeof(bool)
  *
@@ -156,18 +161,23 @@ extern void FFI_SetDouble(FFIResult *result, double value);
  *   - Uses native bool representation (typically 1 byte)
  *   - Non-zero values considered true
  */
-extern void FFI_SetBool(FFIResult *result, bool value);
+extern void Kni_SetBool(KniValue *result, bool value);
 
-extern int8_t FFI_GetByteParam(RuntimeContext *context, uint16_t index);
+extern int8_t Kni_GetByteParam(RuntimeContext *context, uint16_t index);
 
-extern int16_t FFI_GetShortParam(RuntimeContext *context, uint16_t index);
+extern int16_t Kni_GetShortParam(RuntimeContext *context, uint16_t index);
 
-extern int32_t FFI_GetIntParam(RuntimeContext *context, uint16_t index);
+extern int32_t Kni_GetIntParam(RuntimeContext *context, uint16_t index);
 
-extern int64_t FFI_GetLongParam(RuntimeContext *context, uint16_t index);
+extern int64_t Kni_GetLongParam(RuntimeContext *context, uint16_t index);
 
-extern double FFI_GetDoubleParam(RuntimeContext *context, uint16_t index);
+extern double Kni_GetDoubleParam(RuntimeContext *context, uint16_t index);
 
-extern char *FFI_GetStringParam(RuntimeContext *context, uint16_t index);
+extern KniString *Kni_GetStringParam(RuntimeContext *context, uint16_t index);
 
-#endif //FFI_H
+extern KniValue *Kni_GetObjectParam(RuntimeContext *context, uint16_t index);
+
+
+extern void Kni_ReleaseKniString(KniString **string);
+
+#endif //KNI_H
