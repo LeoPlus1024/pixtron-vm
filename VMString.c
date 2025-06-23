@@ -1,9 +1,9 @@
-#include "include/engine/VMString.h"
+#include "VMString.h"
 
 #include "Memory.h"
-#include "include/engine/Object.h"
+#include "Object.h"
 
-static void PixtronVM_StringDestroy(const String *str) {
+static void PixtronVM_StringDestructor(const String *str) {
     char *ptr = str->str;
     if (ptr == NULL) {
         return;
@@ -41,7 +41,7 @@ extern uint32_t PixtronVM_StringHash(const String *str) {
 
 extern String *PixtronVM_StringNew(const char *str, const uint32_t len) {
     g_assert(str!=NULL);
-    String *text = PixtronVM_NewObject(sizeof(String), (ObjectDestructor) PixtronVM_StringDestroy, 1);
+    String *text = PixtronVM_NewObject(sizeof(String), (ObjectDestructor) PixtronVM_StringDestructor, 1);
     char *cc = PixotronVM_calloc(len);
     memcpy(cc, str, len);
     text->len = len;

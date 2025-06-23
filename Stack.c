@@ -1,4 +1,4 @@
-#include "include/engine/Stack.h"
+#include "Stack.h"
 
 #include <assert.h>
 #include <Config.h>

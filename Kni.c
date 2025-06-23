@@ -1,7 +1,7 @@
 #include "Kni.h"
-#include "include/engine/Engine.h"
-#include "include/engine/VMString.h"
-#include "include/engine/Memory.h"
+#include "Engine.h"
+#include "VMString.h"
+#include "Memory.h"
 
 static inline KniValue *Kni_GetParam(RuntimeContext *context, const uint16_t index) {
     g_assert(context!=NULL);

@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <gio/gio.h>
 
-#include "include/engine/Memory.h"
+#include "Memory.h"
 #include "IError.h"
+#include "Type.h"
+#include "Helper.h"
 #include "VMString.h"
-#include "include/engine/Type.h"
-#include "StringUtil.h"
 
 #define MAGIC (0xFFAABBCC)
 #define FILE_SUFFIX_LEN (strlen(".klass"))
@@ -155,7 +155,7 @@ static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klas
         const Type type = *((Type *) (buf + position));
         position += 2;
         char *name = g_strdup((gchar *)(buf + position));
-        position += PixtronVM_GetStrFullLen(name);
+        position += PixtronVM_GetCStyleStrLength(name);
         VMValue *value = values + index;
         const uint8_t typeSize = TYPE_SIZE[type];
         memcpy(value, buf, typeSize);
@@ -171,9 +171,9 @@ static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klas
     uint32_t j = 0;
     while (j < klass->methodCount) {
         const char *selfKlassName = (char *) (buf + position);
-        position += PixtronVM_GetStrFullLen(selfKlassName);
+        position += PixtronVM_GetCStyleStrLength(selfKlassName);
         const char *funcName = (char *) (buf + position);
-        position += PixtronVM_GetStrFullLen(funcName);
+        position += PixtronVM_GetCStyleStrLength(funcName);
         if (!g_str_equal(selfKlassName, "")) {
             const Klass *selfKlass = PixtronVM_GetKlass(vm, selfKlassName, error);
             if (selfKlass == NULL) {
@@ -199,7 +199,7 @@ static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klas
                     char **arr = g_strsplit(libs, "|", 1024);
                     method->libName = arr;
                     method->libCount = g_strv_length(arr);
-                    position += PixtronVM_GetStrFullLen(libs);
+                    position += PixtronVM_GetCStyleStrLength(libs);
                 }
             }
             method->maxLocalsSize = *((uint16_t *) (buf + position));
@@ -222,7 +222,7 @@ static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klas
                     param->type = *((Type *) (buf + position));
                     position += 2;
                     param->name = g_strdup((gchar *)(buf+position));
-                    position += PixtronVM_GetStrFullLen(param->name);
+                    position += PixtronVM_GetCStyleStrLength(param->name);
                 }
             }
             method->argv = argv;

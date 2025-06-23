@@ -24,7 +24,9 @@ enable_testing()
 add_subdirectory(tests)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES}
-        lib/Math.c)
+        lib/Math.c
+        include/engine/Helper.h
+        Helper.c)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
         ${GLIB_DEP_LIBRARIES}

@@ -1,6 +1,10 @@
-#ifndef STRING_UTIL_H
-#define STRING_UTIL_H
-#include <glib.h>
+//
+// Created by  yangkui on 2025/6/23.
+//
+
+#ifndef HELPER_H
+#define HELPER_H
+#include <stdint.h>
 /**
  * Calculates the full buffer size needed to store a null-terminated C string.
  *
@@ -14,5 +18,6 @@
  *       Maximum theoretical string length is G_MAXINT-1 (2^31-2 on 32-bit systems)
  *       due to signed return type. Consider gsize for pure size calculations.
  */
-extern inline gint PixtronVM_GetStrFullLen(const gchar *str);
-#endif //STRING_UTIL_H
+extern int32_t PixtronVM_GetCStyleStrLength(const char *str);
+
+#endif //HELPER_H

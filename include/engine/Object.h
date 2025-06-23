@@ -1,6 +1,13 @@
 #ifndef OBJECT_H
 #define OBJECT_H
+
 #include <stdint.h>
+
+#ifdef __APPLE__
+#undef __STDC_HOSTED__
+#endif
+
+#include <stdatomic.h>
 
 #define CONVERT_TO_OBJECT(ptr) ((void *)(((uint8_t *)ptr) + sizeof(ObjectHeader)))
 #define GET_OBJECT_HEADER(ptr) ((ObjectHeader *)((uint8_t *)ptr - sizeof(ObjectHeader)))
@@ -8,7 +15,7 @@
 typedef void (*ObjectDestructor)(const void *);
 
 typedef struct {
-    uint64_t rc;
+    atomic_uint_least64_t rc;
     ObjectDestructor destructor;
 } ObjectHeader;
 

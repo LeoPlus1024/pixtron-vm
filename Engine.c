@@ -1,15 +1,15 @@
-#include "include/engine/Engine.h"
+#include "Engine.h"
 
 #include <assert.h>
 #include <Config.h>
 #include <stdbool.h>
 
 #include "ByteCodeReader.h"
-#include "include/engine/Klass.h"
+#include "Klass.h"
 #include "Memory.h"
-#include "include/engine/Stack.h"
+#include "Stack.h"
 #include <dlfcn.h>
-#include <Kni.h>
+#include "Kni.h"
 
 
 static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, const Opcode opcode) {

@@ -1,8 +1,6 @@
-#ifndef VMSTRING_H
-#define VMSTRING_H
+#ifndef VM_STRING_H
+#define VM_STRING_H
 #include "Type.h"
-
-#define g_string_hash0(ptr) (PixtronVM_StringHash(ptr))
 
 typedef struct {
     uint32_t len;
@@ -20,5 +18,4 @@ extern uint32_t PixtronVM_StringHash(const String *str);
 
 
 extern String *PixtronVM_StringNew(const char *str, uint32_t len);
-
-#endif //VMSTRING_H
+#endif //VM_STRING_H
