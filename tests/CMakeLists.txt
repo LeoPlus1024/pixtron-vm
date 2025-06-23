@@ -10,6 +10,7 @@ add_executable(Tests ${TEST_SOURCE})
 target_link_libraries(Tests
         PRIVATE
         ${PROJECT_NAME}
+        m
 )
 
 

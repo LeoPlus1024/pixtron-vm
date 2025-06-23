@@ -2,7 +2,7 @@
 
 @func max(int a,int b):int
     %locals 2
-    %stack 2
+    %stacks 2
     load.i32 $0
     load.i32 $1
     icmp
@@ -15,4 +15,4 @@ blarger:
 @end
 
 ; Return the first argument raised to the power of the second argument
-@func @native("PixotronVM") pow(double a,double b) @end
+@func @native("PixotronVM") pow(double a,double b) : double @end

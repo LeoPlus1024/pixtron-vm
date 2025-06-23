@@ -8,7 +8,7 @@
 
 @func printHelloWorld():void
     %locals 0
-    %stack 1
+    %stacks 1
     ldc.str 0
     call println
     ret
