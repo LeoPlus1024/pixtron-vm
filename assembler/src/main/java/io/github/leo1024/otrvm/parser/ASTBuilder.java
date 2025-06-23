@@ -36,6 +36,7 @@ public class ASTBuilder extends Context {
     final Map<String, FieldMeta> fileMetaMap;
     final String namespace;
     final List<Constant> constants;
+    String library;
 
     public ASTBuilder(final String namespace) {
         super(null);
@@ -89,5 +90,13 @@ public class ASTBuilder extends Context {
             }
         }
         throw new ParserException("Function '" + funcName + "' not found.");
+    }
+
+    public void setLibrary(String library) {
+        this.library = library;
+    }
+
+    public String getLibrary() {
+        return library;
     }
 }

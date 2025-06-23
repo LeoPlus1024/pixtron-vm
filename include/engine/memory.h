@@ -13,7 +13,7 @@
  * @warning The returned pointer must be freed using PixotronVM_free()
  *          to avoid memory leaks
  */
-extern void *PixotronVM_calloc(size_t size);
+extern void *pvm_mem_calloc(size_t size);
 
 /**
  * Releases memory back to the PixtronVM's memory pool
@@ -21,9 +21,9 @@ extern void *PixotronVM_calloc(size_t size);
  * @note This function safely handles NULL pointers (no-op)
  * @warning Using standard free() on VM-allocated memory will cause undefined behavior
  */
-extern void PixotronVM_free(void **ref);
+extern void pvm_mem_free(void **ref);
 
 
-extern void *PixotronVM_MemCpy(const void *ptr, size_t size);
+extern void *pvm_mem_cpy(const void *ptr, size_t size);
 
 #endif //MEMORY_H

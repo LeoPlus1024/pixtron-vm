@@ -8,7 +8,7 @@ public enum Type {
     SHORT("short", 2, 2),
     INT("int", 3, 4),
     LONG("long", 4, 8),
-    FLOAT("float", 5, 8),
+    DOUBLE("double", 5, 8),
     BOOL("bool", 6, 1),
     REF("ref", 7, 8),
     VOID("void", 8, 0),

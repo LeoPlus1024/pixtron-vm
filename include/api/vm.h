@@ -11,28 +11,28 @@ typedef struct PixtronVM VM;
  * @param i8 Byte value (-128 to 127)
  * @see PixtronVM_GetByte() for retrieval
  */
-extern Value *PixtronVM_CreateByte(int8_t i8);
+extern Value *pvm_create_byte_value(int8_t i8);
 
 /**
  * Creates a VMValue containing 16-bit signed integer
  * @param i16 Short value (-32,768 to 32,767)
  * @see PixtronVM_GetShort() for retrieval
  */
-extern Value *PixtronVM_CreateShort(int16_t i16);
+extern Value *pvm_create_short_value(int16_t i16);
 
 /**
  * Creates a VMValue containing 32-bit signed integer
  * @param i32 Integer value (-2^31 to 2^31-1)
  * @see PixtronVM_GetInt() for retrieval
  */
-extern Value *PixtronVM_CreateInt(int32_t i32);
+extern Value *pvm_create_int_value(int32_t i32);
 
 /**
  * Creates a VMValue containing 64-bit signed integer
  * @param i64 Long value (-2^63 to 2^63-1)
  * @see PixtronVM_GetLong() for retrieval
  */
-extern Value *PixtronVM_CreateLong(int64_t i64);
+extern Value *pvm_create_long_value(int64_t i64);
 
 /**
  * Creates a VMValue containing 64-bit floating point
@@ -40,39 +40,39 @@ extern Value *PixtronVM_CreateLong(int64_t i64);
  * @see PixtronVM_GetFloat() for retrieval
  * @note NaN/infinite values preserve their bit patterns
  */
-extern Value *PixtronVM_CreateDouble(double f64);
+extern Value *pvm_create_double_value(double f64);
 
 
 /**
  * Extracts 8-bit integer from VMValue
  * @param value VMValue created with CreateByte()
  */
-extern int8_t PixtronVM_GetByte(Value *value);
+extern int8_t pvm_value_get_byte(Value *value);
 
 /**
  * Extracts 16-bit integer from VMValue
  * @param value VMValue created with CreateShort()
  */
-extern int16_t PixtronVM_GetShort(Value *value);
+extern int16_t pvm_value_get_short(Value *value);
 
 /**
  * Extracts 32-bit integer from VMValue
  * @param value VMValue created with CreateInt()
  */
-extern int32_t PixtronVM_GetInt(Value *value);
+extern int32_t pvm_value_get_int(Value *value);
 
 /**
  * Extracts 64-bit integer from VMValue
  * @param value VMValue created with CreateLong()
  */
-extern int64_t PixtronVM_GetLong(Value *value);
+extern int64_t pvm_value_get_long(Value *value);
 
 /**
  * Extracts 64-bit float from VMValue
  * @param value VMValue created with CreateFloat()
  * @note Returns bit-identical NaN values if present
  */
-extern double PixtronVM_GetDouble(Value *value);
+extern double pvm_value_get_double(Value *value);
 
 /**
  * Releases a VMValue and its resources
@@ -80,7 +80,11 @@ extern double PixtronVM_GetDouble(Value *value);
  * @note Safe to call with NULL or already freed values
  * @warning Dangling pointer risk if caller retains references
  */
-extern void PixtronVM_FreeValue(Value **value);
+extern void pvm_free_value(Value **value);
+
+
+extern void pvm_free_values(const Value *value[], uint64_t length);
+
 
 /**
  * Create a new PixtronVM instance
@@ -88,22 +92,22 @@ extern void PixtronVM_FreeValue(Value **value);
  * @return Pointer to the newly created PixtronVM instance
  * @note The VM takes ownership of the buffer and will free it when destroyed
  */
-extern VM *PixtronVM_CreateVM(const char *klassPath);
+extern VM *pvm_init(const char *klass_path);
 
 /**
  * Execute the loaded bytecode in the virtual machine
  * @param vm Pointer to the PixtronVM instance to execute
  * @note This will run the VM until completion or until an error occurs
  */
-extern Value *PixtronVM_LaunchVM(const VM *vm, const char *klassName, const char *methodName, uint16_t argv,
-                                 const Value *args[]);
+extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *method_name, uint16_t argv,
+                         const Value *args[]);
 
 /**
  * Destroy a PixtronVM instance and release all its resources
  * @param ref Reference to the PixtronVM instance to destroy
  * @note This will also free the associated bytecode buffer
  */
-extern void PixtronVM_DestroyVM(VM **vm);
+extern void pvm_destroy(VM **vm);
 
 
 #endif //VM_H

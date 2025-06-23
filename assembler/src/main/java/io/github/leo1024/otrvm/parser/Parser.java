@@ -68,6 +68,8 @@ public class Parser {
             this.parseImport(context);
         } else if (pseudo == Pseudo.CONSTANT) {
             this.parseConstant(context);
+        } else if (pseudo == Pseudo.LIBRARY) {
+            this.parseLibrary(context);
         } else {
             Expr expr = switch (pseudo) {
                 case FUNC -> parseFunc(context);
@@ -127,6 +129,14 @@ public class Parser {
         context.addConstant(Type.STRING, value);
     }
 
+    private void parseLibrary(Context context) {
+        Helper.expect(this.tokenSequence, Constants.LEFT_PAREN);
+        Token libraryToken = Helper.expect(this.tokenSequence, TokenKind.STRING);
+        Helper.expect(this.tokenSequence, Constants.RIGHT_PAREN);
+        ASTBuilder builder = (ASTBuilder) context;
+        builder.setLibrary(libraryToken.getValue());
+    }
+
 
     private Expr parseFunc(final Context context) {
         boolean isNativeFunc = false;
@@ -137,9 +147,13 @@ public class Parser {
             if (!isNativeFunc) {
                 throw ParserException.create(token, "Except a @native in function define.");
             }
-            Helper.expect(this.tokenSequence, Constants.LEFT_PAREN);
-            libNames = Helper.expect(this.tokenSequence, TokenKind.STRING).getValue();
-            Helper.expect(this.tokenSequence, Constants.RIGHT_PAREN);
+            boolean hasParam = this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.LEFT_PAREN));
+            if (hasParam) {
+                if (this.tokenSequence.currentKind() == TokenKind.STRING) {
+                    libNames = Helper.expect(this.tokenSequence, TokenKind.STRING).getValue();
+                }
+                Helper.expect(this.tokenSequence, Constants.RIGHT_PAREN);
+            }
         }
         Token name = Helper.expect(tokenSequence, TokenKind.IDENTIFIER);
         Helper.expect(tokenSequence, Constants.LEFT_PAREN);

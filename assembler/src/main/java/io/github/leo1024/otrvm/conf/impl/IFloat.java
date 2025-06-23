@@ -10,7 +10,7 @@ public class IFloat extends FieldMeta {
     private final double value;
 
     public IFloat(String name, double value) {
-        super(Type.FLOAT, name);
+        super(Type.DOUBLE, name);
         this.value = value;
     }
 

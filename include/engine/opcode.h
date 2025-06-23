@@ -51,10 +51,10 @@ typedef enum:uint16_t {
 
 typedef enum {
     IMPLIED = 0,
-    LOCAL_VAR,
-    GLOBAL_VAR,
-    IMMEDIATE,
-    CONSTANT,
+    LOCAL,
+    FIELD,
+    IMM,
+    CONST,
 } DataSource;
 
 static const uint8_t TYPE_SIZE[] = {

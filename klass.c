@@ -1,13 +1,14 @@
-#include "Klass.h"
+#include "klass.h"
 
 #include <stdio.h>
 #include <gio/gio.h>
 
-#include "Memory.h"
-#include "IError.h"
-#include "Type.h"
-#include "Helper.h"
-#include "VMString.h"
+#include "memory.h"
+#include "ierror.h"
+#include "itype.h"
+#include "helper.h"
+#include "istring.h"
+#include "Config.h"
 
 #define MAGIC (0xFFAABBCC)
 #define FILE_SUFFIX_LEN (strlen(".klass"))
@@ -15,7 +16,7 @@
 
 static char *PixtronVM_MethodToString(const Method *method) {
     GString *str = g_string_new(NULL);
-    const Type retType = method->retType;
+    const Type retType = method->ret;
     const char *retTypeName;
     if (retType == NIL) {
         retTypeName = "void";
@@ -46,35 +47,35 @@ static inline void PixtronVM_FreeKlass(Klass **klass) {
         return;
     }
     const Klass *self = *klass;
-    PixotronVM_free(TO_REF(self->name));
-    PixotronVM_free(TO_REF(self->byteCode));
+    pvm_mem_free(TO_REF(self->name));
+    pvm_mem_free(TO_REF(self->bytecode));
     int32_t fieldCount = (int32_t) self->fieldCount;
     while ((--fieldCount) >= 0) {
         Field *field = self->fields + fieldCount;
-        PixotronVM_free(TO_REF(field->name));
+        pvm_mem_free(TO_REF(field->name));
     }
-    int32_t methodCount = (int32_t) self->methodCount;
-    while ((methodCount--) >= 0) {
+    int32_t methodCount = (int32_t) self->method_count;
+    while ((--methodCount) >= 0) {
         Method *method = self->methods[methodCount];
         if (method == NULL || method->klass != self) {
             continue;
         }
-        PixotronVM_free(TO_REF(method->name));
+        pvm_mem_free(TO_REF(method->name));
         int16_t argv = (int16_t) method->argv;
         while ((--argv) >= 0) {
             MethodParam *param = method->args + argv;
-            PixotronVM_free(TO_REF(param->name));
-            PixotronVM_free(TO_REF(param));
+            pvm_mem_free(TO_REF(param->name));
+            pvm_mem_free(TO_REF(param));
         }
     }
-    PixotronVM_free(TO_REF(self->fields));
-    PixotronVM_free(CAST_REF(klass));
+    pvm_mem_free(TO_REF(self->fields));
+    pvm_mem_free(CAST_REF(klass));
 }
 
-static inline int32_t PixtronVM_BuilderConst(const PixtronVM *vm, Klass *klass, const uint16_t constSize,
-                                             const uint8_t *buf,
-                                             int32_t position) {
-    VMValue **constArr = PixotronVM_calloc(sizeof(VMValue *) * constSize);
+static inline int32_t pvm_build_constant(const PixtronVM *vm, Klass *klass, const uint16_t constSize,
+                                         const uint8_t *buf,
+                                         int32_t position) {
+    VMValue **constants = pvm_mem_calloc(sizeof(VMValue *) * constSize);
     for (uint16_t i = 0; i < constSize; i++) {
         const Type type = *(Type *) (buf + position);
         position += 2;
@@ -89,22 +90,22 @@ static inline int32_t PixtronVM_BuilderConst(const PixtronVM *vm, Klass *klass, 
             length,
             (char *) (buf + position)
         };
-        String *ptr = PixtronVM_StringCheckPool(vm, &string);
-        VMValue *constVal = PixotronVM_calloc(sizeof(VMValue));
+        String *ptr = pvm_string_const_pool_add(vm, &string);
+        VMValue *constVal = pvm_mem_calloc(sizeof(VMValue));
         constVal->type = TYPE_STRING;
         constVal->obj = ptr;
-        constArr[i] = constVal;
+        constants[i] = constVal;
         position += length;
     }
-    klass->constArray = constArr;
+    klass->constants = constants;
 
     return position;
 }
 
-static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klassName, GFile *file, GError **error) {
-    g_return_val_if_fail(klassName != NULL, NULL);
-    g_return_val_if_fail(file != NULL, NULL);
-    g_return_val_if_fail(error != NULL && *error == NULL, NULL);
+static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName, GFile *file, GError **error) {
+#if VM_DEBUG_ENABLE
+    g_debug("Prepare to load klass %s.klass", klassName);
+#endif
     Klass *klass = NULL;
     GFileInfo *fileInfo = NULL;
     GFileInputStream *inputStream = NULL;
@@ -132,30 +133,37 @@ static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klas
         g_set_error(error, KLASS_DOMAIN, MAGIC_ERROR, "Magic mistake.");
         goto finally;
     }
-    klass = PixotronVM_calloc(sizeof(Klass));
+    klass = pvm_mem_calloc(sizeof(Klass));
     klass->vm = vm;
     klass->magic = magic;
     int32_t position = 4;
     klass->version = *((Version *) (buf + position));
     position += 2;
-    const uint16_t constSize = *((uint16_t *) (buf + position));
-    position += 2;
-    if (constSize > 0) {
-        position = PixtronVM_BuilderConst(vm, klass, constSize, buf, position);
+    const uint8_t libraryFlag = *((uint8_t *) (buf + position));
+    position++;
+    if (libraryFlag) {
+        char *library = g_strdup((char *)(buf+position));
+        klass->library = library;
+        position += pvm_get_cstr_len(library);
     }
-    klass->constSize = constSize;
+    const uint16_t const_size = *((uint16_t *) (buf + position));
+    position += 2;
+    if (const_size > 0) {
+        position = pvm_build_constant(vm, klass, const_size, buf, position);
+    }
+    klass->const_size = const_size;
     klass->name = g_strdup(klassName);
-    klass->fieldCount = *((int32_t *) (buf + position));
+    klass->fieldCount = *((uint32_t *) (buf + position));
     position += 4;
-    Field *files = PixotronVM_calloc(sizeof(Field) * klass->fieldCount);
-    VMValue *values = PixotronVM_calloc(VM_VALUE_SIZE * klass->fieldCount);
+    Field *files = pvm_mem_calloc(sizeof(Field) * klass->fieldCount);
+    VMValue *values = pvm_mem_calloc(VM_VALUE_SIZE * klass->fieldCount);
     uint32_t index = 0;
     while (index < klass->fieldCount) {
         Field *field = (files + index);
         const Type type = *((Type *) (buf + position));
         position += 2;
         char *name = g_strdup((gchar *)(buf + position));
-        position += PixtronVM_GetCStyleStrLength(name);
+        position += pvm_get_cstr_len(name);
         VMValue *value = values + index;
         const uint8_t typeSize = TYPE_SIZE[type];
         memcpy(value, buf, typeSize);
@@ -165,21 +173,21 @@ static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klas
         index++;
     }
     klass->fields = files;
-    klass->methodCount = *((uint32_t *) (buf + position));
+    klass->method_count = *((uint32_t *) (buf + position));
     position += 4;
-    klass->methods = PixotronVM_calloc(sizeof(Method *) * klass->methodCount);
+    klass->methods = pvm_mem_calloc(sizeof(Method *) * klass->method_count);
     uint32_t j = 0;
-    while (j < klass->methodCount) {
+    while (j < klass->method_count) {
         const char *selfKlassName = (char *) (buf + position);
-        position += PixtronVM_GetCStyleStrLength(selfKlassName);
+        position += pvm_get_cstr_len(selfKlassName);
         const char *funcName = (char *) (buf + position);
-        position += PixtronVM_GetCStyleStrLength(funcName);
+        position += pvm_get_cstr_len(funcName);
         if (!g_str_equal(selfKlassName, "")) {
-            const Klass *selfKlass = PixtronVM_GetKlass(vm, selfKlassName, error);
-            if (selfKlass == NULL) {
+            const Klass *self_klass = pvm_get_klass(vm, selfKlassName, error);
+            if (self_klass == NULL) {
                 goto finally;
             }
-            Method *method = PixtronVM_GetKlassMethodByName(selfKlass, funcName);
+            Method *method = pvm_get_method_by_name(self_klass, funcName);
             if (method == NULL) {
                 g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND, "Method %s not found in class %s", funcName,
                             selfKlassName);
@@ -187,42 +195,38 @@ static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klas
             }
             klass->methods[j] = method;
         } else {
-            Method *method = PixotronVM_calloc(sizeof(Method));
+            Method *method = pvm_mem_calloc(sizeof(Method));
             method->klass = klass;
-            method->nativeFunc = *((bool *) (buf + position));
+            method->native_func = *((uint8_t *) (buf + position)) == 1;
             position++;
-            if (method->nativeFunc) {
-                const char *libs = (char *) (buf + position);
-                if (g_str_equal(libs, "")) {
-                    method->libCount = 0;
-                } else {
-                    char **arr = g_strsplit(libs, "|", 1024);
-                    method->libName = arr;
-                    method->libCount = g_strv_length(arr);
-                    position += PixtronVM_GetCStyleStrLength(libs);
+            if (method->native_func) {
+                const char *library = (char *) (buf + position);
+                if (!g_str_equal(library, "")) {
+                    method->lib_name = g_strdup(library);
                 }
+                position += pvm_get_cstr_len(library);
             }
-            method->maxLocalsSize = *((uint16_t *) (buf + position));
+            method->max_locals = *((uint16_t *) (buf + position));
             position += 2;
-            method->maxStackSize = *((uint16_t *) (buf + position));
+            method->max_stacks = *((uint16_t *) (buf + position));
             position += 2;
             method->offset = *((uint32_t *) (buf + position));
             position += 4;
-            method->endOffset = *((uint32_t *) (buf + position));
+            method->end_offset = method->offset + (*((uint32_t *) (buf + position)));
             position += 4;
-            method->retType = *((Type *) (buf + position));
+            method->ret = *((Type *) (buf + position));
             position += 2;
             const uint16_t argv = *((uint16_t *) (buf + position));
             position += 2;
             MethodParam *args = NULL;
             if (argv > 0) {
-                args = PixotronVM_calloc(sizeof(MethodParam) * argv);
+                args = pvm_mem_calloc(sizeof(MethodParam) * argv);
                 for (int i = 0; i < argv; ++i) {
                     MethodParam *param = args + i;
                     param->type = *((Type *) (buf + position));
                     position += 2;
                     param->name = g_strdup((gchar *)(buf+position));
-                    position += PixtronVM_GetCStyleStrLength(param->name);
+                    position += pvm_get_cstr_len(param->name);
                 }
             }
             method->argv = argv;
@@ -231,27 +235,37 @@ static inline Klass *PixtronVM_CreateKlass(const PixtronVM *vm, const char *klas
             method->name = g_strdup(funcName);
             method->toString = PixtronVM_MethodToString;
             // Native method automatic calculate stack size
-            if (method->nativeFunc) {
-                method->maxLocalsSize = argv;
-                method->maxStackSize = method->retType != TYPE_VOID;
+            if (method->native_func) {
+                pvm_lookup_native_handle(klass, method, error);
+                if (*error != NULL) {
+                    goto finally;
+                }
+                method->max_locals = argv;
+                method->max_stacks = method->ret != TYPE_VOID;
             }
         }
         j++;
     }
     const uint64_t byteCodeSize = fileSize - position;
     if (byteCodeSize > 0) {
-        klass->byteCode = PixotronVM_calloc(byteCodeSize);
-        memcpy(klass->byteCode, buf + position, byteCodeSize);
+        klass->bytecode = pvm_mem_calloc(byteCodeSize);
+        memcpy(klass->bytecode, buf + position, byteCodeSize);
     }
+#if VM_DEBUG_ENABLE
+    g_debug("%s.klass load success.", klassName);
+#endif
 finally:
     if (*error != NULL) {
+#if VM_DEBUG_ENABLE
+        g_debug("%s.klass load failed:%s", klassName, (*error)->message);
+#endif
         PixtronVM_FreeKlass(&klass);
     }
     g_clear_object(&fileInfo);
     return klass;
 }
 
-static Klass *PixtronVM_KlassLoad(const PixtronVM *vm, const char *klassName, GError **error) {
+static Klass *pvm_load_klass(const PixtronVM *vm, const char *klassName, GError **error) {
     GFile *dir = NULL;
     Klass *klass = NULL;
     GFile *klassFile = NULL;
@@ -275,7 +289,7 @@ static Klass *PixtronVM_KlassLoad(const PixtronVM *vm, const char *klassName, GE
         const size_t strLen = strlen(fileName) - 6;
         if (strncmp(klassName, fileName, strLen) == 0) {
             klassFile = g_file_get_child(dir, fileName);
-            klass = PixtronVM_CreateKlass(vm, klassName, klassFile, error);
+            klass = pvm_create_klass(vm, klassName, klassFile, error);
             if (*error != NULL) {
                 goto finally;
             }
@@ -295,8 +309,8 @@ finally:
     return klass;
 }
 
-extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const char *klassName, GError **error) {
-    Klass *klass = g_hash_table_lookup(vm->klassTable, klassName);
+extern inline Klass *pvm_get_klass(const PixtronVM *vm, const char *klassName, GError **error) {
+    Klass *klass = g_hash_table_lookup(vm->klasses, klassName);
     if (klass != NULL) {
         return klass;
     }
@@ -304,14 +318,14 @@ extern inline Klass *PixtronVM_GetKlass(const PixtronVM *vm, const char *klassNa
     if (vm->klassPath == NULL) {
         return NULL;
     }
-    klass = PixtronVM_KlassLoad(vm, klassName, error);
+    klass = pvm_load_klass(vm, klassName, error);
     if (klass != NULL) {
-        g_hash_table_insert(vm->klassTable, klass->name, klass);
+        g_hash_table_insert(vm->klasses, klass->name, klass);
     }
     return klass;
 }
 
-static inline const Klass *PixtronVM_KlassFieldOutOfBoundsCheck(RuntimeContext *context, const guint16 index) {
+static inline const Klass *pvm_check_field_index(RuntimeContext *context, const guint16 index) {
     const VirtualStackFrame *frame = context->frame;
     const Klass *klass = frame->method->klass;
     const guint count = klass->fieldCount;
@@ -321,15 +335,15 @@ static inline const Klass *PixtronVM_KlassFieldOutOfBoundsCheck(RuntimeContext *
     return klass;
 }
 
-extern inline void PixtronVM_GetKlassFileValue(RuntimeContext *context, const uint16_t index, VMValue *value) {
-    const Klass *klass = PixtronVM_KlassFieldOutOfBoundsCheck(context, index);
+extern inline void pvm_get_klass_field(RuntimeContext *context, const uint16_t index, VMValue *value) {
+    const Klass *klass = pvm_check_field_index(context, index);
     const Field *field = klass->fields + index;
     memcpy(value, field->value, VM_VALUE_SIZE);
 }
 
 
-extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, const guint16 index, const VMValue *value) {
-    const Klass *klass = PixtronVM_KlassFieldOutOfBoundsCheck(context, index);
+extern inline void pvm_set_klass_field(RuntimeContext *context, const guint16 index, const VMValue *value) {
+    const Klass *klass = pvm_check_field_index(context, index);
     const Field *field = klass->fields + index;
     const VMValue *_value = field->value;
     // Type check
@@ -339,30 +353,30 @@ extern inline void PixtronVM_SetKlassFileValue(RuntimeContext *context, const gu
     memcpy(field->value, value, VM_VALUE_SIZE);
 }
 
-extern inline void PixtronVM_GetKlassConstant(RuntimeContext *context, const uint16_t index, VMValue *value) {
+extern inline void pvm_get_klass_constant(RuntimeContext *context, const uint16_t index, VMValue *value) {
     const Klass *klass = context->frame->method->klass;
-    const uint16_t constSize = klass->constSize;
+    const uint16_t constSize = klass->const_size;
     if (index >= constSize) {
         context->throwException(context, "Constant pool index out of bounds: requested #%d (valid range: 0-%d)", index,
                                 constSize);
     }
-    memcpy(value, klass->constArray[index], VM_VALUE_SIZE);
+    memcpy(value, klass->constants[index], VM_VALUE_SIZE);
 }
 
-extern inline Method *PixtronVM_GetKlassMethod(RuntimeContext *context, const uint16_t index) {
+extern inline Method *pvm_get_method(RuntimeContext *context, const uint16_t index) {
     const Klass *klass = context->frame->method->klass;
-    const uint32_t methodCount = klass->methodCount;
-    if (index >= methodCount) {
+    const uint32_t method_count = klass->method_count;
+    if (index >= method_count) {
         context->throwException(context, "Method index out of range current index is [%d] but max index is [%d].",
-                                index, methodCount);
+                                index, method_count);
         return NULL;
     }
     return klass->methods[index];
 }
 
-extern inline Method *PixtronVM_GetKlassMethodByName(const Klass *klass, const char *name) {
-    const uint32_t methodCount = klass->methodCount;
-    for (int i = 0; i < methodCount; ++i) {
+extern inline Method *pvm_get_method_by_name(const Klass *klass, const char *name) {
+    const uint32_t method_count = klass->method_count;
+    for (int i = 0; i < method_count; ++i) {
         Method *method = klass->methods[i];
         if (g_str_equal(method->name, name)) {
             return method;
@@ -371,54 +385,54 @@ extern inline Method *PixtronVM_GetKlassMethodByName(const Klass *klass, const c
     return NULL;
 }
 
-extern inline void PixtronVM_InitSystemKlass(const PixtronVM *vm, GError **error) {
-    const char *klassPath = g_hash_table_lookup(vm->envs, "KlassPath");
-    if (klassPath == NULL) {
+extern inline void pvm_load_system_klass(const PixtronVM *vm, GError **error) {
+    const char *klass_path = g_hash_table_lookup(vm->envs, "KlassPath");
+    if (klass_path == NULL) {
         return;
     }
-    GFile *klassPathDir = NULL;
-    GFileInfo *fileInfo = NULL;
+    GFile *klass_path_dir = NULL;
+    GFileInfo *file_info = NULL;
     GFileEnumerator *enumerator = NULL;
-    klassPathDir = g_file_new_for_path(klassPath);
-    enumerator = g_file_enumerate_children(klassPathDir,
+    klass_path_dir = g_file_new_for_path(klass_path);
+    enumerator = g_file_enumerate_children(klass_path_dir,
                                            G_FILE_ATTRIBUTE_STANDARD_NAME,
                                            G_FILE_QUERY_INFO_NONE,
                                            NULL,
                                            error);
     if (*error != NULL) {
-        g_clear_object(&klassPathDir);
+        g_clear_object(&klass_path_dir);
         return;
     }
 
     for (;;) {
-        if (fileInfo != NULL) {
-            g_clear_object(&fileInfo);
+        if (file_info != NULL) {
+            g_clear_object(&file_info);
         }
-        fileInfo = g_file_enumerator_next_file(enumerator, NULL, error);
-        if (fileInfo == NULL) {
+        file_info = g_file_enumerator_next_file(enumerator, NULL, error);
+        if (file_info == NULL) {
             break;
         }
-        const char *name = g_file_info_get_name(fileInfo);
+        const char *name = g_file_info_get_name(file_info);
         if (!IS_KLASS_FILE(name)) {
             continue;
         }
-        GFile *klassFile = g_file_get_child(klassPathDir, name);
+        GFile *klassFile = g_file_get_child(klass_path_dir, name);
         const size_t t = strlen(name) - FILE_SUFFIX_LEN + 1;
-        char klassName[t];
-        snprintf(klassName, t, "%s", name);
-        const bool exist = g_hash_table_contains(vm->klassTable, klassName);
+        char klass_name[t];
+        snprintf(klass_name, t, "%s", name);
+        const bool exist = g_hash_table_contains(vm->klasses, klass_name);
         if (exist) {
             g_clear_object(&klassFile);
             continue;
         }
-        Klass *klass = PixtronVM_CreateKlass(vm, klassName, klassFile, error);
+        Klass *klass = pvm_create_klass(vm, klass_name, klassFile, error);
         g_clear_object(&klassFile);
         if (klass == NULL) {
             goto finally;
         }
-        g_hash_table_insert(vm->klassTable, klass->name, klass);
+        g_hash_table_insert(vm->klasses, klass->name, klass);
     }
 finally:
     g_clear_object(&enumerator);
-    g_clear_object(&klassPathDir);
+    g_clear_object(&klass_path_dir);
 }

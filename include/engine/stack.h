@@ -1,8 +1,8 @@
 #ifndef VIRTUALSTACK_H
 #define VIRTUALSTACK_H
-#include "Type.h"
+#include "itype.h"
 
-extern inline void PixtronVM_VirtualStackFrameDispose(VirtualStackFrame **frame);
+extern inline void pvm_stack_fram_dispose(VirtualStackFrame **frame);
 
 /**
  * Pushes a value onto the RuntimeContext's operand stack.
@@ -19,7 +19,7 @@ extern inline void PixtronVM_VirtualStackFrameDispose(VirtualStackFrame **frame)
  *       following the typical downward-growing stack convention.
  * @warning Passing a context with a NULL operand stack will result in undefined behavior.
  */
-extern inline void PixtronVM_PushOperand(RuntimeContext *context, const VMValue *value);
+extern inline void pvm_push_operand(RuntimeContext *context, const VMValue *value);
 
 
 /**
@@ -40,7 +40,7 @@ extern inline void PixtronVM_PushOperand(RuntimeContext *context, const VMValue 
  * @warning Passing a NULL context results in undefined behavior.
  * @see PixtronVM_CheckStackBounds
  */
-extern inline VMValue *PixtronVM_PopOperand(RuntimeContext *context);
+extern inline VMValue *pvm_pop_operand(RuntimeContext *context);
 
 
 /**
@@ -87,16 +87,16 @@ extern inline VMValue *PixtronVM_PopOperand(RuntimeContext *context);
  *   3) Operand stack empty in new frame
  *
  */
-extern inline void PixtronVM_CreateStackFrame(RuntimeContext *context, const Method *method, uint16_t argv,
+extern inline void pvm_create_stack_frame(RuntimeContext *context, const Method *method, uint16_t argv,
                                               const VMValue **args);
 
-extern inline void PixtronVM_PushStackFrame(RuntimeContext *context, const Method *method);
+extern inline void pvm_push_stack_frame(RuntimeContext *context, const Method *method);
 
 /**
  * Pop the current stack frame from the call stack
  * @param vm The PixtronVM instance pointer
  */
-extern inline void PixtronVM_PopStackFrame(RuntimeContext *context);
+extern inline void pvm_pop_stack_frame(RuntimeContext *context);
 
 /**
  * Set a value in the current frame's local variable table
@@ -104,7 +104,7 @@ extern inline void PixtronVM_PopStackFrame(RuntimeContext *context);
  * @param index Local variable table slot index
  * @param variant Variant value to store in the local variable table
  */
-extern inline void PixtronVM_SetLocalTable(RuntimeContext *context, uint16_t index, const VMValue *value);
+extern inline void pvm_set_local_value(RuntimeContext *context, uint16_t index, const VMValue *value);
 
 /**
 * Get a value from the current frame's local variable table
@@ -112,9 +112,9 @@ extern inline void PixtronVM_SetLocalTable(RuntimeContext *context, uint16_t ind
 * @param index Local variable table slot index
 * @param variant Pointer to store the retrieved variant value
 */
-extern inline void PixtronVM_GetLocalTable(RuntimeContext *context, uint16_t index, VMValue *value);
+extern inline void pvm_get_local_value(RuntimeContext *context, uint16_t index, VMValue *value);
 
 
-extern inline void PixtronVM_MoveStackFrameSp(RuntimeContext *context, int32_t offset);
+extern inline void pvm_move_stack_pointer(RuntimeContext *context, int32_t offset);
 
 #endif //VIRTUALSTACK_H

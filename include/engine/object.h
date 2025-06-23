@@ -43,7 +43,7 @@ typedef struct {
  *                   refcount reaches 0. Signature: void (*)(void*).
  *                   Pass NULL if no cleanup is needed.
  *
- * @param initRefCount Initial reference count value. Typically 1 for newly created objects.
+ * @param init_ref_count Initial reference count value. Typically 1 for newly created objects.
  *
  * @return Pointer to the user-accessible object data (points to the memory area
  *         immediately after the header). NULL if allocation failed.
@@ -60,7 +60,7 @@ typedef struct {
  * @warning Do not modify the header directly. Use PixtronVM_Retain/Release for refcounting.
  *          Object must be freed through PixtronVM_Release mechanism.
  */
-extern inline void *PixtronVM_NewObject(uint64_t size, const ObjectDestructor destructor, uint64_t initRefCount);
+extern inline void *pvm_object_new(uint64_t size, const ObjectDestructor destructor, uint64_t init_ref_count);
 
 /**
  * @brief Increases the reference count of a managed object.
@@ -77,7 +77,7 @@ extern inline void *PixtronVM_NewObject(uint64_t size, const ObjectDestructor de
  * @warning Calling with invalid pointers causes undefined behavior.
  *          Always pair with matching PixtronVM_Release calls.
  */
-extern inline void PixtronVM_ObjectRetain(void *object);
+extern inline void pvm_object_retain(void *object);
 
 /**
  * @brief Decreases the reference count and potentially destroys the object.
@@ -96,6 +96,6 @@ extern inline void PixtronVM_ObjectRetain(void *object);
  *
  * @concurrency Thread-safe: uses atomic operations with full memory barriers.
  */
-extern inline void PixtronVM_ObjectRelease(void *object);
+extern inline void pvm_object_release(void *object);
 
 #endif

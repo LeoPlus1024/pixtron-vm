@@ -4,7 +4,8 @@
 
 #ifndef HELPER_H
 #define HELPER_H
-#include <stdint.h>
+#include "itype.h"
+
 /**
  * Calculates the full buffer size needed to store a null-terminated C string.
  *
@@ -18,6 +19,8 @@
  *       Maximum theoretical string length is G_MAXINT-1 (2^31-2 on 32-bit systems)
  *       due to signed return type. Consider gsize for pure size calculations.
  */
-extern int32_t PixtronVM_GetCStyleStrLength(const char *str);
+extern int32_t pvm_get_cstr_len(const char *str);
+
+extern inline void *pvm_lookup_native_handle(const Klass *klass, Method *method, GError **error);
 
 #endif //HELPER_H

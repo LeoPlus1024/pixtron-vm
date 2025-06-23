@@ -1,4 +1,4 @@
-#include "Memory.h"
+#include "memory.h"
 #ifdef  __APPLE__
 #include <malloc/malloc.h>
 #else
@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern void *PixotronVM_calloc(const size_t size) {
+extern void *pvm_mem_calloc(const size_t size) {
     void *ptr = calloc(1, size);
     if (ptr == NULL) {
         fprintf(stderr, "Out of memory.\n");
@@ -17,7 +17,7 @@ extern void *PixotronVM_calloc(const size_t size) {
     return ptr;
 }
 
-extern void PixotronVM_free(void **ref) {
+extern void pvm_mem_free(void **ref) {
     if (ref == NULL || *ref == NULL) {
         return;
     }
@@ -26,11 +26,11 @@ extern void PixotronVM_free(void **ref) {
     *ref = NULL;
 }
 
-extern void *PixotronVM_MemCpy(const void *ptr, const size_t size) {
+extern void *pvm_mem_cpy(const void *ptr, const size_t size) {
     if (ptr == NULL || size == 0) {
         return NULL;
     }
-    void *dst = PixotronVM_calloc(size);
+    void *dst = pvm_mem_calloc(size);
     memcpy(dst, ptr, size);
     return dst;
 }

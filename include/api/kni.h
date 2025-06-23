@@ -77,7 +77,7 @@ typedef void (*KniResultOperation)(RuntimeContext *context, KniValue *result);
  *   - Stores formatted message in context->exception_message
  *   - Preserves stack trace at throw point
  */
-extern void Kni_ThrowException(RuntimeContext *context, char *fmt, ...);
+extern void pvm_kni_throw_exception(RuntimeContext *context, char *fmt, ...);
 
 /**
  * Sets a 64-bit signed integer value in Kni result container.
@@ -90,7 +90,7 @@ extern void Kni_ThrowException(RuntimeContext *context, char *fmt, ...);
  *   - result->value.long_value = value
  *   - result->size = sizeof(int64_t)
  */
-extern void Kni_SetLong(KniValue *result, int64_t value);
+extern void pvm_kni_set_long(KniValue *result, int64_t value);
 
 /**
  * Sets a 32-bit signed integer value in Kni result container.
@@ -103,7 +103,7 @@ extern void Kni_SetLong(KniValue *result, int64_t value);
  *   - result->value.int_value = value
  *   - result->size = sizeof(int32_t)
  */
-extern void Kni_SetInt(KniValue *result, int32_t value);
+extern void pvm_kni_set_int(KniValue *result, int32_t value);
 
 /**
  * Sets a 16-bit signed integer value in Kni result container.
@@ -116,7 +116,7 @@ extern void Kni_SetInt(KniValue *result, int32_t value);
  *   - result->value.short_value = value
  *   - result->size = sizeof(int16_t)
  */
-extern void Kni_SetShort(KniValue *result, int16_t value);
+extern void pvm_kni_set_short(KniValue *result, int16_t value);
 
 /**
  * Sets an 8-bit signed integer value in Kni result container.
@@ -129,7 +129,7 @@ extern void Kni_SetShort(KniValue *result, int16_t value);
  *   - result->value.byte_value = value
  *   - result->size = sizeof(int8_t)
  */
-extern void Kni_SetByte(KniValue *result, int8_t value);
+extern void pvm_kni_set_byte(KniValue *result, int8_t value);
 
 /**
  * Sets a double-precision floating point value in Kni result container.
@@ -144,7 +144,7 @@ extern void Kni_SetByte(KniValue *result, int8_t value);
  *
  * Note: Single-precision floats will be automatically promoted
  */
-extern void Kni_SetDouble(KniValue *result, double value);
+extern void pvm_kni_set_double(KniValue *result, double value);
 
 /**
  * Sets a boolean value in Kni result container.
@@ -161,23 +161,23 @@ extern void Kni_SetDouble(KniValue *result, double value);
  *   - Uses native bool representation (typically 1 byte)
  *   - Non-zero values considered true
  */
-extern void Kni_SetBool(KniValue *result, bool value);
+extern void pvm_kni_set_bool(KniValue *result, bool value);
 
-extern int8_t Kni_GetByteParam(RuntimeContext *context, uint16_t index);
+extern int8_t pvm_kni_get_byte(RuntimeContext *context, uint16_t index);
 
-extern int16_t Kni_GetShortParam(RuntimeContext *context, uint16_t index);
+extern int16_t pvm_kni_get_short(RuntimeContext *context, uint16_t index);
 
-extern int32_t Kni_GetIntParam(RuntimeContext *context, uint16_t index);
+extern int32_t pvm_kni_get_int(RuntimeContext *context, uint16_t index);
 
-extern int64_t Kni_GetLongParam(RuntimeContext *context, uint16_t index);
+extern int64_t pvm_kni_get_long(RuntimeContext *context, uint16_t index);
 
-extern double Kni_GetDoubleParam(RuntimeContext *context, uint16_t index);
+extern double pvm_kni_get_double(RuntimeContext *context, uint16_t index);
 
-extern KniString *Kni_GetStringParam(RuntimeContext *context, uint16_t index);
+extern KniString *pvm_kni_get_str(RuntimeContext *context, uint16_t index);
 
-extern KniValue *Kni_GetObjectParam(RuntimeContext *context, uint16_t index);
+extern KniValue *pvm_kni_get_object(RuntimeContext *context, uint16_t index);
 
 
-extern void Kni_ReleaseKniString(KniString **string);
+extern void pvm_kni_release_str(KniString **string);
 
 #endif //KNI_H

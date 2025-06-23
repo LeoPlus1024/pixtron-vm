@@ -68,7 +68,7 @@ public class ByteUtil {
             }
             case SHORT -> short2Bytes(imm.shortValue());
             case LONG -> long2Bytes(imm.longValue());
-            case FLOAT -> ByteBuffer.allocate(type.getLength())
+            case DOUBLE -> ByteBuffer.allocate(type.getLength())
                     .order(ByteOrder.LITTLE_ENDIAN)
                     .putDouble(imm.doubleValue())
                     .array();

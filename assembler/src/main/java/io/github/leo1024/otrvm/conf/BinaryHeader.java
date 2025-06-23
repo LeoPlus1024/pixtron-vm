@@ -3,6 +3,7 @@ package io.github.leo1024.otrvm.conf;
 import io.github.leo1024.otrvm.ISerializable;
 import io.github.leo1024.otrvm.parser.ASTBuilder;
 import io.github.leo1024.otrvm.util.ByteUtil;
+import io.github.leo1024.otrvm.util.CLanguageUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -15,11 +16,11 @@ public class BinaryHeader implements ISerializable {
     final Version version;
     final List<FieldMeta> fieldMetas;
     final List<FuncMeta> funcMetas;
-    final List<ASTBuilder.Constant> constants;
+    final ASTBuilder builder;
 
-    public BinaryHeader(Version version, List<ASTBuilder.Constant> constants, List<FieldMeta> fieldMetas, List<FuncMeta> funcMetas) {
+    public BinaryHeader(Version version, ASTBuilder builder, List<FieldMeta> fieldMetas, List<FuncMeta> funcMetas) {
         this.magic = MAGIC;
-        this.constants = constants;
+        this.builder = builder;
         this.version = version;
         this.fieldMetas = fieldMetas;
         this.funcMetas = Collections.unmodifiableList(funcMetas);
@@ -49,7 +50,7 @@ public class BinaryHeader implements ISerializable {
                 maxFuncSize += array.length;
             }
         }
-
+        final List<ASTBuilder.Constant> constants = builder.getConstants();
         final byte[][] constBytes = new byte[constants.size()][];
         int maxConstSize = 0;
         // Writer constant data
@@ -58,13 +59,29 @@ public class BinaryHeader implements ISerializable {
             maxConstSize = bytes.length;
             constBytes[i] = bytes;
         }
-
+        int libraryLength = 0;
+        byte[] libraryBytes = null;
+        if (builder.getLibrary() != null) {
+            libraryBytes = CLanguageUtil.toCStyleStr(builder.getLibrary());
+            libraryLength = libraryBytes.length;
+        }
         int pos = 0;
-        int constSize = this.constants.size();
-        byte[] data = new byte[length + maxFuncSize + maxVarSize + 8 + 2 + maxConstSize];
+        int constSize = constants.size();
+        byte[] data = new byte[length + maxFuncSize + maxVarSize
+                + 8
+                + 2
+                // library flag
+                + 1
+                + maxConstSize
+                + libraryLength];
 
         pos = ByteUtil.appendInt2Bytes(data, pos, magic);
         pos = ByteUtil.appendShort2Bytes(data, pos, version.getVersion());
+        data[pos++] = libraryLength == 0 ? (byte) 0 : (byte) 1;
+        if (libraryLength > 0) {
+            System.arraycopy(libraryBytes, 0, data, pos, libraryLength);
+            pos += libraryLength;
+        }
         pos = ByteUtil.appendShort2Bytes(data, pos, (short) constSize);
 
         for (byte[] constByte : constBytes) {

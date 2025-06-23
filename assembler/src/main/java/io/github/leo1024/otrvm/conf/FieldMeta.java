@@ -63,7 +63,7 @@ public abstract class FieldMeta implements ISerializable {
             case INT -> new Int(name, number.intValue());
             case LONG -> new ILong(name, number.longValue());
             case SHORT -> new IShort(name, number.shortValue());
-            case FLOAT -> new IFloat(name, number.floatValue());
+            case DOUBLE -> new IFloat(name, number.floatValue());
             case BYTE -> new IByte(name, number.byteValue());
             default -> throw new ParserException("Invalid type.");
         };

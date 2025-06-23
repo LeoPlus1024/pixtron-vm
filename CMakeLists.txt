@@ -14,8 +14,9 @@ configure_file(${PROJECT_SOURCE_DIR}/Config.h.in ${CMAKE_BINARY_DIR}/include/Con
 
 file(GLOB SOURCES *.c lib/*.c)
 
-if (EXISTS example/build)
-    file(COPY example/build DESTINATION ${CMAKE_BINARY_DIR}/tests)
+
+if (EXISTS ${CMAKE_SOURCE_DIR}/example/build)
+    file(COPY ${CMAKE_SOURCE_DIR}/example/build DESTINATION ${CMAKE_BINARY_DIR}/tests)
 endif ()
 
 
@@ -24,9 +25,9 @@ enable_testing()
 add_subdirectory(tests)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES}
-        lib/Math.c
-        include/engine/Helper.h
-        Helper.c)
+        lib/math.c
+        include/engine/helper.h
+        helper.c)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
         ${GLIB_DEP_LIBRARIES}

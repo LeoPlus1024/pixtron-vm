@@ -1,23 +1,23 @@
-#include "Engine.h"
+#include "engine.h"
 
 #include <assert.h>
 #include <Config.h>
 #include <stdbool.h>
 
-#include "ByteCodeReader.h"
-#include "Klass.h"
-#include "Memory.h"
-#include "Stack.h"
+#include "bc_reader.h"
+#include "klass.h"
+#include "memory.h"
+#include "stack.h"
 #include <dlfcn.h>
-#include "Kni.h"
+#include "kni.h"
 
 
-static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *context, const Opcode opcode) {
-    const VMValue *sourceOperand = PixtronVM_PopOperand(context);
-    VMValue *targetOperand = PixtronVM_PopOperand(context);
+static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, const Opcode opcode) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_pop_operand(context);
 
-    const Type t0 = targetOperand->type;
-    const Type t1 = sourceOperand->type;
+    const Type t0 = target_operand->type;
+    const Type t1 = source_operand->type;
     if (t0 != t1) {
         context->throwException(
             context,
@@ -28,81 +28,81 @@ static inline void PixtronVM_executeCanonicalBinaryOperation(RuntimeContext *con
     }
 
     if (opcode == ADD) {
-        APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, +, context);
+        APPLY_COMPOUND_OPERATOR(target_operand, source_operand, +, context);
     } else if (opcode == SUB) {
-        APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, -, context);
+        APPLY_COMPOUND_OPERATOR(target_operand, source_operand, -, context);
     } else if (opcode == MUL) {
-        APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, *, context);
+        APPLY_COMPOUND_OPERATOR(target_operand, source_operand, *, context);
     } else if (opcode == DIV) {
-        APPLY_COMPOUND_OPERATOR(targetOperand, sourceOperand, /, context);
+        APPLY_COMPOUND_OPERATOR(target_operand, source_operand, /, context);
     } else {
         context->throwException(context, "Canonical binary operation '%02x' is not supported.", opcode);
     }
-    PixtronVM_MoveStackFrameSp(context, -1);
+    pvm_move_stack_pointer(context, -1);
 }
 
-static inline void PixtronVM_Goto(RuntimeContext *context) {
+static inline void pvm_goto(RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
-    const int16_t offset = (int16_t) PixtronVM_ReadByteCodeU16(context);
+    const int16_t offset = (int16_t) pvm_bytecode_read_u16(context);
     // Offset contain current opcode
     frame->pc = frame->pc + offset - 2;
 }
 
-static inline void PixtronVM_Ifeqne(RuntimeContext *context, const Opcode opcode) {
-    const VMValue *value = PixtronVM_PopOperand(context);
+static inline void pvm_ifeq_ifnq(RuntimeContext *context, const Opcode opcode) {
+    const VMValue *value = pvm_pop_operand(context);
     const bool ifeq = opcode == IFEQ;
-    const int16_t offset = (int16_t) PixtronVM_ReadByteCodeU16(context);
+    const int16_t offset = (int16_t) pvm_bytecode_read_u16(context);
     VirtualStackFrame *frame = context->frame;
     if ((value->i32 == 0) == ifeq) {
         frame->pc = frame->pc + offset - 2;
     }
 }
 
-static inline void PixtronVM_LessGranterThanEqual(RuntimeContext *context, Opcode opcode) {
-    const int16_t offset = (int16_t) PixtronVM_ReadByteCodeU16(context);
-    const VMValue *value = PixtronVM_PopOperand(context);
+static inline void pvm_less_granter_than_equal(RuntimeContext *context, Opcode opcode) {
+    const int16_t offset = (int16_t) pvm_bytecode_read_u16(context);
+    const VMValue *value = pvm_pop_operand(context);
     const int32_t flag = value->i32;
-    bool jump2Branch = false;
+    bool jump_branch = false;
 
     switch (opcode) {
-        case IFLE: jump2Branch = (flag <= 0);
+        case IFLE: jump_branch = (flag <= 0);
             break;
-        case IFLT: jump2Branch = (flag < 0);
+        case IFLT: jump_branch = (flag < 0);
             break;
-        case IFGE: jump2Branch = (flag >= 0);
+        case IFGE: jump_branch = (flag >= 0);
             break;
-        case IFGT: jump2Branch = (flag > 0);
+        case IFGT: jump_branch = (flag > 0);
             break;
         default: break;
     }
 
-    if (jump2Branch) {
+    if (jump_branch) {
         context->frame->pc += (offset - 2);
     }
 }
 
-extern inline void PixtronVM_Cmp(RuntimeContext *context, const Opcode opcode) {
-    const VMValue *sourceOperand = PixtronVM_PopOperand(context);
-    VMValue *targetOperand = PixtronVM_PopOperand(context);
+extern inline void pvm_cmp(RuntimeContext *context, const Opcode opcode) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *targe_operand = pvm_pop_operand(context);
     switch (opcode) {
         case ICMP:
-            targetOperand->i32 = SIGN_CMP(targetOperand->i32, sourceOperand->i32);
+            targe_operand->i32 = SIGN_CMP(targe_operand->i32, source_operand->i32);
             break;
         case DCMP:
-            targetOperand->i32 = SIGN_CMP(targetOperand->f64, sourceOperand->f64);
+            targe_operand->i32 = SIGN_CMP(targe_operand->f64, source_operand->f64);
             break;
         case LCMP:
-            targetOperand->i32 = SIGN_CMP(targetOperand->i64, sourceOperand->i64);
+            targe_operand->i32 = SIGN_CMP(targe_operand->i64, source_operand->i64);
             break;
         default:
             context->throwException(context, "unsupported cmp opcode:%02x", opcode);
     }
-    targetOperand->type = TYPE_INT;
-    PixtronVM_MoveStackFrameSp(context, -1);
+    targe_operand->type = TYPE_INT;
+    pvm_move_stack_pointer(context, -1);
 }
 
-static void PixtronVM_CONV(RuntimeContext *context, Opcode opcode) {
-    VMValue *value = PixtronVM_PopOperand(context);
+static void pvm_conv(RuntimeContext *context, Opcode opcode) {
+    VMValue *value = pvm_pop_operand(context);
     if (opcode == I2F || opcode == L2F) {
         PixtronVM_ConvertToDoubleValue(value);
     } else if (opcode == I2L || opcode == F2L) {
@@ -110,43 +110,43 @@ static void PixtronVM_CONV(RuntimeContext *context, Opcode opcode) {
     } else if (opcode == F2I || opcode == L2I) {
         PixtronVM_ConvertToIntValue(value);
     }
-    PixtronVM_MoveStackFrameSp(context, -1);
+    pvm_move_stack_pointer(context, -1);
 }
 
-static void PixtronVM_Store(RuntimeContext *context) {
-    const VMValue *value = PixtronVM_PopOperand(context);
-    const uint8_t subOps = PixtronVM_ReadByteCodeU8(context);
+static void pvm_store(RuntimeContext *context) {
+    const VMValue *value = pvm_pop_operand(context);
+    const uint8_t subOps = pvm_bytecode_read_u8(context);
     const DataSource s = OPS_DATA_SOURCE(subOps);
-    const uint16_t index = PixtronVM_ReadByteCodeU16(context);
+    const uint16_t index = pvm_bytecode_read_u16(context);
     // Global variable
-    if (s == GLOBAL_VAR) {
-        PixtronVM_SetKlassFileValue(context, index, value);
+    if (s == FIELD) {
+        pvm_set_klass_field(context, index, value);
     }
     // Local variable
-    else if (s == LOCAL_VAR) {
-        PixtronVM_SetLocalTable(context, index, value);
+    else if (s == LOCAL) {
+        pvm_set_local_value(context, index, value);
     }
 }
 
 
-static inline void PixtronVM_Load(RuntimeContext *context) {
+static inline void pvm_load(RuntimeContext *context) {
     VMValue value;
-    const uint8_t subOps = PixtronVM_ReadByteCodeU8(context);
+    const uint8_t subOps = pvm_bytecode_read_u8(context);
     const DataSource source = OPS_DATA_SOURCE(subOps);
     const Type type = OPS_DATA_TYPE(subOps);
     // Immediate
-    if (source == IMMEDIATE) {
+    if (source == IMM) {
         value.type = type;
-        PixtronVM_ReadByteCodeImm(context, &value);
+        pvm_bytecode_read_imm(context, &value);
     } else {
-        const uint16_t index = PixtronVM_ReadByteCodeU16(context);
+        const uint16_t index = pvm_bytecode_read_u16(context);
         // Local
-        if (source == LOCAL_VAR) {
-            PixtronVM_GetLocalTable(context, index, &value);
-        } else if (source == CONSTANT) {
-            PixtronVM_GetKlassConstant(context, index, &value);
+        if (source == LOCAL) {
+            pvm_get_local_value(context, index, &value);
+        } else if (source == CONST) {
+            pvm_get_klass_constant(context, index, &value);
         } else {
-            PixtronVM_GetKlassFileValue(context, index, &value);
+            pvm_get_klass_field(context, index, &value);
         }
         if (type != value.type) {
             context->throwException(
@@ -157,10 +157,10 @@ static inline void PixtronVM_Load(RuntimeContext *context) {
             );
         }
     }
-    PixtronVM_PushOperand(context, &value);
+    pvm_push_operand(context, &value);
 }
 
-extern void PixtronVM_ThrowException(RuntimeContext *context, char *fmt, ...) {
+extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...) {
     const VirtualStackFrame *frame = context->frame;
     const Method *method = frame->method;
     const gchar *threadName = g_thread_get_name(g_thread_self());
@@ -193,107 +193,106 @@ extern void PixtronVM_ThrowException(RuntimeContext *context, char *fmt, ...) {
         frame->pc, // pc
         frame->sp, // sp
         context->stackDepth, // stack deep
-        frame->maxStackSize, // max stack deep
+        frame->max_stacks, // max stack deep
         (void *) frame->locals, // local
-        (void *) frame->operandStack // operand stack address
+        (void *) frame->operand_stack // operand stack address
     );
     g_free(methodName);
     g_free((gpointer) message);
     g_thread_exit(NULL);
 }
 
-static inline VMValue *PixtronVM_Ret(RuntimeContext *context) {
+static inline VMValue *pvm_ret(RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
     const VMValue *value = NULL;
-    const bool hasRetVal = frame->method->retType != TYPE_VOID;
+    const bool hasRetVal = frame->method->ret != TYPE_VOID;
     if (hasRetVal) {
-        value = PixtronVM_PopOperand(context);
+        value = pvm_pop_operand(context);
     }
     VMValue *retVal = NULL;
-    PixtronVM_PopStackFrame(context);
+    pvm_pop_stack_frame(context);
     if (frame->pre == NULL) {
         context->exit = exit;
-        retVal = PixotronVM_MemCpy(value,VM_VALUE_SIZE);
+        retVal = pvm_mem_cpy(value,VM_VALUE_SIZE);
     } else if (value != NULL) {
-        PixtronVM_PushOperand(context, value);
+        pvm_push_operand(context, value);
     }
-    PixtronVM_VirtualStackFrameDispose(&frame);
+    pvm_stack_fram_dispose(&frame);
     return retVal;
 }
 
-static inline VMValue *PixtronVM_Call(RuntimeContext *context) {
-    const uint16_t index = PixtronVM_ReadByteCodeU16(context);
-    const Method *method = PixtronVM_GetKlassMethod(context, index);
+static inline VMValue *pvm_call(RuntimeContext *context) {
+    const uint16_t index = pvm_bytecode_read_u16(context);
+    const Method *method = pvm_get_method(context, index);
 #if VM_DEBUG_ENABLE
     char *text = method->toString(method);
-    g_debug("Prepare call method: (%p) %s\n", method, text);
-    PixotronVM_free(TO_REF(text));
+    g_debug("Prepare call method: (%p) %s", method, text);
+    pvm_mem_free(TO_REF(text));
 #endif
-    PixtronVM_PushStackFrame(context, method);
-    if (method->nativeFunc) {
-        void *handle = dlsym(RTLD_DEFAULT, method->name);
-        const bool callWithRet = method->retType != TYPE_VOID;
+    pvm_push_stack_frame(context, method);
+    if (method->native_func) {
+        const bool callWithRet = method->ret != TYPE_VOID;
         if (callWithRet) {
-            const KniResultOperation ffiFunc = (KniResultOperation) (handle);
+            const KniResultOperation ffiFunc = (KniResultOperation) method->native_handle;
             VMValue retVal;
             ffiFunc(context, &retVal);
-            PixtronVM_PushOperand(context, &retVal);
+            pvm_push_operand(context, &retVal);
         } else {
-            const KniBaseOperation ffiFunc = (KniBaseOperation) (handle);
+            const KniBaseOperation ffiFunc = (KniBaseOperation) (method->native_handle);
             ffiFunc(context);
         }
         // Native function execute after manual call ret instruction
-        return PixtronVM_Ret(context);
+        return pvm_ret(context);
     }
     return NULL;
 }
 
 
-extern void PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
+extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     const Method *method = callMethodParam->method;
-    RuntimeContext *context = PixotronVM_calloc(sizeof(RuntimeContext));
+    RuntimeContext *context = pvm_mem_calloc(sizeof(RuntimeContext));
     context->vm = method->klass->vm;
     context->exit = false;
     context->maxStackDepth = VM_MAX_STACK_DEPTH;
     context->stackDepth = 0;
-    context->throwException = PixtronVM_ThrowException;
+    context->throwException = pvm_thrown_exception;
     const VMValue **args = callMethodParam->args;
-    PixtronVM_CreateStackFrame(context, method, callMethodParam->argv, args);
+    pvm_create_stack_frame(context, method, callMethodParam->argv, args);
 
     VMValue *retVal = NULL;
     while (!context->exit) {
-        const Opcode opcode = PixtronVM_ReadByteCodeU8(context);
+        const Opcode opcode = pvm_bytecode_read_u8(context);
 
         switch (opcode) {
             case LOAD:
-                PixtronVM_Load(context);
+                pvm_load(context);
                 break;
             case STORE:
-                PixtronVM_Store(context);
+                pvm_store(context);
                 break;
             case ADD:
             case SUB:
             case MUL:
             case DIV:
-                PixtronVM_executeCanonicalBinaryOperation(context, opcode);
+                pvm_exec_canonical_binary_operation(context, opcode);
                 break;
             case GOTO:
-                PixtronVM_Goto(context);
+                pvm_goto(context);
                 break;
             case IFEQ:
             case IFNE:
-                PixtronVM_Ifeqne(context, opcode);
+                pvm_ifeq_ifnq(context, opcode);
                 break;
             case IFLE:
             case IFLT:
             case IFGE:
             case IFGT:
-                PixtronVM_LessGranterThanEqual(context, opcode);
+                pvm_less_granter_than_equal(context, opcode);
                 break;
             case ICMP:
             case DCMP:
             case LCMP:
-                PixtronVM_Cmp(context, opcode);
+                pvm_cmp(context, opcode);
                 break;
             case I2L:
             case I2F:
@@ -301,16 +300,16 @@ extern void PixtronVM_CallMethod(const CallMethodParam *callMethodParam) {
             case L2F:
             case F2I:
             case F2L:
-                PixtronVM_CONV(context, opcode);
+                pvm_conv(context, opcode);
                 break;
             case RET:
-                retVal = PixtronVM_Ret(context);
+                retVal = pvm_ret(context);
                 break;
             case POP:
-                PixtronVM_PopOperand(context);
+                pvm_pop_operand(context);
                 break;
             case CALL:
-                retVal = PixtronVM_Call(context);
+                retVal = pvm_call(context);
                 break;
             default:
                 context->throwException(context, "Unsupported opcode: %02x", opcode);

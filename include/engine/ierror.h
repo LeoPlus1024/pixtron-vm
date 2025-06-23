@@ -10,7 +10,8 @@ typedef enum {
     TYPE_ERROR,
     KLASS_NOT_FOUND,
     METHOD_NOT_FOUND,
-    FIELD_NOT_FOUND
+    FIELD_NOT_FOUND,
+    LIBRARY_NOT_FOUND,
 } VMError;
 
 

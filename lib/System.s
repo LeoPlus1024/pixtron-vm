@@ -1,8 +1,9 @@
 @namespace System
 
+@library("PixotronVM")
 
-@func @native("PixotronVM") currentTimeNano() : long @end
+@func @native currentTimeNano() : long @end
 
-@func  @native("PixotronVM") printNanoDiff(long base,long now) : void @end
+@func  @native printNanoDiff(long base,long now) : void @end
 
-@func @native("PixotronVM") println(string text):void @end
+@func @native println(string text):void @end

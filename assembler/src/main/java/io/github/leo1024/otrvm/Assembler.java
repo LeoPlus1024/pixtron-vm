@@ -29,7 +29,7 @@ public class Assembler {
         OSUtil.mkdirs(buildDir);
         final List<FuncMeta> funcMetas = builder.getFuncList();
         final List<FieldMeta> fieldList = builder.getFieldList();
-        BinaryHeader header = new BinaryHeader(Version.V1_0, builder.getConstants(), fieldList, funcMetas);
+        final BinaryHeader header = new BinaryHeader(Version.V1_0, builder, fieldList, funcMetas);
         final byte[] headerBytes = header.toBytes();
         Path path = buildDir.resolve(String.format("%s.klass", builder.getNamespace()));
         try (FileOutputStream outputStream = new FileOutputStream(path.toFile())) {

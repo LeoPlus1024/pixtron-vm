@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 public enum VMOption {
     LOCALS("%locals"),
-    STACK("%stack");
+    STACK("%stacks");
 
     private final String code;
 

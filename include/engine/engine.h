@@ -1,6 +1,6 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-#include "Type.h"
+#include "itype.h"
 
 /**
  * @brief Safe sign-aware comparison macro for two values of the same type.
@@ -59,8 +59,8 @@ do { \
     } \
 } while(0)
 
-extern void PixtronVM_CallMethod(const CallMethodParam *callMethodParam);
+extern void pvm_call_method(const CallMethodParam *callMethodParam);
 
-extern void PixtronVM_ThrowException(RuntimeContext *context, char *fmt, ...);
+extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...);
 
 #endif //ENGINE_H

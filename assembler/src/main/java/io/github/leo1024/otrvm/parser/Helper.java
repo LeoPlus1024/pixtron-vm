@@ -7,7 +7,6 @@ import io.github.leo1024.otrvm.ex.ParserException;
 import io.github.leo1024.otrvm.lexer.Token;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 public class Helper {
     public static Token expect(TokenSequence tokenSequence, TokenKind... kinds) {
@@ -70,7 +69,7 @@ public class Helper {
             case "i16" -> Type.SHORT;
             case "i32" -> Type.INT;
             case "i64" -> Type.LONG;
-            case "f64" -> Type.FLOAT;
+            case "f64" -> Type.DOUBLE;
             case "bool" -> Type.BOOL;
             case "ptr" -> Type.REF;
             case "str" -> Type.STRING;

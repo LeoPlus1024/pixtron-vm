@@ -10,6 +10,7 @@ public enum Pseudo {
     NATIVE("@native"),
     CONSTANT("@constant"),
     NAMESPACE("@namespace"),
+    LIBRARY("@library"),
     ;
     private final String code;
 

@@ -1,7 +1,7 @@
-#ifndef TYPE_H
-#define TYPE_H
+#ifndef ITYPE_H
+#define ITYPE_H
 
-#include "Opcode.h"
+#include "opcode.h"
 #include <stdint.h>
 #include <glib.h>
 #include <stdbool.h>
@@ -38,17 +38,17 @@ struct _Method;
 
 typedef struct _Method {
     char *name;
-    Type retType;
-    uint16_t maxStackSize;
-    gushort maxLocalsSize;
+    Type ret;
+    uint16_t max_stacks;
+    gushort max_locals;
     uint32_t offset;
-    uint32_t endOffset;
+    uint32_t end_offset;
     uint16_t argv;
     MethodParam *args;
     struct _Klass *klass;
-    bool nativeFunc;
-    char **libName;
-    uint16_t libCount;
+    bool native_func;
+    char *lib_name;
+    void *native_handle;
 
     char * (*toString)(const struct _Method *);
 } Method;
@@ -64,13 +64,13 @@ typedef struct _Klass {
     // Version
     Version version;
     // Constants size
-    uint32_t constSize;
+    uint32_t const_size;
     // Constants
-    VMValue **constArray;
+    VMValue **constants;
     // Class methods
     Method **methods;
     // Class bytecode
-    uint8_t *byteCode;
+    uint8_t *bytecode;
     // Field meta data
     Field *fields;
     //Class name
@@ -78,8 +78,9 @@ typedef struct _Klass {
     // Field count
     uint32_t fieldCount;
     // Method count
-    uint32_t methodCount;
+    uint32_t method_count;
     const struct VM *vm;
+    char *library;
 } Klass;
 
 struct _VirtualStackFrame;
@@ -90,13 +91,13 @@ typedef struct _VirtualStackFrame {
     // local variable
     VMValue *locals;
     // Operand stack
-    VMValue *operandStack;
+    VMValue *operand_stack;
     // Program counter
     uint32_t pc;
     // Stack pointer
     uint32_t sp;
-    uint32_t maxStackSize;
-    uint32_t maxLocalsSize;
+    uint32_t max_stacks;
+    uint32_t max_locals;
     // Previous stack frame
     struct _VirtualStackFrame *pre;
 } VirtualStackFrame;
@@ -121,9 +122,9 @@ typedef struct VM {
     // Environments
     GHashTable *envs;
     // Classes
-    GHashTable *klassTable;
+    GHashTable *klasses;
     // String constant pool
-    GHashTable *strConstantPool;
+    GHashTable *string_constants;
 } PixtronVM;
 
 
@@ -168,4 +169,4 @@ extern inline void PixtronVM_ConvertToLongValue(VMValue *value);
 
 
 extern inline void PixtronVM_ConvertToIntValue(VMValue *value);
-#endif //TYPE_H
+#endif //ITYPE_H
