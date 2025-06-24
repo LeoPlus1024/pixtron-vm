@@ -7,6 +7,7 @@
 
 #ifdef _WIN64
 #define LIB_SUFFIX ".dll"
+#include <Windows.h>
 #elif __APPLE__
 #define LIB_SUFFIX ".dylib"
 #else
@@ -39,15 +40,23 @@ extern inline void *pvm_lookup_native_handle(const Klass *klass, Method *method,
         const uint64_t length = strlen(library) + strlen(LIB_SUFFIX) + 4;
         char buf[length];
         snprintf(buf, length, "lib%s%s\0", library, LIB_SUFFIX);
+#ifdef _WIN64
+        HMODULE handle = LoadLibraryA(buf);
+#else
         void *handle = dlopen(buf, RTLD_LAZY);
+#endif
         if (handle == NULL) {
             g_set_error(error, KLASS_DOMAIN, LIBRARY_NOT_FOUND, "Can't find library %s", buf);
             return NULL;
         }
-        fptr = dlsym(handle, nativeMethodName);
-    }
-    if (fptr == NULL) {
-        g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND, "Can't find native method %s", method_name);
+#ifdef _WIN64
+        FARPROC fptr = GetProcAddress(handle,native);
+#else
+        void *fptr = dlsym(handle, nativeMethodName);
+#endif
+        if (fptr == NULL) {
+            g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND, "Can't find native method %s", method_name);
+        }
     }
     method->native_handle = fptr;
     return fptr;
