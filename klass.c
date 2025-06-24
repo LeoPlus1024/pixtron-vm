@@ -298,7 +298,7 @@ static Klass *pvm_load_klass(const PixtronVM *vm, const char *klassName, GError 
         g_clear_object(&fileInfo);
     }
     if (klassFile == NULL) {
-        g_set_error(error, KLASS_DOMAIN, KLASS_NOT_FOUND, "%s.klass not found.\n", klassName);
+        g_set_error(error, KLASS_DOMAIN, KLASS_NOT_FOUND, "%s.klass not found.", klassName);
     }
 finally:
     g_clear_object(&dir);

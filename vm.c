@@ -1,12 +1,12 @@
 #include "vm.h"
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "memory.h"
 
 #include "klass.h"
 #include "engine.h"
 #include "istring.h"
+#include "config.h"
 
 extern Value *pvm_create_byte_value(const int8_t i8) {
     VMValue *value = pvm_mem_calloc(VM_VALUE_SIZE);
@@ -80,6 +80,11 @@ extern double pvm_value_get_double(Value *value) {
 
 
 extern VM *pvm_init(const char *klass_path) {
+    // Debug mode enable log output
+#ifdef VM_DEBUG_ENABLE
+    g_log_set_debug_enabled(TRUE);
+#endif
+
     PixtronVM *vm = pvm_mem_calloc(sizeof(PixtronVM));
     if (klass_path != NULL) {
         vm->klassPath = g_strdup(klass_path);
@@ -130,7 +135,7 @@ extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *metho
     const Klass *klass = pvm_get_klass((PixtronVM *) vm, klass_name, &error);
     if (klass == NULL) {
         if (error != NULL) {
-            g_printerr("Launcher VM instance fail:%s\n", error->message);
+            g_printerr("Launcher VM fail:%s\n", error->message);
         }
         exit(-1);
     }
@@ -148,7 +153,7 @@ extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *metho
             method_param->args[i] = (VMValue *) args[i];
         }
     }
-    GThread *thread = g_thread_new("Main", (GThreadFunc) pvm_call_method, (gpointer) method_param);
+    GThread *thread = g_thread_new("Main Thread", (GThreadFunc) pvm_call_method, (gpointer) method_param);
     Value *value = g_thread_join(thread);
     if (argv > 0) {
         pvm_mem_free(CAST_REF(&(method_param->args)));

@@ -43,7 +43,7 @@ PixtronVM/
 ├── tests/                  # C测试套件
 ├── example/                # 示例程序
 ├── CMakeLists.txt          # 主构建配置
-└── Config.h.in             # 配置模板
+└── config.h.in             # 配置模板
 ```
 
 ## ✨ 核心特性

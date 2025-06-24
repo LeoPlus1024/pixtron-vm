@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include "memory.h"
 
-static inline VirtualStackFrame *PixtronVM_IPushStackFrame(RuntimeContext *context, const Method *method,
-                                                           const uint16_t argv) {
+static inline VirtualStackFrame *pvm_ipush_stack_frame(RuntimeContext *context, const Method *method,
+                                                       const uint16_t argv) {
     if (argv != method->argv) {
         context->throwException(context, "Invalid number of arguments expect argv is %d but is %d", method->argv, argv);
     }
@@ -71,8 +71,8 @@ extern inline VMValue *pvm_pop_operand(RuntimeContext *context) {
 }
 
 extern inline void pvm_create_stack_frame(RuntimeContext *context, const Method *method, const uint16_t argv,
-                                              const VMValue **args) {
-    const VirtualStackFrame *frame = PixtronVM_IPushStackFrame(context, method, argv);
+                                          const VMValue **args) {
+    const VirtualStackFrame *frame = pvm_ipush_stack_frame(context, method, argv);
     for (uint16_t i = 0; i < argv; i++) {
         const VMValue *arg = args[i];
         if (arg->type != (method->args + i)->type) {
@@ -85,7 +85,7 @@ extern inline void pvm_create_stack_frame(RuntimeContext *context, const Method 
 extern inline void pvm_push_stack_frame(RuntimeContext *context, const Method *method) {
     const uint16_t argv = method->argv;
     VirtualStackFrame *frame = context->frame;
-    const VirtualStackFrame *new_frame = PixtronVM_IPushStackFrame(context, method, argv);
+    const VirtualStackFrame *new_frame = pvm_ipush_stack_frame(context, method, argv);
     if (argv == 0) {
         return;
     }

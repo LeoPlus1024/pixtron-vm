@@ -1,7 +1,7 @@
 #include "engine.h"
 
 #include <assert.h>
-#include <Config.h>
+#include <config.h>
 #include <stdbool.h>
 
 #include "bc_reader.h"
@@ -104,11 +104,11 @@ extern inline void pvm_cmp(RuntimeContext *context, const Opcode opcode) {
 static void pvm_conv(RuntimeContext *context, Opcode opcode) {
     VMValue *value = pvm_pop_operand(context);
     if (opcode == I2F || opcode == L2F) {
-        PixtronVM_ConvertToDoubleValue(value);
+        pvm_value_to_double(value);
     } else if (opcode == I2L || opcode == F2L) {
-        PixtronVM_ConvertToLongValue(value);
+        pvm_value_to_long(value);
     } else if (opcode == F2I || opcode == L2I) {
-        PixtronVM_ConvertToIntValue(value);
+        pvm_value_to_int(value);
     }
     pvm_move_stack_pointer(context, -1);
 }

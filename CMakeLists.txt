@@ -10,7 +10,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLIB_DEP REQUIRED glib-2.0 gobject-2.0 gio-2.0)
 
 
-configure_file(${PROJECT_SOURCE_DIR}/Config.h.in ${CMAKE_BINARY_DIR}/include/Config.h)
+configure_file(${PROJECT_SOURCE_DIR}/config.h.in ${CMAKE_BINARY_DIR}/include/config.h)
 
 file(GLOB SOURCES *.c lib/*.c)
 
@@ -24,10 +24,12 @@ enable_testing()
 
 add_subdirectory(tests)
 
-add_library(${PROJECT_NAME} SHARED ${SOURCES}
-        lib/math.c
-        include/engine/helper.h
-        helper.c)
+add_library(${PROJECT_NAME} SHARED ${SOURCES})
+
+if (APPLE)
+    target_link_directories(${PROJECT_NAME} PUBLIC ${GLIB_DEP_LIBRARY_DIRS})
+endif ()
+
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
         ${GLIB_DEP_LIBRARIES}

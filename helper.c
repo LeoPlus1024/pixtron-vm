@@ -32,9 +32,9 @@ extern inline void *pvm_lookup_native_handle(const Klass *klass, Method *method,
     if (library == NULL) {
         library = klass->library;
     }
-    void *funcPtr = NULL;
+    void *fptr = NULL;
     if (library == NULL) {
-        funcPtr = dlsym(RTLD_DEFAULT, method->name);
+        fptr = dlsym(RTLD_DEFAULT, method->name);
     } else {
         const uint64_t length = strlen(library) + strlen(LIB_SUFFIX) + 4;
         char buf[length];
@@ -44,11 +44,11 @@ extern inline void *pvm_lookup_native_handle(const Klass *klass, Method *method,
             g_set_error(error, KLASS_DOMAIN, LIBRARY_NOT_FOUND, "Can't find library %s", buf);
             return NULL;
         }
-        funcPtr = dlsym(handle, nativeMethodName);
+        fptr = dlsym(handle, nativeMethodName);
     }
-    if (funcPtr == NULL) {
+    if (fptr == NULL) {
         g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND, "Can't find native method %s", method_name);
     }
-    method->native_handle = funcPtr;
-    return funcPtr;
+    method->native_handle = fptr;
+    return fptr;
 }

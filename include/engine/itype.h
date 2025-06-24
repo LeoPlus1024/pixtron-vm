@@ -159,14 +159,14 @@ typedef struct {
  * Convert a Variant to double-precision floating point representation
  * @param value Pointer to the value to convert (modified in-place)
  */
-extern inline void PixtronVM_ConvertToDoubleValue(VMValue *value);
+extern inline void pvm_value_to_double(VMValue *value);
 
 /**
  * Convert a Variant to 64-bit integer (long) representation
  * @param value Pointer to the value to convert (modified in-place)
  */
-extern inline void PixtronVM_ConvertToLongValue(VMValue *value);
+extern inline void pvm_value_to_long(VMValue *value);
 
 
-extern inline void PixtronVM_ConvertToIntValue(VMValue *value);
+extern inline void pvm_value_to_int(VMValue *value);
 #endif //ITYPE_H

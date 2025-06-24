@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-extern inline void PixtronVM_ConvertToDoubleValue(VMValue *value) {
+extern inline void pvm_value_to_double(VMValue *value) {
     switch (value->type) {
 #define HANDLE_CASE(type,field) \
         case type: value->f64 = (double)(value->field);  break;
@@ -14,7 +14,7 @@ extern inline void PixtronVM_ConvertToDoubleValue(VMValue *value) {
     value->type = TYPE_DOUBLE;
 }
 
-extern inline void PixtronVM_ConvertToLongValue(VMValue *value) {
+extern inline void pvm_value_to_long(VMValue *value) {
     switch (value->type) {
 #define HANDLE_CASE(type,field) \
 case type: value->i64 = (int64_t)(value->field);  break;
@@ -26,7 +26,7 @@ case type: value->i64 = (int64_t)(value->field);  break;
     value->type = TYPE_LONG;
 }
 
-extern inline void PixtronVM_ConvertToIntValue(VMValue *value) {
+extern inline void pvm_value_to_int(VMValue *value) {
     switch (value->type) {
 #define HANDLE_CASE(type,field) \
 case type: value->i32 = (int32_t)(value->field);  break;
