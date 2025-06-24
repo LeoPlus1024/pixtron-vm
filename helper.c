@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "ierror.h"
 
-#ifdef __WIN32__
+#ifdef _WIN64
 #define LIB_SUFFIX ".dll"
 #elif __APPLE__
 #define LIB_SUFFIX ".dylib"
