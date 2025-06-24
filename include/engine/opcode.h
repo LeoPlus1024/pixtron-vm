@@ -3,36 +3,7 @@
 #include <stdint.h>
 
 typedef enum:uint8_t {
-    // 栈操作
-    LOAD, // 压栈（操作数含类型和值）
-    STORE, // 弹栈（操作数含类型）
-    // 算术运算
-    ADD, // 加法（操作数含类型）
-    SUB, // 减法
-    MUL,
-    DIV,
-    // 无条件跳转
-    GOTO,
-    RET,
-    I2L,
-    I2F,
-    L2I,
-    L2F,
-    F2I,
-    F2L,
-    CALL,
-    IFEQ,
-    IFNE,
-    IFLT,
-    IFGE,
-    IFGT,
-    IFLE,
-    ICMP,
-    LCMP,
-    DCMP,
-    POP,
-    // 扩展预留
-    RESERVED_START = 0x80
+    #include "opcode.txt"
 } Opcode;
 
 // 类型标记（操作数中使用）

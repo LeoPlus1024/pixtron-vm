@@ -34,7 +34,7 @@ public enum Opcode {
     LCMP("lcmp", 22),
     DCMP("dcmp", 23),
     POP("pop", 24),
-    ;
+    ASSERT("assert", 25);
 
 
     private final byte value;

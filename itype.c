@@ -39,7 +39,7 @@ case type: value->i32 = (int32_t)(value->field);  break;
 }
 
 extern inline uint8_t pvm_load_typed_value_from_buffer(const Type type, VMValue *value, const uint8_t *buf) {
-    uint8_t size = TYPE_SIZE[type];
+    const uint8_t size = TYPE_SIZE[type];
     switch (type) {
         case TYPE_BYTE:
         case TYPE_BOOL:

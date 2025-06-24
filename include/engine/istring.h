@@ -1,5 +1,5 @@
-#ifndef ISTRING_H
-#define ISTRING_H
+#ifndef I_STRING_H
+#define I_STRING_H
 #include "itype.h"
 
 typedef struct {
@@ -18,4 +18,5 @@ extern uint32_t pvm_string_hash(const String *str);
 
 
 extern String *pvm_string_new(const char *str, uint32_t len);
-#endif //ISTRING_H
+
+#endif //I_STRING_H

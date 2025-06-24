@@ -1,5 +1,4 @@
 #include "bc_reader.h"
-#include "helper.h"
 #include "itype.h"
 
 static inline void pvm_bytecode_index_check(RuntimeContext *context,
@@ -26,7 +25,7 @@ extern inline uint8_t pvm_bytecode_read_u8(RuntimeContext *context) {
 
 
 extern inline void pvm_bytecode_read_imm(RuntimeContext *context, const Type type, VMValue *value) {
-    const uint8_t size = TYPE_SIZE[value->type];
+    const uint8_t size = TYPE_SIZE[type];
     VirtualStackFrame *frame = context->frame;
     const Method *method = frame->method;
     const Klass *klass = method->klass;

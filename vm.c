@@ -1,4 +1,6 @@
 #include "vm.h"
+
+#include <locale.h>
 #include <stdio.h>
 
 #include "memory.h"
@@ -84,7 +86,7 @@ extern VM *pvm_init(const char *klass_path) {
 #ifdef VM_DEBUG_ENABLE
     g_log_set_debug_enabled(TRUE);
 #endif
-
+    setlocale(LC_ALL, "");
     PixtronVM *vm = pvm_mem_calloc(sizeof(PixtronVM));
     if (klass_path != NULL) {
         vm->klassPath = g_strdup(klass_path);
@@ -160,6 +162,10 @@ extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *metho
     }
     pvm_mem_free(TO_REF(method_param));
     return value;
+}
+
+extern void pvm_launch_main(const VM *vm, const char *klass_name) {
+    pvm_launch(vm, klass_name, "main", 0, NULL);
 }
 
 extern void pvm_destroy(VM **vm) {

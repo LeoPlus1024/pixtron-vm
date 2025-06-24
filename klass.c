@@ -8,7 +8,7 @@
 #include "itype.h"
 #include "helper.h"
 #include "istring.h"
-#include "Config.h"
+#include "config.h"
 
 #define MAGIC (0xFFAABBCC)
 #define FILE_SUFFIX_LEN (strlen(".klass"))

@@ -8,6 +8,7 @@ import io.github.leo1024.otrvm.ex.ParserException;
 import io.github.leo1024.otrvm.parser.impl.Func;
 import io.github.leo1024.otrvm.util.ByteUtil;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class ASTBuilder extends Context {
@@ -16,7 +17,7 @@ public class ASTBuilder extends Context {
         @Override
         public byte[] toBytes() {
             if (type == Type.STRING) {
-                byte[] strBytes = ((String) value).getBytes();
+                byte[] strBytes = ((String) value).getBytes(StandardCharsets.UTF_8);
                 int strBytesLen = strBytes.length;
                 // Type + Length + data length
                 byte[] bytes = new byte[2 + 4 + strBytesLen];

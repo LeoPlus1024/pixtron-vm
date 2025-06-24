@@ -6,6 +6,7 @@ import io.github.leo1024.otrvm.ex.ParserException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class CharSequence {
@@ -74,7 +75,8 @@ public class CharSequence {
     }
 
     public String readStrLiteral() {
-        StringBuilder sb = new StringBuilder();
+        byte[] bytes = new byte[1024];
+        int index = 0;
         for (; ; ) {
             boolean isEscape = this.chr == Constants.ESCAPE;
             char chr = this.read();
@@ -84,9 +86,12 @@ public class CharSequence {
             if (chr == Constants.DOUBLE_QUOTE && !isEscape) {
                 break;
             }
-            sb.append(chr);
+            bytes[index++] = (byte) chr;
+            if (index == bytes.length) {
+                bytes = Arrays.copyOf(bytes, bytes.length * 2);
+            }
         }
-        return sb.toString();
+        return new String(bytes, 0, index);
     }
 
     public String readHexOrVariable() {

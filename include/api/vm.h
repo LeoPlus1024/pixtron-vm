@@ -102,6 +102,8 @@ extern VM *pvm_init(const char *klass_path);
 extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *method_name, uint16_t argv,
                          const Value *args[]);
 
+extern void pvm_launch_main(const VM *vm, const char *klass_name);
+
 /**
  * Destroy a PixtronVM instance and release all its resources
  * @param ref Reference to the PixtronVM instance to destroy

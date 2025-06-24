@@ -9,7 +9,13 @@
 #include "memory.h"
 #include "stack.h"
 #include <dlfcn.h>
+
+#include "istring.h"
 #include "kni.h"
+
+#ifdef VM_DEBUG_ENABLE
+#include "op_gen.h"
+#endif
 
 
 static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, const Opcode opcode) {
@@ -246,6 +252,27 @@ static inline VMValue *pvm_call(RuntimeContext *context) {
     return NULL;
 }
 
+static void inline pvm_assert(RuntimeContext *context) {
+#ifdef VM_DEBUG_ENABLE
+    const uint16_t index = pvm_bytecode_read_u16(context);
+    VMValue value;
+    pvm_get_klass_constant(context, index, &value);
+    if (value.type != TYPE_STRING) {
+        context->throwException(context, "Except a string type but it is '%s'", TYPE_NAME[value.type]);
+    }
+    const char *message;
+    const String *obj = (String *) value.obj;
+    if (obj != NULL) {
+        message = obj->str;
+    } else {
+        message = "??";
+    }
+    context->throwException(context, "Assert fail:%s", message);
+#else
+    context->frame->pc += 3;
+#endif
+}
+
 
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     const Method *method = callMethodParam->method;
@@ -261,7 +288,9 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     VMValue *retVal = NULL;
     while (!context->exit) {
         const Opcode opcode = pvm_bytecode_read_u8(context);
-
+#ifdef VM_DEBUG_ENABLE
+        g_debug("Exec opcode：%s", pvm_opcode_name(opcode));
+#endif
         switch (opcode) {
             case LOAD:
                 pvm_load(context);
@@ -309,6 +338,9 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
                 break;
             case CALL:
                 retVal = pvm_call(context);
+                break;
+            case ASSERT:
+                pvm_assert(context);
                 break;
             default:
                 context->throwException(context, "Unsupported opcode: %02x", opcode);

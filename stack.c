@@ -1,7 +1,7 @@
 #include "stack.h"
 
 #include <assert.h>
-#include <Config.h>
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "memory.h"

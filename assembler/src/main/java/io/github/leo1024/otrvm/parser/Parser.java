@@ -200,6 +200,7 @@ public class Parser {
         Opcode opcode = Opcode.of(token);
         Expr expr = switch (opcode) {
             case RET -> new Ret();
+            case ASSERT -> parserAssert();
             case LOAD, GET_FIELD, LOAD_CONST -> parseLoadExpr(opcode);
             case STORE, SET_FIELD -> parseStoreExpr(opcode);
             case ADD, SUB, MUL, DIV -> new Math(opcode);
@@ -213,6 +214,12 @@ public class Parser {
             default -> throw ParserException.create(token, "Unsupported opcode.");
         };
         context.addExpr(expr);
+    }
+
+    private Expr parserAssert() {
+        Token token = Helper.expect(this.tokenSequence, TokenKind.INTEGER);
+        int index = Integer.parseInt(token.getValue());
+        return new Assert(index);
     }
 
     private Expr parseLoadExpr(final Opcode opcode) {
