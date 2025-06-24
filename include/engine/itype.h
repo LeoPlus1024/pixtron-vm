@@ -52,7 +52,7 @@ typedef struct _Method {
     bool native_func;
     char *lib_name;
 #ifdef _WIN64
-    FARPROC *native_handle;
+    FARPROC native_handle;
 #else
     void *native_handle;
 #endif
