@@ -4,6 +4,7 @@
 #include <glib.h>
 #include <stdio.h>
 #include "ierror.h"
+#include <stdbool.h>
 
 #ifdef _WIN64
 #define LIB_SUFFIX ".dll"
@@ -21,14 +22,12 @@ extern inline int32_t pvm_get_cstr_len(const char *str) {
 }
 
 
-extern inline void *pvm_lookup_native_handle(const Klass *klass, Method *method, GError **error) {
-    g_assert(klass!=NULL);
-    g_assert(method!=NULL);
+extern inline bool pvm_lookup_native_handle(const Klass *klass, Method *method, GError **error) {
     const char *klass_name = klass->name;
     const char *method_name = method->name;
     const uint64_t len = strlen(klass_name) + strlen(method_name) + 2;
-    char nativeMethodName[len];
-    snprintf(nativeMethodName, len, "%s_%s\0", klass_name, method_name);
+    char native_method_name[len];
+    snprintf(native_method_name, len, "%s_%s\0", klass_name, method_name);
     const char *library = method->lib_name;
     if (library == NULL) {
         library = klass->library;
@@ -46,18 +45,33 @@ extern inline void *pvm_lookup_native_handle(const Klass *klass, Method *method,
         void *handle = dlopen(buf, RTLD_LAZY);
 #endif
         if (handle == NULL) {
-            g_set_error(error, KLASS_DOMAIN, LIBRARY_NOT_FOUND, "Can't find library %s", buf);
-            return NULL;
-        }
 #ifdef _WIN64
-        FARPROC fptr = GetProcAddress(handle,native);
+            DWORD win_err = GetLastError();
+            g_set_error(error, KLASS_DOMAIN, LIBRARY_NOT_FOUND, "LoadLibrary(%s) failed (0x%lx)", buf, win_err);
 #else
-        void *fptr = dlsym(handle, nativeMethodName);
+            const char* dl_err = dlerror();
+            g_set_error(error, KLASS_DOMAIN, LIBRARY_NOT_FOUND,"dlopen(%s) failed: %s", buf, dl_err);
+#endif
+            return false;
+        }
+        void *fptr;
+#ifdef _WIN64
+        fptr = GetProcAddress(handle, native_method_name);
+#else
+        fptr = dlsym(handle, native_method_name);
 #endif
         if (fptr == NULL) {
-            g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND, "Can't find native method %s", method_name);
+#ifdef _WIN64
+            DWORD win_err = GetLastError();
+            FreeLibrary(handle);
+            g_set_error(error, KLASS_DOMAIN, FUNCTION_NOT_FOUND,"GetProcAddress(%s) failed (0x%lx)", native_method_name, win_err);
+#else
+            const char* dl_err = dlerror();
+            dlclose(handle);  // 释放资源
+            g_set_error(error, KLASS_DOMAIN, FUNCTION_NOT_FOUND,"dlsym(%s) failed: %s", native_method_name, dl_err);
+#endif
         }
     }
     method->native_handle = fptr;
-    return fptr;
+    return fptr == NULL;
 }
