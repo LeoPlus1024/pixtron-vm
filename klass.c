@@ -156,7 +156,6 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
     klass->fieldCount = *((uint32_t *) (buf + position));
     position += 4;
     Field *files = pvm_mem_calloc(sizeof(Field) * klass->fieldCount);
-    VMValue *values = pvm_mem_calloc(VM_VALUE_SIZE * klass->fieldCount);
     uint32_t index = 0;
     while (index < klass->fieldCount) {
         Field *field = (files + index);
@@ -164,12 +163,11 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
         position += 2;
         char *name = g_strdup((gchar *)(buf + position));
         position += pvm_get_cstr_len(name);
-        VMValue *value = values + index;
-        const uint8_t typeSize = TYPE_SIZE[type];
-        memcpy(value, buf, typeSize);
+        VMValue *value = pvm_mem_calloc(VM_VALUE_SIZE);
+        position += pvm_load_typed_value_from_buffer(type, value, buf);
         value->type = type;
-        position = position + typeSize;
         field->name = name;
+        field->value = value;
         index++;
     }
     klass->fields = files;
@@ -236,8 +234,8 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
             method->toString = PixtronVM_MethodToString;
             // Native method automatic calculate stack size
             if (method->native_func) {
-                pvm_lookup_native_handle(klass, method, error);
-                if (*error != NULL) {
+                const bool success = pvm_lookup_native_handle(klass, method, error);
+                if (!success) {
                     goto finally;
                 }
                 method->max_locals = argv;

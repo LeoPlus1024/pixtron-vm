@@ -101,7 +101,7 @@ extern inline void pvm_cmp(RuntimeContext *context, const Opcode opcode) {
     pvm_move_stack_pointer(context, -1);
 }
 
-static void pvm_conv(RuntimeContext *context, Opcode opcode) {
+static void pvm_conv(RuntimeContext *context, const Opcode opcode) {
     VMValue *value = pvm_pop_operand(context);
     if (opcode == I2F || opcode == L2F) {
         pvm_value_to_double(value);
@@ -136,8 +136,7 @@ static inline void pvm_load(RuntimeContext *context) {
     const Type type = OPS_DATA_TYPE(subOps);
     // Immediate
     if (source == IMM) {
-        value.type = type;
-        pvm_bytecode_read_imm(context, &value);
+        pvm_bytecode_read_imm(context, type, &value);
     } else {
         const uint16_t index = pvm_bytecode_read_u16(context);
         // Local

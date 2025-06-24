@@ -40,7 +40,7 @@ typedef struct _Method {
     char *name;
     Type ret;
     uint16_t max_stacks;
-    gushort max_locals;
+    uint16_t max_locals;
     uint32_t offset;
     uint32_t end_offset;
     uint16_t argv;
@@ -49,6 +49,7 @@ typedef struct _Method {
     bool native_func;
     char *lib_name;
     void *native_handle;
+
     char * (*toString)(const struct _Method *);
 } Method;
 
@@ -168,4 +169,7 @@ extern inline void pvm_value_to_long(VMValue *value);
 
 
 extern inline void pvm_value_to_int(VMValue *value);
+
+
+extern inline uint8_t pvm_load_typed_value_from_buffer(Type type, VMValue *value, const uint8_t *buf);
 #endif //ITYPE_H

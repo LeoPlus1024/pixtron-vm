@@ -135,26 +135,26 @@ FFI外部函数接口
 
 ```c
 // 基本FFI操作（无参数/返回值）
-typedef void (*FFIBaseOperation)(RuntimeContext *context);
+typedef void (*KniBaseOperation)(RuntimeContext *context);
 
 // 带返回值的FFI操作
-typedef void (*FFIResultOperation)(RuntimeContext *context, FFIResult *result);
+typedef void (*KniResultOperation)(RuntimeContext *context, KniValue *result);
 ```
 
 异常处理
 
 ```c
 // 抛出格式化异常
-void FFI_ThrowException(RuntimeContext *context, char *fmt, ...);
+extern void pvm_kni_throw_exception(RuntimeContext *context, char *fmt, ...);
 
 // 使用示例：
 void native_divide(RuntimeContext *ctx, FFIResult *result) {
-    double divisor = FFI_GetDoubleParam(ctx, 1);
+    double divisor = pvm_kni_get_double(ctx, 1);
     if (divisor == 0.0) {
-        FFI_ThrowException(ctx, "Division by zero at PC: %d", ctx->pc);
+        pvm_kni_throw_exception(ctx, "Division by zero at PC: %d", ctx->pc);
         return;
     }
-    double quotient = FFI_GetDoubleParam(ctx, 0) / divisor;
+    double quotient = pvm_kni_get_double(ctx, 0) / divisor;
     FFI_SetDouble(result, quotient);
 }
 ```
@@ -163,33 +163,34 @@ void native_divide(RuntimeContext *ctx, FFIResult *result) {
 
 ```c
 // 获取各种类型的参数
-int8_t  FFI_GetByteParam(RuntimeContext *context, uint16_t index);
-int16_t FFI_GetShortParam(RuntimeContext *context, uint16_t index);
-int32_t FFI_GetIntParam(RuntimeContext *context, uint16_t index);
-int64_t FFI_GetLongParam(RuntimeContext *context, uint16_t index);
-double  FFI_GetDoubleParam(RuntimeContext *context, uint16_t index);
-char*   FFI_GetStringParam(RuntimeContext *context, uint16_t index);
+extern int8_t pvm_kni_get_byte(RuntimeContext *context, uint16_t index);
+extern int16_t pvm_kni_get_short(RuntimeContext *context, uint16_t index);
+extern int32_t pvm_kni_get_int(RuntimeContext *context, uint16_t index);
+extern int64_t pvm_kni_get_long(RuntimeContext *context, uint16_t index);
+extern double pvm_kni_get_double(RuntimeContext *context, uint16_t index);
+extern KniString *pvm_kni_get_str(RuntimeContext *context, uint16_t index);
+extern KniValue *pvm_kni_get_object(RuntimeContext *context, uint16_t index);
 ```
 结果设置
 
 ```c
 // 设置各种类型的返回值
-void FFI_SetByte(FFIResult *result, int8_t value);
-void FFI_SetShort(FFIResult *result, int16_t value);
-void FFI_SetInt(FFIResult *result, int32_t value);
-void FFI_SetLong(FFIResult *result, int64_t value);
-void FFI_SetDouble(FFIResult *result, double value);
-void FFI_SetBool(FFIResult *result, bool value);
+extern void pvm_kni_set_long(KniValue *result, int64_t value);
+extern void pvm_kni_set_int(KniValue *result, int32_t value);
+extern void pvm_kni_set_short(KniValue *result, int16_t value);
+extern void pvm_kni_set_byte(KniValue *result, int8_t value);
+extern void pvm_kni_set_double(KniValue *result, double value);
+extern void pvm_kni_set_bool(KniValue *result, bool value);
 ```
 完整FFI示例
 
 Native 函数声明
 ```asm
-@func @native("PixotronVM.so") println(string text):void @end
+@func @native("PixotronVM") println(string text):void @end
 ```
 C 函数实现
 ```asm
-void println(RuntimeContext *context) {
+void System_println(RuntimeContext *context) {
     const char *const str = FFI_GetStringParam(context, 0);
     if (str == NULL) {
         printf("%s\n", "null");
@@ -211,7 +212,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-   http://www.apache.org/licenses/LICENSE-2.0
+   https://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,

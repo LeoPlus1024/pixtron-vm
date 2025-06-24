@@ -23,7 +23,7 @@ extern inline uint8_t pvm_bytecode_read_u8(RuntimeContext *context);
  * @param context Runtime context containing code segment pointer and VM state
  * @param variant [out] Destination structure for the parsed variant value
  */
-extern inline void pvm_bytecode_read_imm(RuntimeContext *context, VMValue *value);
+extern inline void pvm_bytecode_read_imm(RuntimeContext *context, Type type, VMValue *value);
 
 /**
  * @brief Reads a 32-bit unsigned integer from the VM's code segment
