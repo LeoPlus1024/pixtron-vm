@@ -5,9 +5,6 @@
 #include <stdint.h>
 #include <glib.h>
 #include <stdbool.h>
-#ifdef _WIN64
-#include <Window.h>
-#endif
 
 typedef struct _VMValue {
     union {
@@ -51,11 +48,7 @@ typedef struct _Method {
     struct _Klass *klass;
     bool native_func;
     char *lib_name;
-#ifdef _WIN64
-    FARPROC native_handle;
-#else
     void *native_handle;
-#endif
     char * (*toString)(const struct _Method *);
 } Method;
 
