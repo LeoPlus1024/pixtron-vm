@@ -155,7 +155,7 @@ void native_divide(RuntimeContext *ctx, KniValue *result) {
         return;
     }
     double quotient = pvm_kni_get_double(ctx, 0) / divisor;
-    FFI_SetDouble(result, quotient);
+    pvm_kni_set_double(result, quotient);
 }
 ```
 
