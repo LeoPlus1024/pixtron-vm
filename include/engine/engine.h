@@ -2,6 +2,13 @@
 #define ENGINE_H
 #include "itype.h"
 
+#define OPS_DATA_TYPE(value) ((value >> 4) & 0x0f)
+
+#define OPS_DATA_SOURCE(value) (value & 0x0f)
+
+#define TYPE_BIGGER_INTEGER(value) (value == TYPE_LONG)
+
+#define TYPE_SMALL_INTEGER(value) (value == TYPE_BYTE || value == TYPE_SHORT || value == TYPE_INT)
 /**
  * @brief Safe sign-aware comparison macro for two values of the same type.
  *
@@ -53,9 +60,11 @@ do { \
         case TYPE_LONG: \
             (targetOperand)->i64 compoundOp##= (sourceOperand)->i64; \
             break; \
-        default: \
+        case TYPE_DOUBLE: \
             (targetOperand)->f64 compoundOp##= (sourceOperand)->f64; \
             break; \
+        default:    \
+            pvm_thrown_exception(executionContext ,"Not support compound operator."); \
     } \
 } while(0)
 

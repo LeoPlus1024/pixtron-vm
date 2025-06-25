@@ -23,8 +23,6 @@ static char *PixtronVM_MethodToString(const Method *method) {
     } else {
         retTypeName = TYPE_NAME[retType];
     }
-    g_string_append(str, retTypeName);
-    g_string_append(str, " ");
     g_string_append(str, method->name);
     g_string_append_c(str, '(');
     const uint16_t argv = method->argv;
@@ -39,6 +37,8 @@ static char *PixtronVM_MethodToString(const Method *method) {
         }
     }
     g_string_append_c(str, ')');
+    g_string_append(str, " -> ");
+    g_string_append(str, retTypeName);
     return g_string_free(str, FALSE);
 }
 
@@ -103,9 +103,6 @@ static inline int32_t pvm_build_constant(const PixtronVM *vm, Klass *klass, cons
 }
 
 static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName, GFile *file, GError **error) {
-#if VM_DEBUG_ENABLE
-    g_debug("Prepare to load klass %s.klass", klassName);
-#endif
     Klass *klass = NULL;
     GFileInfo *fileInfo = NULL;
     GFileInputStream *inputStream = NULL;
@@ -249,14 +246,8 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
         klass->bytecode = pvm_mem_calloc(byteCodeSize);
         memcpy(klass->bytecode, buf + position, byteCodeSize);
     }
-#if VM_DEBUG_ENABLE
-    g_debug("%s.klass load success.", klassName);
-#endif
 finally:
     if (*error != NULL) {
-#if VM_DEBUG_ENABLE
-        g_debug("%s.klass load failed:%s", klassName, (*error)->message);
-#endif
         PixtronVM_FreeKlass(&klass);
     }
     g_clear_object(&fileInfo);

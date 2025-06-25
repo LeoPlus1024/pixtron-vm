@@ -40,6 +40,9 @@ static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, 
     } else if (opcode == MUL) {
         APPLY_COMPOUND_OPERATOR(target_operand, source_operand, *, context);
     } else if (opcode == DIV) {
+        if (TYPE_SMALL_INTEGER(t1) && source_operand->i32 == 0 || TYPE_BIGGER_INTEGER(t1) && source_operand->i64 == 0) {
+            context->throwException(context, "Divisor cannot be zero.");
+        }
         APPLY_COMPOUND_OPERATOR(target_operand, source_operand, /, context);
     } else {
         context->throwException(context, "Canonical binary operation '%02x' is not supported.", opcode);
@@ -229,11 +232,6 @@ static inline VMValue *pvm_ret(RuntimeContext *context) {
 static inline VMValue *pvm_call(RuntimeContext *context) {
     const uint16_t index = pvm_bytecode_read_u16(context);
     const Method *method = pvm_get_method(context, index);
-#if VM_DEBUG_ENABLE
-    char *text = method->toString(method);
-    g_debug("Prepare call method: (%p) %s", method, text);
-    pvm_mem_free(TO_REF(text));
-#endif
     pvm_push_stack_frame(context, method);
     if (method->native_func) {
         const bool callWithRet = method->ret != TYPE_VOID;
@@ -289,7 +287,8 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     while (!context->exit) {
         const Opcode opcode = pvm_bytecode_read_u8(context);
 #ifdef VM_DEBUG_ENABLE
-        g_debug("Exec opcode：%s", pvm_opcode_name(opcode));
+        const Method *m = context->frame->method;
+        g_debug("%s : %s", m->toString(m), pvm_opcode_name(opcode));
 #endif
         switch (opcode) {
             case LOAD:

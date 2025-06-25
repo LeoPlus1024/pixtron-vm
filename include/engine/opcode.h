@@ -63,10 +63,4 @@ typedef enum:uint16_t {
     V1_7,
 } Version;
 
-#define OPS_DATA_TYPE(value) ((value >> 4) & 0x0f)
-#define OPS_DATA_SOURCE(value) (value & 0x0f)
-#define VM_TRUE(value) (value == 1)
-#define VM_FALSE(value) (value == 0)
-
-
 #endif
