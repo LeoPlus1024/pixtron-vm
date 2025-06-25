@@ -148,7 +148,7 @@ typedef void (*KniResultOperation)(RuntimeContext *context, KniValue *result);
 extern void pvm_kni_throw_exception(RuntimeContext *context, char *fmt, ...);
 
 // 使用示例：
-void native_divide(RuntimeContext *ctx, FFIResult *result) {
+void native_divide(RuntimeContext *ctx, KniValue *result) {
     double divisor = pvm_kni_get_double(ctx, 1);
     if (divisor == 0.0) {
         pvm_kni_throw_exception(ctx, "Division by zero at PC: %d", ctx->pc);
@@ -163,6 +163,7 @@ void native_divide(RuntimeContext *ctx, FFIResult *result) {
 
 ```c
 // 获取各种类型的参数
+extern void pvm_kni_release_str(KniString **string);
 extern int8_t pvm_kni_get_byte(RuntimeContext *context, uint16_t index);
 extern int16_t pvm_kni_get_short(RuntimeContext *context, uint16_t index);
 extern int32_t pvm_kni_get_int(RuntimeContext *context, uint16_t index);
@@ -171,6 +172,7 @@ extern double pvm_kni_get_double(RuntimeContext *context, uint16_t index);
 extern KniString *pvm_kni_get_str(RuntimeContext *context, uint16_t index);
 extern KniValue *pvm_kni_get_object(RuntimeContext *context, uint16_t index);
 ```
+
 结果设置
 
 ```c
@@ -182,21 +184,36 @@ extern void pvm_kni_set_byte(KniValue *result, int8_t value);
 extern void pvm_kni_set_double(KniValue *result, double value);
 extern void pvm_kni_set_bool(KniValue *result, bool value);
 ```
+
 完整FFI示例
 
 Native 函数声明
+
 ```asm
-@func @native("PixotronVM") println(string text):void @end
+; 声明命名空间
+@namespace System
+; 声明当前命名空间内native默认动态链接库
+@library("PixotronVM")
+; 声明native函数
+@func @native println(string text):void @end
 ```
+
 C 函数实现
+
 ```asm
+; Native函数命需要按照'命名空间_函数名'形式定义
 void System_println(RuntimeContext *context) {
-    const char *const str = FFI_GetStringParam(context, 0);
+    // 由于虚拟机内部字符串被设计为不可变，通过该方法获取到的是虚拟机字符串的副本,
+    // 调用者具有该数据所有权需要显示释放防止内存泄漏.
+    const KniString str =*pvm_kni_get_str(context,0);
     if (str == NULL) {
         printf("%s\n", "null");
         return;
     }
-    printf("%s\n", str);
+    printf("%s\n", str->buf);
+    // 显示释放字符串
+    pvm_kni_release_str(&str);
+    
 }
 
 ```
