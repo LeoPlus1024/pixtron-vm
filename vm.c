@@ -143,7 +143,7 @@ extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *metho
     }
     const Method *method = pvm_get_method_by_name(klass, method_name);
     if (method == NULL) {
-        g_printerr("Main method not found in klass:%s", klass->name);
+        g_printerr("Method '%s' not found in klass:%s", method_name, klass->name);
         exit(-1);
     }
     CallMethodParam *method_param = pvm_mem_calloc(sizeof(CallMethodParam));

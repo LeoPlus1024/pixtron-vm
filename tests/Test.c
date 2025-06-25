@@ -19,7 +19,7 @@ static uint64_t currentTimeNanos() {
 }
 
 
-void testMathMax(const int a, const int b, const int expect) {
+void test_max(const int a, const int b) {
     VM *vm = pvm_init("build");
     Value *av = pvm_create_int_value(a);
     Value *bv = pvm_create_int_value(b);
@@ -27,17 +27,14 @@ void testMathMax(const int a, const int b, const int expect) {
         av,
         bv
     };
-    const uint64_t t0 = currentTimeNanos();
     Value *value = pvm_launch(vm, "TMath", "testMax", 2, args);
-    const uint64_t t1 = currentTimeNanos();
     const int32_t rs = pvm_value_get_int(value);
-    printf("Math.Max(%d, %d) = %d, time: %ld ns\n", a, b, rs, t1 - t0);
-    assert(rs == expect);
+    assert(rs == ((a > b) ? a : b));
     pvm_free_values(args, 2);
     pvm_destroy(&vm);
 }
 
-void testPow(const double a, const int b) {
+void test_pow(const double a, const int b) {
     VM *vm = pvm_init("build");
     Value *av = pvm_create_double_value(a);
     Value *bv = pvm_create_double_value(b);
@@ -52,14 +49,54 @@ void testPow(const double a, const int b) {
     pvm_destroy(&vm);
 }
 
-void testHelloWorld() {
+void test_println_hello_world() {
     VM *vm = pvm_init("build");
     pvm_launch(vm, "TString", "printHelloWorld", 0, NULL);
     pvm_destroy(&vm);
 }
 
+void test_int_div(const int a, const int b) {
+    VM *vm = pvm_init("build");
+    const Value *args[] = {
+        pvm_create_int_value(a),
+        pvm_create_int_value(b)
+    };
+    Value *value = pvm_launch(vm, "TMath", "testIntDiv", 2, args);
+    assert(pvm_value_get_int(value) == a / b);
+    pvm_free_value(&value);
+    pvm_destroy(&vm);
+}
+
+void test_double_div(const double a, const double b) {
+    VM *vm = pvm_init("build");
+    const Value *args[] = {
+        pvm_create_double_value(a),
+        pvm_create_double_value(b)
+    };
+    Value *value = pvm_launch(vm, "TMath", "testDoubleDiv", 2, args);
+    assert(pvm_value_get_double(value) == a / b);
+    pvm_free_value(&value);
+    pvm_destroy(&vm);
+}
+
+void test_byte_add(const int8_t a, const int8_t b) {
+    VM *vm = pvm_init("build");
+    const Value *args[] = {
+        pvm_create_byte_value(a),
+        pvm_create_byte_value(b)
+    };
+    Value *value = pvm_launch(vm, "TMath", "testByteAdd", 2, args);
+    const int8_t sum = pvm_value_get_byte(value);
+    assert(sum == (int8_t)(a + b));
+    pvm_free_value(&value);
+    pvm_destroy(&vm);
+}
+
 int main(int argc, char *argv[]) {
-    testMathMax(10, 11, 11);
-    testHelloWorld();
-    testPow(10, 20);
+    test_max(10, 11);
+    test_println_hello_world();
+    test_pow(10, 20);
+    test_int_div(10, 5);
+    test_double_div(10, 0.0);
+    test_byte_add(127, 1);
 }
