@@ -5,7 +5,15 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(VM_MAX_STACK_DEPTH "1024")
 
-find_program(Python_EXECUTABLE python NO_CMAKE_FIND_ROOT_PATH REQUIRED)
+find_program(Python_EXECUTABLE python NO_CMAKE_FIND_ROOT_PATH)
+# if python can't find try find python3
+if (NOT Python_EXECUTABLE)
+    find_program(Python_EXECUTABLE python3 NO_CMAKE_FIND_ROOT_PATH)
+endif ()
+#if python and python3 not found in host throw error
+if (NOT Python_EXECUTABLE)
+    message(FATAL_ERROR "Please ensure python/python3 install in host.")
+endif ()
 
 find_package(PkgConfig REQUIRED)
 
