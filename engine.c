@@ -20,7 +20,7 @@
 
 static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, const Opcode opcode) {
     const VMValue *source_operand = pvm_pop_operand(context);
-    VMValue *target_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
 
     const Type t0 = target_operand->type;
     const Type t1 = source_operand->type;
@@ -47,7 +47,6 @@ static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, 
     } else {
         context->throwException(context, "Canonical binary operation '%02x' is not supported.", opcode);
     }
-    pvm_move_stack_pointer(context, -1);
 }
 
 static inline void pvm_goto(RuntimeContext *context) {
@@ -92,7 +91,7 @@ static inline void pvm_less_granter_than_equal(RuntimeContext *context, Opcode o
 
 extern inline void pvm_cmp(RuntimeContext *context, const Opcode opcode) {
     const VMValue *source_operand = pvm_pop_operand(context);
-    VMValue *targe_operand = pvm_pop_operand(context);
+    VMValue *targe_operand = pvm_get_operand(context);
     switch (opcode) {
         case ICMP:
             targe_operand->i32 = SIGN_CMP(targe_operand->i32, source_operand->i32);
@@ -107,11 +106,10 @@ extern inline void pvm_cmp(RuntimeContext *context, const Opcode opcode) {
             context->throwException(context, "unsupported cmp opcode:%02x", opcode);
     }
     targe_operand->type = TYPE_INT;
-    pvm_move_stack_pointer(context, -1);
 }
 
 static void pvm_conv(RuntimeContext *context, const Opcode opcode) {
-    VMValue *value = pvm_pop_operand(context);
+    VMValue *value = pvm_get_operand(context);
     if (opcode == I2F || opcode == L2F) {
         pvm_value_to_double(value);
     } else if (opcode == I2L || opcode == F2L) {
@@ -119,7 +117,6 @@ static void pvm_conv(RuntimeContext *context, const Opcode opcode) {
     } else if (opcode == F2I || opcode == L2I) {
         pvm_value_to_int(value);
     }
-    pvm_move_stack_pointer(context, -1);
 }
 
 static void pvm_store(RuntimeContext *context) {
@@ -272,6 +269,58 @@ static void inline pvm_assert(RuntimeContext *context) {
 }
 
 
+static void inline pvm_ishx(RuntimeContext *context, Opcode opcode) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+    if (target_operand->type != TYPE_INT || source_operand->type != TYPE_INT) {
+        context->throwException(context, "ishl instruction only support small integer.");
+    }
+    const int32_t bit = source_operand->i32 & 0x1F;
+
+    switch (opcode) {
+        case IUSHR: {
+            uint32_t value = (uint32_t) target_operand->i32;
+            value = value >> bit;
+            target_operand->i32 = (int32_t) value;
+            break;
+        }
+        case ISHR:
+            target_operand->i32 = target_operand->i32 >> bit;
+            break;
+        case ISHL:
+            target_operand->i32 = target_operand->i32 << bit;
+            break;
+        default: ;
+    }
+}
+
+static void inline pvm_lshx(RuntimeContext *context, Opcode opcode) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+    if (TYPE_BIGGER_INTEGER(target_operand->type) || source_operand->type != TYPE_INT) {
+        context->throwException(
+            context, "lshl instruction the first operand must is long and the second operand must is integer.");
+    }
+    const int32_t bit = source_operand->i32 & 0x3F;
+    const int64_t value = target_operand->i64;
+    switch (opcode) {
+        case LUSHR: {
+            uint64_t tmp = (uint64_t) value;
+            tmp >>= bit;
+            target_operand->i64 = (int64_t) tmp;
+            break;
+        }
+        case LSHR:
+            target_operand->i64 = value >> bit;
+            break;
+        case LSHL:
+            target_operand->i64 = value << bit;
+            break;
+        default: ;
+    }
+}
+
+
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     const Method *method = callMethodParam->method;
     RuntimeContext *context = pvm_mem_calloc(sizeof(RuntimeContext));
@@ -340,6 +389,16 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
                 break;
             case ASSERT:
                 pvm_assert(context);
+                break;
+            case ISHL:
+            case ISHR:
+            case IUSHR:
+                pvm_ishx(context, opcode);
+                break;
+            case LSHL:
+            case LSHR:
+            case LUSHR:
+                pvm_lshx(context, opcode);
                 break;
             default:
                 context->throwException(context, "Unsupported opcode: %02x", opcode);

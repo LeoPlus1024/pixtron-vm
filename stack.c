@@ -145,3 +145,13 @@ extern inline void pvm_move_stack_pointer(RuntimeContext *context, const int32_t
     }
     frame->sp = sp;
 }
+
+
+extern inline VMValue *pvm_get_operand(RuntimeContext *context) {
+    const VirtualStackFrame *frame = context->frame;
+    const uint32_t sp = frame->sp;
+    if (sp >= frame->max_stacks) {
+        context->throwException(context, "Stack index out of bound.");
+    }
+    return frame->operand_stack + sp;
+}

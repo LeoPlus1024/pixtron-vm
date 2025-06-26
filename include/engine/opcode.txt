@@ -23,6 +23,12 @@
     LCMP,
     DCMP,
     POP,
-    ASSERT
+    ASSERT,
+    ISHL,
+    ISHR,
+    IUSHR,
+    LSHL,
+    LSHR,
+    LUSHR,
 
 
