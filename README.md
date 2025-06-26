@@ -156,6 +156,7 @@ graph LR
 ; 控制台输出函数
 @func @native println(string message) : void @end
 
+@namespace Math
 ; 自动绑定到标准库函数
 @func @native sqrt(double value) : double @end
 ```
@@ -178,13 +179,16 @@ extern void println(const char* message) {
 ```plaintext
 ; 使用原生函数
 ; String literal define
-@import { println , sqrt } from System
+@import { println  } from System
+@import { sqrt     } from Math
 
 @constant "Hello FFI!"
 
 @func main(): void
     ldc.str 0
     call println
+    load.f64 2.5
+    call sqrt
 @end
 ```
 
@@ -258,11 +262,13 @@ sequenceDiagram
     - 使用VM内存分配器
 
 2**自动释放**：
+
 - 函数返回后立即释放
 - 按参数反序释放（LIFO）
 - 使用相同内存分配器
 
 3**编码规范**：
+
 - 所有字符串使用UTF-8编码
 - 最大长度：无限制
 - 包含完整字节序列
