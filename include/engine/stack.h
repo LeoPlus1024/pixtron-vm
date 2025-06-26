@@ -88,7 +88,7 @@ extern inline VMValue *pvm_pop_operand(RuntimeContext *context);
  *
  */
 extern inline void pvm_create_stack_frame(RuntimeContext *context, const Method *method, uint16_t argv,
-                                              const VMValue **args);
+                                          const VMValue **args);
 
 extern inline void pvm_push_stack_frame(RuntimeContext *context, const Method *method);
 
@@ -116,5 +116,15 @@ extern inline void pvm_get_local_value(RuntimeContext *context, uint16_t index, 
 
 
 extern inline void pvm_move_stack_pointer(RuntimeContext *context, int32_t offset);
+
+/**
+ * Retrieves the current top operand pointer from the VM's operand stack.
+ * This function performs a boundary check before accessing the stack.
+ *
+ * @param context Runtime context containing the current stack frame.
+ * @return Pointer to the operand at the current stack top.
+ * @throws Exception If stack pointer (SP) exceeds stack capacity.
+ */
+extern inline VMValue *pvm_get_operand(RuntimeContext *context);
 
 #endif //VIRTUALSTACK_H
