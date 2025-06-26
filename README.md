@@ -156,7 +156,7 @@ graph LR
 ; 控制台输出函数
 @func @native println(string message) : void @end
 
-; 数学函数
+; 自动绑定到标准库函数
 @func @native sqrt(double value) : double @end
 ```
 
