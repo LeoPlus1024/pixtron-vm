@@ -40,7 +40,20 @@ extern inline bool pvm_lookup_native_handle(const Klass *klass, Method *method, 
     }
     void *fptr = NULL;
     if (library == NULL) {
+#ifdef _WIN64
+        HMODULE hModule = GetModuleHandle(NULL);
+        if (!hModule) {
+            DWORD win_err = GetLastError();
+            g_set_error(error, KLASS_DOMAIN, LIBRARY_NOT_FOUND, "GetModuleHandle failed (0x%lx)", win_err);
+        }
+        fptr = GetProcAddress(hModule, native_method_name);
+        FreeLibrary(handle);
+        if (fptr == NULL) {
+            g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND , "GetProcAddress(%s) failed (0x%lx)", native_method_name, win_err);
+        }
+#else
         fptr = dlsym(RTLD_DEFAULT, method->name);
+#endif
     } else {
         const uint64_t length = strlen(library) + DY_SUFFIX_LEN + 4;
         char buf[length];
@@ -62,14 +75,14 @@ extern inline bool pvm_lookup_native_handle(const Klass *klass, Method *method, 
         }
 #ifdef _WIN64
         fptr = GetProcAddress(handle, native_method_name);
+        FreeLibrary(handle);
 #else
         fptr = dlsym(handle, native_method_name);
 #endif
         if (fptr == NULL) {
 #ifdef _WIN64
             DWORD win_err = GetLastError();
-            FreeLibrary(handle);
-            g_set_error(error, KLASS_DOMAIN, FUNCTION_NOT_FOUND,"GetProcAddress(%s) failed (0x%lx)", native_method_name, win_err);
+            g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND,"GetProcAddress(%s) failed (0x%lx)", native_method_name, win_err);
 #else
             const char *dl_err = dlerror();
             dlclose(handle);
