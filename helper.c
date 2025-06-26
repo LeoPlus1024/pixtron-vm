@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <ffi.h>
 
+#include "istring.h"
+#include "memory.h"
 #include "stack.h"
 
 #ifdef _WIN64
@@ -80,12 +82,10 @@ extern inline bool pvm_lookup_native_handle(const Klass *klass, Method *method, 
 }
 
 extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
-    if (!method->native_func) {
-        context->throwException(context, "FFI call only native method.");
-    }
     const uint16_t argv = method->argv;
-    ffi_type *args[argv];
+    ffi_type *arg_types[argv];
     void *values[argv];
+    void *copies[argv];
 
     // Initialize native method params
     for (int i = argv - 1; i >= 0; --i) {
@@ -94,36 +94,69 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
         if (operand->type != param->type) {
             context->throwException(context, "FFI call only one argument that is the same type.");
         }
-        switch (param->type) {
+        const Type type = param->type;
+        switch (type) {
             case TYPE_BOOL:
             case TYPE_BYTE:
-                args[i] = &ffi_type_sint8;
+                arg_types[i] = &ffi_type_sint8;
                 values[i] = &(operand->i8);
                 break;
             case TYPE_INT:
-                args[i] = &ffi_type_sint32;
+                arg_types[i] = &ffi_type_sint32;
                 values[i] = &(operand->i32);
                 break;
             case TYPE_SHORT:
-                args[i] = &ffi_type_sshort;
+                arg_types[i] = &ffi_type_sshort;
                 values[i] = &(operand->i16);
                 break;
+            case TYPE_LONG:
+                arg_types[i] = &ffi_type_sint64;
+                values[i] = &(operand->i64);
+                break;
             case TYPE_DOUBLE:
-                args[i] = &ffi_type_double;
+                arg_types[i] = &ffi_type_double;
                 values[i] = &(operand->f64);
                 break;
             default:
-                args[i] = &ffi_type_pointer;
-                values[i] = operand->obj;
+                arg_types[i] = &ffi_type_pointer;
+                if (type == TYPE_STRING) {
+                    copies[i] = pvm_string_to_cstr(operand->obj);
+                } else {
+                    copies[i] = (operand->obj);
+                }
+                values[i] = &copies[i];
         }
     }
     ffi_cif cif;
-    const bool success = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argv, &ffi_type_sint, args) == FFI_OK;
+    const Type ret = method->ret;
+    ffi_type rtype;
+    switch (ret) {
+        case TYPE_BOOL:
+            rtype = ffi_type_sint8;
+            break;
+        case TYPE_SHORT:
+            rtype = ffi_type_sint16;
+            break;
+        case TYPE_INT:
+            rtype = ffi_type_sint32;
+            break;
+        case TYPE_LONG:
+            rtype = ffi_type_sint64;
+            break;
+        case TYPE_DOUBLE:
+            rtype = ffi_type_double;
+            break;
+        case TYPE_VOID:
+            rtype = ffi_type_void;
+            break;
+        default:
+            rtype = ffi_type_pointer;
+    };
+    const bool success = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argv, &rtype, arg_types) == FFI_OK;
     if (!success) {
         context->throwException(context, "FFI init failed.");
     }
-    const Type ret = method->ret;
-    void *func_ptr = method->native_handle;
+    void *fptr = method->native_handle;
     if (ret != TYPE_VOID) {
         VMValue value;
         value.i64 = 0;
@@ -142,10 +175,18 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
             default:
                 retval = &value.obj;
         }
-        ffi_call(&cif, func_ptr, retval, values);
+        ffi_call(&cif, fptr, retval, values);
         // Push ret value to operand stack
         pvm_push_operand(context, &value);
     } else {
-        ffi_call(&cif, func_ptr,NULL, values);
+        ffi_call(&cif, fptr, NULL, values);
+    }
+    // Free string copies
+    for (int i = 0; i < argv; ++i) {
+        const MethodParam *param = method->args + i;
+        if (param->type != TYPE_STRING) {
+            continue;
+        }
+        pvm_mem_free(TO_REF(copies[i]));
     }
 }

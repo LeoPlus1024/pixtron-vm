@@ -1,5 +1,7 @@
 #include "istring.h"
 
+#include <stdio.h>
+
 #include "memory.h"
 #include "object.h"
 
@@ -47,4 +49,14 @@ extern String *pvm_string_new(const char *str, const uint32_t len) {
     text->len = len;
     text->str = cc;
     return text;
+}
+
+extern char *pvm_string_to_cstr(const String *str) {
+    if (str == NULL || str->len == 0) {
+        return NULL;
+    }
+    const uint32_t len = str->len + 1;
+    char *c_str = pvm_mem_cpy(str->str, len);
+    c_str[len] = '\0';
+    return c_str;
 }

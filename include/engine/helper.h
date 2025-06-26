@@ -19,7 +19,18 @@ extern int32_t pvm_get_cstr_len(const char *str);
 
 extern inline bool pvm_lookup_native_handle(const Klass *klass, Method *method, GError **error);
 
-
+/**
+ * Invokes a native method via Foreign Function Interface (FFI).
+ *
+ * This function handles the complete FFI call process including:
+ * - Parameter type conversion
+ * - Memory management for temporary string copies
+ * - FFI call setup and execution
+ * - Return value handling
+ *
+ * @param context Runtime context of the virtual machine
+ * @param method Metadata for the native method being called
+ */
 extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method);
 
 #endif //HELPER_H
