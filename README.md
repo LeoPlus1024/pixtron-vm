@@ -129,93 +129,309 @@ graph LR
 
 ## 📖 开发指南
 
-FFI外部函数接口
+# FFI（外部函数接口）集成指南
 
-基本操作类型
+## 概述
 
-```c
-// 基本FFI操作（无参数/返回值）
-typedef void (*KniBaseOperation)(RuntimeContext *context);
+虚拟机通过`@native`标注实现了字节码与本地原生函数的无缝集成，使用`libffi`自动处理函数调用。本指南详细说明了如何声明、使用和管理原生函数调用，特别强调
+**字符串参数的自动内存管理**和**C ABI专属支持**。
 
-// 带返回值的FFI操作
-typedef void (*KniResultOperation)(RuntimeContext *context, KniValue *result);
-```
+---
 
-异常处理
+## 快速入门
 
-```c
-// 抛出格式化异常
-extern void pvm_kni_throw_exception(RuntimeContext *context, char *fmt, ...);
+### 基本使用步骤
 
-// 使用示例：
-void native_divide(RuntimeContext *ctx, KniValue *result) {
-    double divisor = pvm_kni_get_double(ctx, 1);
-    if (divisor == 0.0) {
-        pvm_kni_throw_exception(ctx, "Division by zero at PC: %d", ctx->pc);
-        return;
-    }
-    double quotient = pvm_kni_get_double(ctx, 0) / divisor;
-    pvm_kni_set_double(result, quotient);
-}
-```
+1. **声明原生函数**：使用`@native`标注
+2. **实现原生函数**：在C语言中实现并导出
+3. **调用函数**：像普通字节码函数一样调用
 
-参数获取
+### 示例代码
 
-```c
-// 获取各种类型的参数
-extern void pvm_kni_release_str(KniString **string);
-extern int8_t pvm_kni_get_byte(RuntimeContext *context, uint16_t index);
-extern int16_t pvm_kni_get_short(RuntimeContext *context, uint16_t index);
-extern int32_t pvm_kni_get_int(RuntimeContext *context, uint16_t index);
-extern int64_t pvm_kni_get_long(RuntimeContext *context, uint16_t index);
-extern double pvm_kni_get_double(RuntimeContext *context, uint16_t index);
-extern KniString *pvm_kni_get_str(RuntimeContext *context, uint16_t index);
-extern KniValue *pvm_kni_get_object(RuntimeContext *context, uint16_t index);
-```
+**字节码声明**:
 
-结果设置
-
-```c
-// 设置各种类型的返回值
-extern void pvm_kni_set_long(KniValue *result, int64_t value);
-extern void pvm_kni_set_int(KniValue *result, int32_t value);
-extern void pvm_kni_set_short(KniValue *result, int16_t value);
-extern void pvm_kni_set_byte(KniValue *result, int8_t value);
-extern void pvm_kni_set_double(KniValue *result, double value);
-extern void pvm_kni_set_bool(KniValue *result, bool value);
-```
-
-完整FFI示例
-
-Native 函数声明
-
-```asm
-; 声明命名空间
+```plaintext
 @namespace System
-; 声明当前命名空间内native默认动态链接库
-@library("PixotronVM")
-; 声明native函数
-@func @native println(string text):void @end
+
+; 控制台输出函数
+@func @native println(string message) : void @end
+
+; 数学函数
+@func @native sqrt(double value) : double @end
 ```
 
-C 函数实现
+**C语言实现**:
 
-```asm
-; Native函数命需要按照'命名空间_函数名'形式定义
-void System_println(RuntimeContext *context) {
-    // 由于虚拟机内部字符串被设计为不可变，通过该方法获取到的是虚拟机字符串的副本,
-    // 调用者具有该数据所有权需要显示释放防止内存泄漏.
-    const KniString str =*pvm_kni_get_str(context,0);
-    if (str == NULL) {
-        printf("%s\n", "null");
-        return;
-    }
-    printf("%s\n", str->buf);
-    // 显示释放字符串
-    pvm_kni_release_str(&str);
-    
+```c
+#include <stdio.h>
+
+extern void println(const char* message) {
+    printf("%s\n", message);
 }
 
+
+#endif
+```
+
+**字节码调用**:
+
+```plaintext
+; 使用原生函数
+; String literal define
+@import { println , sqrt } from System
+
+@constant "Hello FFI!"
+
+@func main(): void
+    ldc.str 0
+    call println
+@end
+```
+
+---
+
+## 函数声明语法
+
+### 基本结构
+
+```plaintext
+@func @native <function_name>(<param_type> <param_name>, ...) : <return_type> @end
+```
+
+### 关键规则
+
+1. **`@native`标注**：必须存在且无函数体
+2. **命名空间**：可以声明在任何命名空间中
+3. **命名规范**：
+    - 函数名必须与原生符号完全匹配
+
+### 有效示例
+
+```plaintext
+; 无返回值函数
+@func @native logError(string message) : void @end
+
+; 多参数函数
+@func @native add(int a, int b) : int @end
+```
+
+---
+
+## 数据类型映射
+
+| 字节码类型    | C语言类型         | FFI类型              | 传递方式     |
+|----------|---------------|--------------------|----------|
+| `int`    | `int32_t`     | `ffi_type_sint32`  | 值传递      |
+| `long`   | `int64_t`     | `ffi_type_sint64`  | 值传递      |
+| `double` | `double`      | `ffi_type_double`  | 值传递      |
+| `string` | `const char*` | `ffi_type_pointer` | **指针传递** |
+| `void`   | `void`        | `ffi_type_void`    | -        |
+| `object` | `void*`       | `ffi_type_pointer` | 指针传递     |
+
+> **不支持的类型**：结构体、联合体、数组、函数指针
+
+---
+
+## 字符串处理机制
+
+### 生命周期管理
+
+```mermaid
+sequenceDiagram
+    participant VM as 虚拟机
+    participant FFI as FFI模块
+    participant Native as 原生函数
+    VM ->> FFI: 调用含字符串参数的函数
+    FFI ->> FFI: 创建字符串副本
+    FFI ->> Native: 传递副本指针
+    Native ->> Native: 使用字符串(只读)
+    Native -->> FFI: 返回结果
+    FFI ->> FFI: 释放字符串副本
+    FFI -->> VM: 返回结果
+```
+
+### 关键特性
+
+1. **自动副本创建**：
+    - 在调用前创建完整副本
+    - 包含null终止符
+    - 使用VM内存分配器
+
+2**自动释放**：
+- 函数返回后立即释放
+- 按参数反序释放（LIFO）
+- 使用相同内存分配器
+
+3**编码规范**：
+- 所有字符串使用UTF-8编码
+- 最大长度：无限制
+- 包含完整字节序列
+
+### 内存操作伪代码
+
+```c
+// 创建副本
+extern char *pvm_string_to_cstr(const String *str) {
+    if (str == NULL || str->len == 0) {
+        return NULL;
+    }
+    const uint32_t len = str->len + 1;
+    char *c_str = pvm_mem_cpy(str->str, len);
+    c_str[len] = '\0';
+    return c_str;
+}
+
+// 释放副本
+void release_copy(char* str) {
+    pvm_mem_free(str);
+}
+```
+
+---
+
+## 调用过程详解
+
+### 调用流程图
+
+```mermaid
+graph TD
+    A[字节码调用] --> B[参数准备]
+    B --> C{参数类型检查}
+    C -->|字符串| D[创建副本]
+    C -->|其他| E[直接传递]
+    D --> F[绑定函数指针]
+    E --> F
+    F --> G[FFI调用]
+    G --> H{是否有返回值}
+    H -->|是| I[处理返回值]
+    H -->|否| J[清理资源]
+    I --> J
+    J -->|字符串| K[释放副本]
+    J -->|完成| L[返回控制]
+```
+
+### 关键阶段
+
+1. **准备阶段**：
+    - 解析函数签名
+    - 验证参数类型
+    - 准备FFI cif结构
+
+2. **执行阶段**：
+    - 创建字符串副本
+    - 绑定函数指针
+    - 调用原生函数
+
+3. **清理阶段**：
+    - 释放字符串副本
+    - 处理返回值
+    - 异常处理
+
+---
+
+## 平台兼容性
+
+### 符号导出要求
+
+| 平台          | 导出宏                                      | 验证命令                           |
+|-------------|------------------------------------------|--------------------------------|
+| Windows     | `__declspec(dllexport)`                  | `dumpbin /EXPORTS program.exe` |
+| Linux/macOS | `__attribute__((visibility("default")))` | `nm -D program                 | grep function` |
+
+### C++兼容性处理
+
+```c
+// 必须避免C++名称修饰
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+EXPORT void myFunction(const char* str);
+
+#ifdef __cplusplus
+}
+#endif
+```
+
+### ABI严格限制
+
+1. **仅支持标准C ABI**
+2. **禁止使用以下调用约定**：
+    - stdcall
+    - fastcall
+    - thiscall
+3. **错误处理**：
+    - 尝试调用非C ABI函数将抛出`FFI_ABI_MISMATCH`
+
+---
+
+## 最佳实践
+
+### 函数设计原则
+
+1. **无状态函数**：
+   ```c
+   // 推荐：纯函数
+   double calculate(double a, double b);
+   
+   // 避免：有状态函数
+   void initContext();
+   void processData(Context* ctx);
+   ```
+
+2. **字符串处理**：
+   ```c
+   // 安全：使用长度参数
+   void processBuffer(const char* data, size_t length);
+   
+   // 危险：依赖null终止符
+   void processString(const char* str);
+   ```
+
+### 安全准则
+
+1. 原生函数不应修改字符串内容
+2. 不要缓存或返回字符串指针
+3. 避免长时间持有字符串引用
+4. 大文件使用缓冲区API而非字符串
+
+---
+
+## 性能优化
+
+### 开销分析
+
+| 操作   | 小字符串(<64B) | 中字符串(1KB) | 大字符串(1MB+) |
+|------|------------|-----------|------------|
+| 复制开销 | 低(~100ns)  | 中(~1μs)   | 高(>1ms)    |
+| 内存开销 | 可忽略        | 中等        | 显著         |
+
+### 处理流程
+
+```mermaid
+graph LR
+    A[FFI调用] --> B{成功?}
+    B -->|是| C[继续执行]
+    B -->|否| D{错误类型}
+    D -->|内存错误| E[终止调用]
+    D -->|符号错误| F[回退实现]
+    D -->|类型错误| G[抛出异常]
+    E --> H[清理资源]
+    F --> H
+    G --> H
+```
+
+### 调试支持
+
+```bash
+# 启用详细日志
+VM_FFI_DEBUG=2 ./program
+
+# 日志示例
+[FFI] Calling: Math::pow
+  Param[0]: double = 2.000000
+  Param[1]: double = 3.000000
+  Return: double = 8.000000
 ```
 
 ## 📜 许可证
