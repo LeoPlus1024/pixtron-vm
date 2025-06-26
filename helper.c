@@ -5,6 +5,9 @@
 #include <stdio.h>
 #include "ierror.h"
 #include <stdbool.h>
+#include <ffi.h>
+
+#include "stack.h"
 
 #ifdef _WIN64
 #define LIB_SUFFIX ".dll"
@@ -25,11 +28,10 @@ extern inline int32_t pvm_get_cstr_len(const char *str) {
 
 
 extern inline bool pvm_lookup_native_handle(const Klass *klass, Method *method, GError **error) {
-    const char *klass_name = klass->name;
     const char *method_name = method->name;
-    const uint64_t len = strlen(klass_name) + strlen(method_name) + 2;
+    const uint64_t len = strlen(method_name) + 1;
     char native_method_name[len];
-    snprintf(native_method_name, len, "%s_%s\0", klass_name, method_name);
+    snprintf(native_method_name, len, "%s\0", method_name);
     const char *library = method->lib_name;
     if (library == NULL) {
         library = klass->library;
@@ -75,4 +77,75 @@ extern inline bool pvm_lookup_native_handle(const Klass *klass, Method *method, 
     }
     method->native_handle = fptr;
     return fptr != NULL;
+}
+
+extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
+    if (!method->native_func) {
+        context->throwException(context, "FFI call only native method.");
+    }
+    const uint16_t argv = method->argv;
+    ffi_type *args[argv];
+    void *values[argv];
+
+    // Initialize native method params
+    for (int i = argv - 1; i >= 0; --i) {
+        const MethodParam *param = method->args + i;
+        VMValue *operand = pvm_pop_operand(context);
+        if (operand->type != param->type) {
+            context->throwException(context, "FFI call only one argument that is the same type.");
+        }
+        switch (param->type) {
+            case TYPE_BOOL:
+            case TYPE_BYTE:
+                args[i] = &ffi_type_sint8;
+                values[i] = &(operand->i8);
+                break;
+            case TYPE_INT:
+                args[i] = &ffi_type_sint32;
+                values[i] = &(operand->i32);
+                break;
+            case TYPE_SHORT:
+                args[i] = &ffi_type_sshort;
+                values[i] = &(operand->i16);
+                break;
+            case TYPE_DOUBLE:
+                args[i] = &ffi_type_double;
+                values[i] = &(operand->f64);
+                break;
+            default:
+                args[i] = &ffi_type_pointer;
+                values[i] = operand->obj;
+        }
+    }
+    ffi_cif cif;
+    const bool success = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argv, &ffi_type_sint, args) == FFI_OK;
+    if (!success) {
+        context->throwException(context, "FFI init failed.");
+    }
+    const Type ret = method->ret;
+    void *func_ptr = method->native_handle;
+    if (ret != TYPE_VOID) {
+        VMValue value;
+        value.i64 = 0;
+        value.type = ret;
+        void *retval = NULL;
+        switch (ret) {
+            case TYPE_BOOL:
+            case TYPE_BYTE:
+            case TYPE_INT:
+            case TYPE_LONG:
+                retval = &value.i64;
+                break;
+            case TYPE_DOUBLE:
+                retval = &value.f64;
+                break;
+            default:
+                retval = &value.obj;
+        }
+        ffi_call(&cif, func_ptr, retval, values);
+        // Push ret value to operand stack
+        pvm_push_operand(context, &value);
+    } else {
+        ffi_call(&cif, func_ptr,NULL, values);
+    }
 }

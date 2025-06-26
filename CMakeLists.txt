@@ -17,6 +17,7 @@ endif ()
 
 find_package(PkgConfig REQUIRED)
 
+pkg_check_modules(FFI libffi REQUIRED)
 pkg_check_modules(GLIB_DEP REQUIRED glib-2.0 gobject-2.0 gio-2.0)
 
 
@@ -41,16 +42,21 @@ execute_process(COMMAND ${Python_EXECUTABLE}
         ${CMAKE_SOURCE_DIR}/include/engine ERROR_QUIET
 )
 
-target_link_directories(${PROJECT_NAME} PUBLIC ${GLIB_DEP_LIBRARY_DIRS})
+target_link_directories(${PROJECT_NAME} PUBLIC
+        ${GLIB_DEP_LIBRARY_DIRS}
+        ${FFI_LIBDIR}
+)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
         ${GLIB_DEP_LIBRARIES}
+        ffi
 )
 
 
 target_include_directories(${PROJECT_NAME} PUBLIC
         include/engine
         include/api
+        ${FFI_INCLUDE_DIRS}
         ${CMAKE_BINARY_DIR}/include
         ${GLIB_DEP_INCLUDE_DIRS}
 )

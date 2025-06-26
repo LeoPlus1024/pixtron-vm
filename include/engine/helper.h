@@ -19,4 +19,7 @@ extern int32_t pvm_get_cstr_len(const char *str);
 
 extern inline bool pvm_lookup_native_handle(const Klass *klass, Method *method, GError **error);
 
+
+extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method);
+
 #endif //HELPER_H

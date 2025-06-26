@@ -10,6 +10,7 @@
 #include "stack.h"
 #include <dlfcn.h>
 
+#include "helper.h"
 #include "istring.h"
 #include "kni.h"
 
@@ -226,25 +227,14 @@ static inline VMValue *pvm_ret(RuntimeContext *context) {
     return retVal;
 }
 
-static inline VMValue *pvm_call(RuntimeContext *context) {
+static inline void pvm_call(RuntimeContext *context) {
     const uint16_t index = pvm_bytecode_read_u16(context);
     const Method *method = pvm_get_method(context, index);
-    pvm_push_stack_frame(context, method);
     if (method->native_func) {
-        const bool callWithRet = method->ret != TYPE_VOID;
-        if (callWithRet) {
-            const KniResultOperation ffiFunc = (KniResultOperation) method->native_handle;
-            VMValue retVal;
-            ffiFunc(context, &retVal);
-            pvm_push_operand(context, &retVal);
-        } else {
-            const KniBaseOperation ffiFunc = (KniBaseOperation) (method->native_handle);
-            ffiFunc(context);
-        }
-        // Native function execute after manual call ret instruction
-        return pvm_ret(context);
+        pvm_ffi_call(context, method);
+    } else {
+        pvm_push_stack_frame(context, method);
     }
-    return NULL;
 }
 
 static void inline pvm_assert(RuntimeContext *context) {
@@ -385,7 +375,7 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
                 pvm_pop_operand(context);
                 break;
             case CALL:
-                retVal = pvm_call(context);
+                pvm_call(context);
                 break;
             case ASSERT:
                 pvm_assert(context);
