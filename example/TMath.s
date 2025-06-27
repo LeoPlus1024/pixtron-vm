@@ -24,8 +24,8 @@
 
 
 @func _testPow(double a,double b) : void
-    %locals 2
-    %stacks 2
+    %locals 3
+    %stacks 3
     load.f64 $0
     load.f64 $1
     call pow
@@ -40,9 +40,9 @@
     div
     load.i32 $2
     icmp
-    ifne div_fail
+    ifne fail
     ret
-div_fail:
+fail:
     assert 1
     ret
 @end
@@ -72,7 +72,6 @@ div_fail:
     call _testMax
     load.f64 2.0
     load.f64 2.0
-    load.f64 4.0
     call _testPow
     load.i32 10
     load.i32 2

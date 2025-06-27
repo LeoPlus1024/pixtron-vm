@@ -56,7 +56,7 @@ public class BinaryHeader implements ISerializable {
         // Writer constant data
         for (int i = 0; i < constBytes.length; i++) {
             byte[] bytes = constants.get(i).toBytes();
-            maxConstSize = bytes.length;
+            maxConstSize += bytes.length;
             constBytes[i] = bytes;
         }
         int libraryLength = 0;
@@ -69,6 +69,7 @@ public class BinaryHeader implements ISerializable {
         int constSize = constants.size();
         byte[] data = new byte[length + maxFuncSize + maxFieldSize
             + 8
+            // Constant size
             + 2
             // library flag
             + 1
