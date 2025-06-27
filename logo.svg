@@ -1,30 +1,61 @@
 <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-    <!-- Abstract Pixel Core -->
-    <path d="M70 70L130 70L130 130L70 130Z" fill="none" stroke="#6366F1" stroke-width="8"/>
+    <!-- 核心立体化改造 -->
+    <path d="M70 70L130 70L130 130L70 130Z"
+          fill="none"
+          stroke="url(#coreGradient)"
+          stroke-width="10"
+          stroke-linejoin="round"
+          style="filter: drop-shadow(0 2px 4px rgba(83, 104, 255, 0.25))"/>
 
-    <!-- Floating Pixel Matrix -->
-    <g fill="#8B5CF6" opacity="0.8">
-        <rect x="40" y="40" width="12" height="12" rx="2"/>
-        <rect x="148" y="40" width="12" height="12" rx="2"/>
-        <rect x="40" y="148" width="12" height="12" rx="2"/>
-        <rect x="148" y="148" width="12" height="12" rx="2"/>
+    <!-- 高密度光点 -->
+    <g fill="url(#pixelGradient)" opacity="0.9">
+        <rect x="40" y="40" width="14" height="14" rx="4" style="mix-blend-mode: overlay"/>
+        <rect x="148" y="40" width="14" height="14" rx="4" style="mix-blend-mode: overlay"/>
+        <rect x="40" y="148" width="14" height="14" rx="4" style="mix-blend-mode: overlay"/>
+        <rect x="148" y="148" width="14" height="14" rx="4" style="mix-blend-mode: overlay"/>
     </g>
 
-    <!-- Dynamic Connection Lines -->
-    <g stroke="#A5B4FC" stroke-width="3" stroke-linecap="round">
+    <!-- 能量导管 -->
+    <g stroke="url(#lineGradient)" stroke-width="5" stroke-linecap="round">
         <path d="M70 70L52 52M130 70L148 52M130 130L148 148M70 130L52 148"/>
     </g>
 
-    <!-- Glowing Center -->
-    <circle cx="100" cy="100" r="20" fill="#6366F1" filter="url(#glow)"/>
+    <!-- 聚变核心 -->
+    <circle cx="100" cy="100" r="20" fill="url(#coreFill)" stroke="url(#coreStroke)" stroke-width="2"/>
 
-    <!-- Modern Text -->
-    <text x="100" y="185" font-family="'Inter', sans-serif" font-size="18"
-          text-anchor="middle" fill="#111827" font-weight="500">PIXTRON<span style="font-weight:700">VM</span></text>
+    <!-- 精密渐变系统 -->
+    <linearGradient id="coreGradient" gradientTransform="rotate(45)">
+        <stop offset="0%" stop-color="#5D7BFF"/>  <!-- 深空蓝 -->
+        <stop offset="50%" stop-color="#7A5DFF"/> <!-- 晶紫 -->
+        <stop offset="100%" stop-color="#A35DFF"/> <!-- 星云紫 -->
+    </linearGradient>
 
-    <!-- Glow Effect -->
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur stdDeviation="5" result="blur"/>
-        <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    <linearGradient id="pixelGradient">
+        <stop offset="0%" stop-color="#85FFE8" stop-opacity="0.8"/> <!-- 量子绿 -->
+        <stop offset="100%" stop-color="#AD85FF" stop-opacity="0.9"/> <!-- 相位紫 -->
+    </linearGradient>
+
+    <linearGradient id="lineGradient">
+        <stop offset="0%" stop-color="#AEC7FF"/> <!-- 冷光白 -->
+        <stop offset="100%" stop-color="#BFAEC7"/> <!-- 月尘灰 -->
+    </linearGradient>
+
+    <radialGradient id="coreFill">
+        <stop offset="0%" stop-color="#5D7BFF" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#7A5DFF" stop-opacity="0.8"/>
+    </radialGradient>
+
+    <linearGradient id="coreStroke">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.4"/>
+        <stop offset="100%" stop-color="#E0E7FF" stop-opacity="0.7"/>
+    </linearGradient>
+
+    <!-- 微光增强 -->
+    <filter id="glow">
+        <feGaussianBlur stdDeviation="1.2" result="blur"/>
+        <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
     </filter>
 </svg>
