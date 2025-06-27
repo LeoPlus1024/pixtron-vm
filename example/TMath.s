@@ -33,7 +33,7 @@
 @end
 
 @func _testIntDiv(int a,int b,int except) : void
-    %locals 2
+    %locals 3
     %stacks 2
     load.i32 $0
     load.i32 $1
@@ -48,7 +48,7 @@ fail:
 @end
 
 @func _testDoubleDiv(double a,double b,double except) : void
-    %locals 2
+    %locals 3
     %stacks 2
     load.f64 $0
     load.f64 $1

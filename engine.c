@@ -26,7 +26,7 @@ static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, 
     const Type t0 = target_operand->type;
     const Type t1 = source_operand->type;
     if (t0 != t1) {
-        context->throwException(
+        context->throw_exception(
             context,
             "Operand type mismatch the first operand is:'%s' and the second operand is:'%s'.",
             TYPE_NAME[t0],
@@ -42,11 +42,11 @@ static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, 
         APPLY_COMPOUND_OPERATOR(target_operand, source_operand, *, context);
     } else if (opcode == DIV) {
         if (TYPE_SMALL_INTEGER(t1) && source_operand->i32 == 0 || TYPE_BIGGER_INTEGER(t1) && source_operand->i64 == 0) {
-            context->throwException(context, "Divisor cannot be zero.");
+            context->throw_exception(context, "Divisor cannot be zero.");
         }
         APPLY_COMPOUND_OPERATOR(target_operand, source_operand, /, context);
     } else {
-        context->throwException(context, "Canonical binary operation '%02x' is not supported.", opcode);
+        context->throw_exception(context, "Canonical binary operation '%02x' is not supported.", opcode);
     }
 }
 
@@ -60,10 +60,13 @@ static inline void pvm_goto(RuntimeContext *context) {
 static inline void pvm_ifeq_ifnq(RuntimeContext *context, const Opcode opcode) {
     const VMValue *value = pvm_pop_operand(context);
     const bool ifeq = opcode == IFEQ;
-    const int16_t offset = (int16_t) pvm_bytecode_read_u16(context);
     VirtualStackFrame *frame = context->frame;
+    const uint16_t pc = frame->pc;
     if ((value->i32 == 0) == ifeq) {
-        frame->pc = frame->pc + offset - 2;
+        const int16_t offset = (int16_t) pvm_bytecode_read_u16(context);
+        frame->pc = pc + offset - 2;
+    } else {
+        frame->pc = pc + 2;
     }
 }
 
@@ -104,7 +107,7 @@ extern inline void pvm_cmp(RuntimeContext *context, const Opcode opcode) {
             targe_operand->i32 = SIGN_CMP(targe_operand->i64, source_operand->i64);
             break;
         default:
-            context->throwException(context, "unsupported cmp opcode:%02x", opcode);
+            context->throw_exception(context, "unsupported cmp opcode:%02x", opcode);
     }
     targe_operand->type = TYPE_INT;
 }
@@ -146,16 +149,18 @@ static inline void pvm_load(RuntimeContext *context) {
         pvm_bytecode_read_imm(context, type, &value);
     } else {
         const uint16_t index = pvm_bytecode_read_u16(context);
-        // Local
-        if (source == LOCAL) {
-            pvm_get_local_value(context, index, &value);
-        } else if (source == CONST) {
-            pvm_get_klass_constant(context, index, &value);
-        } else {
-            pvm_get_klass_field(context, index, &value);
+        switch (source) {
+            case LOCAL:
+                pvm_get_local_value(context, index, &value);
+                break;
+            case CONST:
+                pvm_get_klass_constant(context, index, &value);
+                break;
+            default:
+                pvm_get_klass_field(context, index, &value);
         }
         if (type != value.type) {
-            context->throwException(
+            context->throw_exception(
                 context,
                 "Load value type mismatch the expected type is:'%s' and the actual type is:'%s'",
                 TYPE_NAME[type],
@@ -198,7 +203,7 @@ extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...) {
         frame->pc, // pc
         frame->pc, // pc
         frame->sp, // sp
-        context->stackDepth, // stack deep
+        context->stack_depth, // stack deep
         frame->max_stacks, // max stack deep
         (void *) frame->locals, // local
         (void *) frame->operand_stack // operand stack address
@@ -223,7 +228,7 @@ static inline VMValue *pvm_ret(RuntimeContext *context) {
     } else if (value != NULL) {
         pvm_push_operand(context, value);
     }
-    pvm_stack_fram_dispose(&frame);
+    // pvm_stack_fram_dispose(&frame);
     return retVal;
 }
 
@@ -242,7 +247,7 @@ static void inline pvm_assert(RuntimeContext *context) {
     VMValue value;
     pvm_get_klass_constant(context, index, &value);
     if (value.type != TYPE_STRING) {
-        context->throwException(context, "Except a string type but it is '%s'", TYPE_NAME[value.type]);
+        context->throw_exception(context, "Except a string type but it is '%s'", TYPE_NAME[value.type]);
     }
     const char *message;
     const String *obj = (String *) value.obj;
@@ -251,7 +256,7 @@ static void inline pvm_assert(RuntimeContext *context) {
     } else {
         message = "??";
     }
-    context->throwException(context, "Assert fail:%s", message);
+    context->throw_exception(context, "Assert fail:%s", message);
 }
 
 
@@ -259,7 +264,7 @@ static void inline pvm_ishx(RuntimeContext *context, Opcode opcode) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
     if (target_operand->type != TYPE_INT || source_operand->type != TYPE_INT) {
-        context->throwException(context, "ishl instruction only support small integer.");
+        context->throw_exception(context, "ishl instruction only support small integer.");
     }
     const int32_t bit = source_operand->i32 & 0x1F;
 
@@ -284,7 +289,7 @@ static void inline pvm_lshx(RuntimeContext *context, Opcode opcode) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
     if (TYPE_BIGGER_INTEGER(target_operand->type) || source_operand->type != TYPE_INT) {
-        context->throwException(
+        context->throw_exception(
             context, "lshl instruction the first operand must is long and the second operand must is integer.");
     }
     const int32_t bit = source_operand->i32 & 0x3F;
@@ -312,9 +317,9 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     RuntimeContext *context = pvm_mem_calloc(sizeof(RuntimeContext));
     context->vm = method->klass->vm;
     context->exit = false;
-    context->maxStackDepth = VM_MAX_STACK_DEPTH;
-    context->stackDepth = 0;
-    context->throwException = pvm_thrown_exception;
+    context->max_stack_depth = VM_MAX_STACK_DEPTH;
+    context->stack_depth = 0;
+    context->throw_exception = pvm_thrown_exception;
     const VMValue **args = callMethodParam->args;
     pvm_create_stack_frame(context, method, callMethodParam->argv, args);
 
@@ -387,7 +392,7 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
                 pvm_lshx(context, opcode);
                 break;
             default:
-                context->throwException(context, "Unsupported opcode: %02x", opcode);
+                context->throw_exception(context, "Unsupported opcode: %02x", opcode);
         }
     }
     g_thread_exit(retVal);

@@ -133,16 +133,16 @@ struct _RuntimeContext;
 typedef struct _RuntimeContext {
     volatile bool exit;
     // Current stack depth
-    uint32_t stackDepth;
+    uint32_t stack_depth;
     // Max stack depth
-    uint32_t maxStackDepth;
+    uint32_t max_stack_depth;
     // Stack top frame
     VirtualStackFrame *frame;
     // VM pointer
     const PixtronVM *vm;
 
     // Exception throw callback
-    void (*throwException)(struct _RuntimeContext *context, gchar *fmt, ...);
+    void (*throw_exception)(struct _RuntimeContext *context, gchar *fmt, ...);
 } RuntimeContext;
 
 

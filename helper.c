@@ -105,7 +105,7 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
         const MethodParam *param = method->args + i;
         VMValue *operand = pvm_pop_operand(context);
         if (operand->type != param->type) {
-            context->throwException(context, "FFI call only one argument that is the same type.");
+            context->throw_exception(context, "FFI call only one argument that is the same type.");
         }
         const Type type = param->type;
         switch (type) {
@@ -167,7 +167,7 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
     };
     const bool success = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, argv, &rtype, arg_types) == FFI_OK;
     if (!success) {
-        context->throwException(context, "FFI init failed.");
+        context->throw_exception(context, "FFI init failed.");
     }
     void *fptr = method->native_handle;
     if (ret != TYPE_VOID) {

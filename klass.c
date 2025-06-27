@@ -319,7 +319,7 @@ static inline const Klass *pvm_check_field_index(RuntimeContext *context, const 
     const Klass *klass = frame->method->klass;
     const guint count = klass->fieldCount;
     if (index >= count) {
-        context->throwException(context, "Klass index out of bounds.");
+        context->throw_exception(context, "Klass index out of bounds.");
     }
     return klass;
 }
@@ -337,7 +337,7 @@ extern inline void pvm_set_klass_field(RuntimeContext *context, const guint16 in
     const VMValue *_value = field->value;
     // Type check
     if (_value->type != value->type) {
-        context->throwException(context, "Klass field type is:%d but value type is:%d.", _value->type, value->type);
+        context->throw_exception(context, "Klass field type is:%d but value type is:%d.", _value->type, value->type);
     }
     memcpy(field->value, value, VM_VALUE_SIZE);
 }
@@ -346,7 +346,7 @@ extern inline void pvm_get_klass_constant(RuntimeContext *context, const uint16_
     const Klass *klass = context->frame->method->klass;
     const uint16_t constSize = klass->const_size;
     if (index >= constSize) {
-        context->throwException(context, "Constant pool index out of bounds: requested #%d (valid range: 0-%d)", index,
+        context->throw_exception(context, "Constant pool index out of bounds: requested #%d (valid range: 0-%d)", index,
                                 constSize);
     }
     memcpy(value, klass->constants[index], VM_VALUE_SIZE);
@@ -356,7 +356,7 @@ extern inline Method *pvm_get_method(RuntimeContext *context, const uint16_t ind
     const Klass *klass = context->frame->method->klass;
     const uint32_t method_count = klass->method_count;
     if (index >= method_count) {
-        context->throwException(context, "Method index out of range current index is [%d] but max index is [%d].",
+        context->throw_exception(context, "Method index out of range current index is [%d] but max index is [%d].",
                                 index, method_count);
         return NULL;
     }

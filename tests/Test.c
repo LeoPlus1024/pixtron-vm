@@ -12,4 +12,5 @@ int main(int argc, char *argv[]) {
     exec_main("TString");
     exec_main("TLogic");
     exec_main("TMath");
+    exec_main("TBaseline");
 }

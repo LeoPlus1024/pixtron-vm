@@ -9,7 +9,7 @@ static inline void pvm_bytecode_index_check(RuntimeContext *context,
     if (pc + size <= method->end_offset) {
         return;
     }
-    context->throwException(context, "Bytecode index out of bounds.");
+    context->throw_exception(context, "Bytecode index out of bounds.");
 }
 
 extern inline uint8_t pvm_bytecode_read_u8(RuntimeContext *context) {
