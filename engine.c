@@ -238,7 +238,6 @@ static inline void pvm_call(RuntimeContext *context) {
 }
 
 static void inline pvm_assert(RuntimeContext *context) {
-#ifdef VM_DEBUG_ENABLE
     const uint16_t index = pvm_bytecode_read_u16(context);
     VMValue value;
     pvm_get_klass_constant(context, index, &value);
@@ -253,9 +252,6 @@ static void inline pvm_assert(RuntimeContext *context) {
         message = "??";
     }
     context->throwException(context, "Assert fail:%s", message);
-#else
-    context->frame->pc += 3;
-#endif
 }
 
 

@@ -32,21 +32,21 @@ public class BinaryHeader implements ISerializable {
         int length = 6;
         int fieldSize = this.fieldMetas.size();
         byte[][] fieldBytes = new byte[fieldSize][];
-        int maxVarSize = 0;
+        int maxFieldSize = 0;
         if (fieldSize > 0) {
             for (int i = 0; i < fieldSize; i++) {
                 byte[] array = fieldMetas.get(i).toBytes();
                 fieldBytes[i] = array;
-                maxVarSize += array.length;
+                maxFieldSize += array.length;
             }
         }
         int funcSize = this.funcMetas.size();
-        byte[][] funcArrays = new byte[funcSize][];
+        byte[][] funcBytes = new byte[funcSize][];
         int maxFuncSize = 0;
         if (funcSize > 0) {
             for (int i = 0; i < funcSize; i++) {
                 byte[] array = funcMetas.get(i).toBytes();
-                funcArrays[i] = array;
+                funcBytes[i] = array;
                 maxFuncSize += array.length;
             }
         }
@@ -67,22 +67,23 @@ public class BinaryHeader implements ISerializable {
         }
         int pos = 0;
         int constSize = constants.size();
-        byte[] data = new byte[length + maxFuncSize + maxVarSize
-                + 8
-                + 2
-                // library flag
-                + 1
-                + maxConstSize
-                + libraryLength];
+        byte[] data = new byte[length + maxFuncSize + maxFieldSize
+            + 8
+            + 2
+            // library flag
+            + 1
+            + maxConstSize
+            + libraryLength
+            ];
 
         pos = ByteUtil.appendInt2Bytes(data, pos, magic);
         pos = ByteUtil.appendShort2Bytes(data, pos, version.getVersion());
-        data[pos++] = libraryLength == 0 ? (byte) 0 : (byte) 1;
+        data[pos++] = libraryLength == 0 ? (byte)0 : (byte)1;
         if (libraryLength > 0) {
             System.arraycopy(libraryBytes, 0, data, pos, libraryLength);
             pos += libraryLength;
         }
-        pos = ByteUtil.appendShort2Bytes(data, pos, (short) constSize);
+        pos = ByteUtil.appendShort2Bytes(data, pos, (short)constSize);
 
         for (byte[] constByte : constBytes) {
             System.arraycopy(constByte, 0, data, pos, constByte.length);
@@ -98,7 +99,7 @@ public class BinaryHeader implements ISerializable {
 
         pos = ByteUtil.appendInt2Bytes(data, pos, funcSize);
 
-        for (byte[] array : funcArrays) {
+        for (byte[] array : funcBytes) {
             System.arraycopy(array, 0, data, pos, array.length);
             pos += array.length;
         }

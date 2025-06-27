@@ -31,7 +31,6 @@ public class Parser {
         return context;
     }
 
-
     private void parseExpr(Context context) {
         if (tokenSequence.isEof()) {
             throw ParserException.create(tokenSequence.consume(), "Unexpected end of file.");
@@ -49,7 +48,7 @@ public class Parser {
                 default -> {
                     Token token = this.tokenSequence.consume();
                     if (tokenKind == TokenKind.IDENTIFIER
-                            && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
+                        && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
                         context.addLabel(token.getValue());
                     } else {
                         throw ParserException.create(token, "Unexpected token.");
@@ -101,11 +100,11 @@ public class Parser {
         Helper.expect(this.tokenSequence, Constants.FROM);
         Token nameSpaceToken = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);
         for (String method : methods) {
-            FuncMeta funcMeta = new FuncMeta(true, nameSpaceToken.getValue(), new Id(method), Type.VOID, List.of(), false, null);
+            FuncMeta funcMeta = new FuncMeta(true, nameSpaceToken.getValue(), new Id(method), Type.VOID, List.of(),
+                false, null);
             context.addExpr(new Func(context, funcMeta));
         }
     }
-
 
     private void parseField(Context context) {
         Type type = Helper.expect(this.tokenSequence, TokenKind.TYPE).toType();
@@ -133,10 +132,9 @@ public class Parser {
         Helper.expect(this.tokenSequence, Constants.LEFT_PAREN);
         Token libraryToken = Helper.expect(this.tokenSequence, TokenKind.STRING);
         Helper.expect(this.tokenSequence, Constants.RIGHT_PAREN);
-        ASTBuilder builder = (ASTBuilder) context;
+        ASTBuilder builder = (ASTBuilder)context;
         builder.setLibrary(libraryToken.getValue());
     }
-
 
     private Expr parseFunc(final Context context) {
         boolean isNativeFunc = false;
@@ -174,7 +172,8 @@ public class Parser {
             }
             Helper.expect(tokenSequence, Constants.RIGHT_PAREN);
         }
-        boolean declareRetType = this.tokenSequence.checkToken(token -> token != null && token.valEqual(Constants.COLON));
+        boolean declareRetType = this.tokenSequence.checkToken(
+            token -> token != null && token.valEqual(Constants.COLON));
         Type retType = null;
         if (declareRetType) {
             retType = Helper.expect(tokenSequence, TokenKind.TYPE).toType();
@@ -190,22 +189,23 @@ public class Parser {
 
     private void convertVMOpts(Context context) {
         VMOption option = VMOption.of(Helper.expect(this.tokenSequence, TokenKind.VM_OPTIONS));
-        Object value = Helper.convertLiteral(Helper.expect(this.tokenSequence, TokenKind.STRING, TokenKind.INTEGER, TokenKind.HEX, TokenKind.FLOAT));
+        Object value = Helper.convertLiteral(
+            Helper.expect(this.tokenSequence, TokenKind.STRING, TokenKind.INTEGER, TokenKind.HEX, TokenKind.FLOAT));
         context.setOption(option, value);
     }
-
 
     private void parseOpcode(final Context context) {
         Token token = this.tokenSequence.consume();
         Opcode opcode = Opcode.of(token);
         Expr expr = switch (opcode) {
-            case RET -> new Ret();
             case ASSERT -> parserAssert();
             case LOAD, GET_FIELD, LOAD_CONST -> parseLoadExpr(opcode);
             case STORE, SET_FIELD -> parseStoreExpr(opcode);
-            case ADD, SUB, MUL, DIV -> new Math(opcode);
-            case F2I, F2L, I2L, I2F, L2I, L2F -> new Cast(opcode);
-            case ICMP, LCMP, DCMP -> new XCmp(opcode);
+            case ADD, SUB, MUL, DIV, F2I,
+                 F2L, I2L, I2F, L2I, L2F,
+                 ICMP, LCMP, DCMP, RET,
+                 ISHL, ISHR, IUSHR, LSHL,
+                 LSHR, LUSHR -> new Simple(opcode);
             case CALL -> parserCallExpr();
             case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT -> {
                 String label = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
@@ -249,7 +249,7 @@ public class Parser {
             if (!(value instanceof Number)) {
                 throw new ParserException("Load only support number immediate.");
             }
-            immValue = (Number) value;
+            immValue = (Number)value;
         } else {
             index = Helper.convertVarRefIndex(token);
         }
