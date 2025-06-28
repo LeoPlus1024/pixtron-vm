@@ -93,7 +93,7 @@ static inline void pvm_less_granter_than_equal(RuntimeContext *context, Opcode o
     }
 }
 
-extern inline void pvm_cmp(RuntimeContext *context, const Opcode opcode) {
+static inline void pvm_cmp(RuntimeContext *context, const Opcode opcode) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *targe_operand = pvm_get_operand(context);
     switch (opcode) {
@@ -112,7 +112,7 @@ extern inline void pvm_cmp(RuntimeContext *context, const Opcode opcode) {
     targe_operand->type = TYPE_INT;
 }
 
-static void pvm_conv(RuntimeContext *context, const Opcode opcode) {
+static inline void pvm_conv(RuntimeContext *context, const Opcode opcode) {
     VMValue *value = pvm_get_operand(context);
     if (opcode == I2F || opcode == L2F) {
         pvm_value_to_double(value);
@@ -123,7 +123,7 @@ static void pvm_conv(RuntimeContext *context, const Opcode opcode) {
     }
 }
 
-static void pvm_store(RuntimeContext *context) {
+static inline void pvm_store(RuntimeContext *context) {
     const VMValue *value = pvm_pop_operand(context);
     const uint8_t subOps = pvm_bytecode_read_u8(context);
     const DataSource s = OPS_DATA_SOURCE(subOps);

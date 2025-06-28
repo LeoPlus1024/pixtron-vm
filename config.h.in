@@ -1,5 +1,5 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 #define VM_MAX_STACK_DEPTH (@VM_MAX_STACK_DEPTH@)
-#define VM_DEBUG_ENABLE (1)
+#define VM_DEBUG_ENABLE (@VM_DEBUG_ENABLE@)
 #endif

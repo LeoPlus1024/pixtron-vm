@@ -83,7 +83,7 @@ extern double pvm_value_get_double(Value *value) {
 
 extern VM *pvm_init(const char *klass_path) {
     // Debug mode enable log output
-#ifdef VM_DEBUG_ENABLE
+#if VM_DEBUG_ENABLE
     g_log_set_debug_enabled(TRUE);
 #endif
     setlocale(LC_ALL, "");

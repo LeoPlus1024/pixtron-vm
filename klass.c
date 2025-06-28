@@ -8,13 +8,12 @@
 #include "itype.h"
 #include "helper.h"
 #include "istring.h"
-#include "config.h"
 
 #define MAGIC (0xFFAABBCC)
 #define FILE_SUFFIX_LEN (strlen(".klass"))
 #define IS_KLASS_FILE(fileName) (g_str_has_suffix(fileName, ".klass"))
 
-static char *PixtronVM_MethodToString(const Method *method) {
+static inline  char *PixtronVM_MethodToString(const Method *method) {
     GString *str = g_string_new(NULL);
     const Type retType = method->ret;
     const char *retTypeName;
@@ -254,7 +253,7 @@ finally:
     return klass;
 }
 
-static Klass *pvm_load_klass(const PixtronVM *vm, const char *klassName, GError **error) {
+static inline  Klass *pvm_load_klass(const PixtronVM *vm, const char *klassName, GError **error) {
     GFile *dir = NULL;
     Klass *klass = NULL;
     GFile *klassFile = NULL;

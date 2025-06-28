@@ -36,7 +36,7 @@ extern inline void pvm_bytecode_read_imm(RuntimeContext *context, const Type typ
     frame->pc = pc + size;
 }
 
-extern inline guint32 pvm_bytecode_read_u32(RuntimeContext *context) {
+extern inline uint32_t pvm_bytecode_read_u32(RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
     const Method *method = frame->method;
     const Klass *klass = method->klass;
