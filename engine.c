@@ -14,7 +14,7 @@
 #include "istring.h"
 #include "kni.h"
 
-#ifdef VM_DEBUG_ENABLE
+#if VM_DEBUG_ENABLE
 #include "op_gen.h"
 #endif
 
@@ -64,7 +64,7 @@ static inline void pvm_ifeq_ifnq(RuntimeContext *context, const Opcode opcode) {
     const uint16_t pc = frame->pc;
     if ((value->i32 == 0) == ifeq) {
         const int16_t offset = (int16_t) pvm_bytecode_read_u16(context);
-        frame->pc = pc + offset - 2;
+        frame->pc = pc + offset;
     } else {
         frame->pc = pc + 2;
     }
@@ -228,7 +228,7 @@ static inline VMValue *pvm_ret(RuntimeContext *context) {
     } else if (value != NULL) {
         pvm_push_operand(context, value);
     }
-    // pvm_stack_fram_dispose(&frame);
+    pvm_stack_fram_dispose(&frame);
     return retVal;
 }
 
@@ -326,7 +326,7 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     VMValue *retVal = NULL;
     while (!context->exit) {
         const Opcode opcode = pvm_bytecode_read_u8(context);
-#ifdef VM_DEBUG_ENABLE
+#if VM_DEBUG_ENABLE
         const Method *m = context->frame->method;
         g_debug("%s : %s", m->toString(m), pvm_opcode_name(opcode));
 #endif
