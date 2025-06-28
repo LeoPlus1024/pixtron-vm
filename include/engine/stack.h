@@ -1,9 +1,6 @@
 #ifndef VIRTUALSTACK_H
 #define VIRTUALSTACK_H
 #include "itype.h"
-
-extern inline void pvm_stack_fram_dispose(VirtualStackFrame **frame);
-
 /**
  * Pushes a value onto the RuntimeContext's operand stack.
  *
@@ -113,9 +110,6 @@ extern inline void pvm_set_local_value(RuntimeContext *context, uint16_t index, 
 * @param variant Pointer to store the retrieved variant value
 */
 extern inline void pvm_get_local_value(RuntimeContext *context, uint16_t index, VMValue *value);
-
-
-extern inline void pvm_move_stack_pointer(RuntimeContext *context, int32_t offset);
 
 /**
  * Retrieves the current top operand pointer from the VM's operand stack.
