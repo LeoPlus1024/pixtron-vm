@@ -88,10 +88,10 @@ struct _VirtualStackFrame;
 typedef struct _VirtualStackFrame {
     // Method
     const Method *method;
-    // local variable
-    VMValue *locals;
-    // Operand stack
-    VMValue *operand_stack;
+    // // local variable
+    // VMValue *locals;
+    // // Operand stack
+    // VMValue *operand_stack;
     // Program counter
     uint32_t pc;
     // Stack pointer
@@ -132,15 +132,18 @@ struct _RuntimeContext;
 
 typedef struct _RuntimeContext {
     volatile bool exit;
+    // Current stack pointer
+    uint32_t sp;
+    // Max stack depth
+    uint32_t stack_size;
     // Current stack depth
     uint32_t stack_depth;
-    // Max stack depth
-    uint32_t max_stack_depth;
     // Stack top frame
     VirtualStackFrame *frame;
     // VM pointer
     const PixtronVM *vm;
-
+    // Stack
+    const uint8_t *stack;
     // Exception throw callback
     void (*throw_exception)(struct _RuntimeContext *context, gchar *fmt, ...);
 } RuntimeContext;

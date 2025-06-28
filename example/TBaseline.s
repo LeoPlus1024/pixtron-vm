@@ -38,7 +38,7 @@ ret1:
     %locals 1
     call currentTimeNano
     store.i64 $0
-    load.i32 80
+    load.i32 40
     call fib
     load.i64 $0
     call currentTimeNano

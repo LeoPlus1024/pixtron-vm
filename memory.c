@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern void *pvm_mem_calloc(const size_t size) {
+extern inline void *pvm_mem_calloc(const size_t size) {
     void *ptr = calloc(1, size);
     if (ptr == NULL) {
         fprintf(stderr, "Out of memory.\n");
@@ -17,7 +17,7 @@ extern void *pvm_mem_calloc(const size_t size) {
     return ptr;
 }
 
-extern void pvm_mem_free(void **ref) {
+extern inline void pvm_mem_free(void **ref) {
     if (ref == NULL || *ref == NULL) {
         return;
     }
@@ -26,7 +26,7 @@ extern void pvm_mem_free(void **ref) {
     *ref = NULL;
 }
 
-extern void *pvm_mem_cpy(const void *ptr, const size_t size) {
+extern inline void *pvm_mem_cpy(const void *ptr, const size_t size) {
     if (ptr == NULL || size == 0) {
         return NULL;
     }

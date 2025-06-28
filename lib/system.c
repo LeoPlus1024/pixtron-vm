@@ -2,14 +2,14 @@
 #include <stdio.h>
 
 #include "itype.h"
-#include "memory.h"
+
 
 int64_t currentTimeNano() {
     struct timespec ts;
-    if (timespec_get(&ts, TIME_UTC) != TIME_UTC) {
+    if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
         return -1;
     }
-    return ts.tv_nsec;
+    return ts.tv_sec * 1000000000LL + ts.tv_nsec;;
 }
 
 void printNanoDiff(const int64_t base, const int64_t now) {

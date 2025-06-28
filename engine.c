@@ -191,9 +191,7 @@ extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...) {
         "*                                                                             *\n"
         "* Execution State:                                                            *\n"
         "*   Program Counter: 0x%08x (instruction #%d)                         *\n"
-        "*   Stack Pointer:   0x%08x (depth: %d/%d)                             *\n"
-        "*   Locals Address:  0x%p                                    *\n"
-        "*   Operand Stack:   0x%p                                    *\n"
+        "*   Stack Pointer:   0x%08x (depth: %d)                             *\n"
         "*                                                                             *\n"
         "*******************************************************************************\n\n",
         threadName ? threadName : "<unnamed-thread>",
@@ -202,11 +200,9 @@ extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...) {
         message, // error message
         frame->pc, // pc
         frame->pc, // pc
-        frame->sp, // sp
+        frame, // sp
         context->stack_depth, // stack deep
-        frame->max_stacks, // max stack deep
-        (void *) frame->locals, // local
-        (void *) frame->operand_stack // operand stack address
+        frame->max_stacks // max stack deep
     );
     g_free(methodName);
     g_free((gpointer) message);
@@ -214,7 +210,7 @@ extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...) {
 }
 
 static inline VMValue *pvm_ret(RuntimeContext *context) {
-    VirtualStackFrame *frame = context->frame;
+    const VirtualStackFrame *frame = context->frame;
     const VMValue *value = NULL;
     const bool hasRetVal = frame->method->ret != TYPE_VOID;
     if (hasRetVal) {
@@ -228,7 +224,6 @@ static inline VMValue *pvm_ret(RuntimeContext *context) {
     } else if (value != NULL) {
         pvm_push_operand(context, value);
     }
-    pvm_stack_fram_dispose(&frame);
     return retVal;
 }
 
@@ -311,15 +306,31 @@ static void inline pvm_lshx(RuntimeContext *context, Opcode opcode) {
     }
 }
 
+static inline RuntimeContext *pvm_init_runtime_context() {
+    RuntimeContext *context = pvm_mem_calloc(sizeof(RuntimeContext));
+    context->sp = 0;
+    context->vm = NULL;
+    context->frame = NULL;
+    context->exit = false;
+    context->stack_size = VM_STACK_SIZE;
+    context->throw_exception = pvm_thrown_exception;
+    context->stack = pvm_mem_calloc(VM_STACK_SIZE);
+    return context;
+}
+
+static inline void pvm_free_runtime_context(RuntimeContext **context) {
+    if (context == NULL || *context == NULL) {
+        return;
+    }
+    RuntimeContext *self = *context;
+    pvm_mem_free(TO_REF(self->stack));
+    pvm_mem_free(CAST_REF(context));
+}
+
 
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
+    RuntimeContext *context = pvm_init_runtime_context();
     const Method *method = callMethodParam->method;
-    RuntimeContext *context = pvm_mem_calloc(sizeof(RuntimeContext));
-    context->vm = method->klass->vm;
-    context->exit = false;
-    context->max_stack_depth = VM_MAX_STACK_DEPTH;
-    context->stack_depth = 0;
-    context->throw_exception = pvm_thrown_exception;
     const VMValue **args = callMethodParam->args;
     pvm_create_stack_frame(context, method, callMethodParam->argv, args);
 
@@ -395,5 +406,6 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
                 context->throw_exception(context, "Unsupported opcode: %02x", opcode);
         }
     }
+    pvm_free_runtime_context(&context);
     g_thread_exit(retVal);
 }

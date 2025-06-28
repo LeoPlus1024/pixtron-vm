@@ -4,7 +4,7 @@ project(PixotronVM C)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(VM_DEBUG_ENABLE "0")
-set(VM_MAX_STACK_DEPTH "2048")
+set(VM_STACK_SIZE "1024*1024")
 
 find_program(Python_EXECUTABLE python NO_CMAKE_FIND_ROOT_PATH)
 # if python can't find try find python3
