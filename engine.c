@@ -57,7 +57,7 @@ static inline void pvm_goto(RuntimeContext *context) {
     frame->pc = frame->pc + offset - 2;
 }
 
-static inline void pvm_ifeq_ifnq(RuntimeContext *context, const Opcode opcode) {
+static inline void pvm_ifeq_ifne(RuntimeContext *context, const Opcode opcode) {
     const VMValue *value = pvm_pop_operand(context);
     const bool ifeq = opcode == IFEQ;
     VirtualStackFrame *frame = context->frame;
@@ -335,77 +335,147 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     pvm_create_stack_frame(context, method, callMethodParam->argv, args);
 
     VMValue *retVal = NULL;
-    while (!context->exit) {
-        const Opcode opcode = pvm_bytecode_read_u8(context);
 #if VM_DEBUG_ENABLE
         const Method *m = context->frame->method;
         g_debug("%s : %s", m->toString(m), pvm_opcode_name(opcode));
 #endif
-        switch (opcode) {
-            case LOAD:
-                pvm_load(context);
-                break;
-            case STORE:
-                pvm_store(context);
-                break;
-            case ADD:
-            case SUB:
-            case MUL:
-            case DIV:
-                pvm_exec_canonical_binary_operation(context, opcode);
-                break;
-            case GOTO:
-                pvm_goto(context);
-                break;
-            case IFEQ:
-            case IFNE:
-                pvm_ifeq_ifnq(context, opcode);
-                break;
-            case IFLE:
-            case IFLT:
-            case IFGE:
-            case IFGT:
-                pvm_less_granter_than_equal(context, opcode);
-                break;
-            case ICMP:
-            case DCMP:
-            case LCMP:
-                pvm_cmp(context, opcode);
-                break;
-            case I2L:
-            case I2F:
-            case L2I:
-            case L2F:
-            case F2I:
-            case F2L:
-                pvm_conv(context, opcode);
-                break;
-            case RET:
-                retVal = pvm_ret(context);
-                break;
-            case POP:
-                pvm_pop_operand(context);
-                break;
-            case CALL:
-                pvm_call(context);
-                break;
-            case ASSERT:
-                pvm_assert(context);
-                break;
-            case ISHL:
-            case ISHR:
-            case IUSHR:
-                pvm_ishx(context, opcode);
-                break;
-            case LSHL:
-            case LSHR:
-            case LUSHR:
-                pvm_lshx(context, opcode);
-                break;
-            default:
-                context->throw_exception(context, "Unsupported opcode: %02x", opcode);
-        }
+    static void *opcode_table[] = {
+        &&load,
+        &&store,
+        &&add,
+        &&sub,
+        &&mul,
+        &&div,
+        &&goto0,
+        &&ret0,
+        &&i2l,
+        &&i2f,
+        &&l2i,
+        &&l2f,
+        &&f2i,
+        &&f2l,
+        &&call,
+        &&ifeq,
+        &&ifne,
+        &&iflt,
+        &&ifge,
+        &&ifgt,
+        &&ifle,
+        &&icmp,
+        &&lcmp,
+        &&dcmp,
+        &&pop,
+        &&assert0,
+        &&ishl,
+        &&ishr,
+        &&iushr,
+        &&lshl,
+        &&lshr,
+        &&lushr,
+    };
+#define DISPATCH goto *opcode_table[pvm_bytecode_read_u8(context)];
+    DISPATCH
+load:
+    pvm_load(context);
+    DISPATCH
+store:
+    pvm_store(context);
+    DISPATCH
+add:
+    pvm_exec_canonical_binary_operation(context, ADD);
+    DISPATCH
+sub:
+    pvm_exec_canonical_binary_operation(context, SUB);
+    DISPATCH
+mul:
+    pvm_exec_canonical_binary_operation(context, MUL);
+    DISPATCH
+div:
+    pvm_exec_canonical_binary_operation(context, DIV);
+    DISPATCH
+goto0:
+    pvm_goto(context);
+    DISPATCH
+ret0:
+    retVal = pvm_ret(context);
+    if (context->exit) {
+        goto finally;
     }
+    DISPATCH
+i2l:
+    pvm_conv(context, I2L);
+    DISPATCH
+i2f:
+    pvm_conv(context, I2F);
+    DISPATCH
+l2i:
+    pvm_conv(context, L2I);
+    DISPATCH
+l2f:
+    pvm_conv(context, L2F);
+    DISPATCH
+f2i:
+    pvm_conv(context, F2I);
+    DISPATCH
+f2l:
+    pvm_conv(context, F2L);
+    DISPATCH
+call:
+    pvm_call(context);
+    DISPATCH
+ifeq:
+    pvm_ifeq_ifne(context, IFEQ);
+    DISPATCH
+ifne:
+    pvm_ifeq_ifne(context, IFNE);
+    DISPATCH
+ifle:
+    pvm_less_granter_than_equal(context, IFLE);
+    DISPATCH
+ifgt:
+    pvm_less_granter_than_equal(context, IFGT);
+    DISPATCH
+ifge:
+    pvm_less_granter_than_equal(context, IFGE);
+    DISPATCH
+iflt:
+    pvm_less_granter_than_equal(context, IFLT);
+    DISPATCH
+icmp:
+    pvm_cmp(context, ICMP);
+    DISPATCH
+lcmp:
+    pvm_cmp(context, LCMP);
+    DISPATCH
+dcmp:
+    pvm_cmp(context, DCMP);
+    DISPATCH
+pop:
+    pvm_pop_operand(context);
+    DISPATCH
+assert0:
+    pvm_assert(context);
+    DISPATCH
+ishl:
+    pvm_ishx(context, ISHL);
+    DISPATCH
+ishr:
+    pvm_ishx(context, ISHR);
+    DISPATCH
+iushr:
+    pvm_ishx(context, IUSHR);
+    DISPATCH
+lshl:
+    pvm_lshx(context, LSHL);
+    DISPATCH
+lshr:
+    pvm_lshx(context, LSHR);
+    DISPATCH
+lushr:
+    pvm_lshx(context, LUSHR);
+    DISPATCH
+finally
+:
     pvm_free_runtime_context(&context);
     g_thread_exit(retVal);
 }
