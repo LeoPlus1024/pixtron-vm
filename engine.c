@@ -373,7 +373,22 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         &&lshr,
         &&lushr,
     };
-#define DISPATCH goto *opcode_table[pvm_bytecode_read_u8(context)];
+
+#define DISPATCH  do {  \
+        Opcode opcode = pvm_bytecode_read_u8(context); \
+        switch (opcode) {    \
+            case LOAD:      \
+                pvm_load(context);  \
+                break;                 \
+            case STORE:                   \
+                pvm_store(context);        \
+                break;                        \
+            default:                        \
+                goto *opcode_table[opcode];         \
+        }                                \
+        goto dispath0;            \
+    }while (0);
+dispath0:
     DISPATCH
 load:
     pvm_load(context);
