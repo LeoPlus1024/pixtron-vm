@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 typedef enum:uint8_t {
-    #include "opcode.txt"
+#include "opcode.txt"
 } Opcode;
 
 // 类型标记（操作数中使用）
@@ -17,7 +17,8 @@ typedef enum:uint16_t {
     TYPE_BOOL,
     TYPE_REF,
     TYPE_VOID,
-    TYPE_STRING
+    TYPE_STRING,
+    TYPE_ARRAY,
 } Type;
 
 typedef enum {
@@ -36,7 +37,8 @@ static const uint8_t TYPE_SIZE[] = {
     [TYPE_LONG] = 8,
     [TYPE_DOUBLE] = 8,
     [TYPE_BOOL] = 1,
-    [TYPE_REF] = 8
+    [TYPE_REF] = 8,
+    [TYPE_ARRAY] = 8,
 };
 
 static const char *const TYPE_NAME[] = {
@@ -49,7 +51,8 @@ static const char *const TYPE_NAME[] = {
     "bool",
     "object",
     "void",
-    "string"
+    "string",
+    "array"
 };
 
 typedef enum:uint16_t {

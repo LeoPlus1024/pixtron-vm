@@ -40,14 +40,15 @@ public enum Opcode {
     IUSHR("iushr", 28),
     LSHL("ishl", 29),
     LSHR("ishr", 30),
-    LUSHR("lushr", 21);
+    LUSHR("lushr", 21),
+    NEW_ARRAY("newarray", 32);
 
     private final byte value;
     private final String mnemonic;
 
     Opcode(String mnemonic, int value) {
         this.mnemonic = mnemonic;
-        this.value = (byte)value;
+        this.value = (byte) value;
     }
 
     public byte getValue() {
@@ -60,9 +61,9 @@ public enum Opcode {
 
     public static Opcode of(String value) {
         return Arrays.stream(values())
-            .filter(it -> it.mnemonic.equals(value))
-            .findAny()
-            .orElse(null);
+                .filter(it -> it.mnemonic.equals(value))
+                .findAny()
+                .orElse(null);
     }
 
     public static Opcode of(Token token) {

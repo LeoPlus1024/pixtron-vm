@@ -48,7 +48,7 @@ public class Parser {
                 default -> {
                     Token token = this.tokenSequence.consume();
                     if (tokenKind == TokenKind.IDENTIFIER
-                        && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
+                            && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
                         context.addLabel(token.getValue());
                     } else {
                         throw ParserException.create(token, "Unexpected token.");
@@ -101,7 +101,7 @@ public class Parser {
         Token nameSpaceToken = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);
         for (String method : methods) {
             FuncMeta funcMeta = new FuncMeta(true, nameSpaceToken.getValue(), new Id(method), Type.VOID, List.of(),
-                false, null);
+                    false, null);
             context.addExpr(new Func(context, funcMeta));
         }
     }
@@ -132,7 +132,7 @@ public class Parser {
         Helper.expect(this.tokenSequence, Constants.LEFT_PAREN);
         Token libraryToken = Helper.expect(this.tokenSequence, TokenKind.STRING);
         Helper.expect(this.tokenSequence, Constants.RIGHT_PAREN);
-        ASTBuilder builder = (ASTBuilder)context;
+        ASTBuilder builder = (ASTBuilder) context;
         builder.setLibrary(libraryToken.getValue());
     }
 
@@ -173,7 +173,7 @@ public class Parser {
             Helper.expect(tokenSequence, Constants.RIGHT_PAREN);
         }
         boolean declareRetType = this.tokenSequence.checkToken(
-            token -> token != null && token.valEqual(Constants.COLON));
+                token -> token != null && token.valEqual(Constants.COLON));
         Type retType = null;
         if (declareRetType) {
             retType = Helper.expect(tokenSequence, TokenKind.TYPE).toType();
@@ -190,7 +190,7 @@ public class Parser {
     private void convertVMOpts(Context context) {
         VMOption option = VMOption.of(Helper.expect(this.tokenSequence, TokenKind.VM_OPTIONS));
         Object value = Helper.convertLiteral(
-            Helper.expect(this.tokenSequence, TokenKind.STRING, TokenKind.INTEGER, TokenKind.HEX, TokenKind.FLOAT));
+                Helper.expect(this.tokenSequence, TokenKind.STRING, TokenKind.INTEGER, TokenKind.HEX, TokenKind.FLOAT));
         context.setOption(option, value);
     }
 
@@ -199,6 +199,7 @@ public class Parser {
         Opcode opcode = Opcode.of(token);
         Expr expr = switch (opcode) {
             case ASSERT -> parserAssert();
+            case NEW_ARRAY -> parseNewArray();
             case LOAD, GET_FIELD, LOAD_CONST -> parseLoadExpr(opcode);
             case STORE, SET_FIELD -> parseStoreExpr(opcode);
             case ADD, SUB, MUL, DIV, F2I,
@@ -249,11 +250,17 @@ public class Parser {
             if (!(value instanceof Number)) {
                 throw new ParserException("Load only support number immediate.");
             }
-            immValue = (Number)value;
+            immValue = (Number) value;
         } else {
             index = Helper.convertVarRefIndex(token);
         }
         return new Load(type, from, immValue, index);
+    }
+
+    private NewArray parseNewArray() {
+        Helper.expect(this.tokenSequence, Constants.DOT);
+        Type type = Helper.convertOperandType(this.tokenSequence);
+        return new NewArray(type);
     }
 
     private Expr parseStoreExpr(Opcode opcode) {

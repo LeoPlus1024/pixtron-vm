@@ -12,7 +12,7 @@
 
 #include "helper.h"
 #include "istring.h"
-#include "kni.h"
+#include "array.h"
 
 #if VM_DEBUG_ENABLE
 #include "op_gen.h"
@@ -327,6 +327,20 @@ static inline void pvm_free_runtime_context(RuntimeContext **context) {
     pvm_mem_free(CAST_REF(context));
 }
 
+static inline void pvm_newarray(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_INT) {
+        context->throw_exception(context, "Array length require a int value but it is %s", TYPE_NAME[value->type]);
+    }
+#endif
+    const Type type = pvm_bytecode_read_u16(context);
+    const uint32_t length = value->i32;
+    void *obj = pvm_new_array(type, length);
+    value->obj = obj;
+    value->type = TYPE_ARRAY;
+}
+
 
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     RuntimeContext *context = pvm_init_runtime_context();
@@ -335,10 +349,7 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     pvm_create_stack_frame(context, method, callMethodParam->argv, args);
 
     VMValue *retVal = NULL;
-#if VM_DEBUG_ENABLE
-        const Method *m = context->frame->method;
-        g_debug("%s : %s", m->toString(m), pvm_opcode_name(opcode));
-#endif
+
     static void *opcode_table[] = {
         &&load,
         &&store,
@@ -372,10 +383,11 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         &&lshl,
         &&lshr,
         &&lushr,
+        &&array
     };
 
 #define DISPATCH  do {  \
-        Opcode opcode = pvm_bytecode_read_u8(context); \
+        Opcode opcode = pvm_bytecode_read_u8(context);                    \
         switch (opcode) {    \
             case LOAD:      \
                 pvm_load(context);  \
@@ -488,6 +500,9 @@ lshr:
     DISPATCH
 lushr:
     pvm_lshx(context, LUSHR);
+    DISPATCH
+array:
+    pvm_newarray(context);
     DISPATCH
 finally:
     pvm_free_runtime_context(&context);

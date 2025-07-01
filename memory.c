@@ -9,6 +9,9 @@
 #include <string.h>
 
 extern inline void *pvm_mem_calloc(const size_t size) {
+    if (size == 0) {
+        return NULL;
+    }
     void *ptr = calloc(1, size);
     if (ptr == NULL) {
         fprintf(stderr, "Out of memory.\n");

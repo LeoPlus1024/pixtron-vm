@@ -30,5 +30,6 @@
     LSHL,
     LSHR,
     LUSHR,
+    NEWARRAY,
 
 
