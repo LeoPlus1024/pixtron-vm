@@ -489,8 +489,7 @@ lshr:
 lushr:
     pvm_lshx(context, LUSHR);
     DISPATCH
-finally
-:
+finally:
     pvm_free_runtime_context(&context);
     g_thread_exit(retVal);
 }

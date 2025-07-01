@@ -7,13 +7,9 @@
     %stacks 3
     %locals 1
     load.i32 $0
-    load.i32 0
-    icmp
-    ifle ret0
-    load.i32 $0
     load.i32 1
     icmp
-    ifeq ret1
+    ifle ret0
     load.i32 $0
     load.i32 1
     sub
@@ -25,10 +21,7 @@
     add
     ret
 ret0:
-    load.i32 0
-    ret
-ret1:
-    load.i32 1
+    load.i32 $0
     ret
 @end
 

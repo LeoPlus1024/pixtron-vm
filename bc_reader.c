@@ -24,7 +24,7 @@ extern inline uint32_t pvm_bytecode_read_u32(const RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
     const uint64_t pc = frame->pc;
     const uint8_t *bytecode = frame->bytecode;
-    const uint32_t *value = (guint32 *) (bytecode + pc);
+    const uint32_t *value = (uint32_t *) (bytecode + pc);
     frame->pc = pc + 4;
     return *value;
 }
