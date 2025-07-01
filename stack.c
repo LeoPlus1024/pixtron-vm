@@ -18,40 +18,35 @@ static inline VirtualStackFrame *pvm_ipush_stack_frame(RuntimeContext *context, 
     if (vstack_size + sp > VM_STACK_SIZE) {
         context->throw_exception(context, "PixotronVM_stack_push: stack overflow.\n");
     }
+    const Klass *klass = method->klass;
     VirtualStackFrame *frame = (VirtualStackFrame *) (context->stack + sp);
+    if (frame->method != method) {
+        frame->method = method;
+        frame->max_locals = max_locals;
+        frame->max_stacks = max_stacks;
+        frame->bytecode = klass->bytecode;
+    }
     frame->sp = max_stacks;
-    frame->method = method;
     frame->pc = method->offset;
     frame->pre = context->frame;
-    frame->max_locals = max_locals;
-    frame->max_stacks = max_stacks;
     context->sp = sp + vstack_size;
     context->frame = frame;
     context->stack_depth++;
     return frame;
 }
 
-extern inline void pvm_push_operand(RuntimeContext *context, const VMValue *value) {
-#if VM_DEBUG_ENABLE
-    g_assert(value!=NULL);
-#endif
+extern inline void pvm_push_operand(const RuntimeContext *context, const VMValue *value) {
     VirtualStackFrame *frame = context->frame;
     const int32_t sp = (int32_t) (frame->sp - 1);
-    if (sp < 0) {
-        context->throw_exception(context, "Stack underflow.");
-    }
     frame->sp = sp;
     uint8_t *stack_top = (uint8_t *) (GET_OPERAND_STACK(frame) + sp);
     memcpy(stack_top, value, VM_VALUE_SIZE);
 }
 
 
-extern inline VMValue *pvm_pop_operand(RuntimeContext *context) {
+extern inline VMValue *pvm_pop_operand(const RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
     const uint32_t sp = frame->sp;
-    if (sp + 1 > frame->max_stacks) {
-        context->throw_exception(context, "Stack overflow.");
-    }
     VMValue *value = GET_OPERAND_STACK(frame) + sp;
     frame->sp = sp + 1;
     return value;
@@ -78,18 +73,14 @@ extern inline void pvm_push_stack_frame(RuntimeContext *context, const Method *m
         return;
     }
     const uint32_t sp = frame->sp;
-    const uint32_t depth = frame->max_stacks - sp;
-    if (depth < argv) {
-        context->throw_exception(context, "Stack depth too min.");
-    }
-    if (method->max_locals < argv) {
-        context->throw_exception(context, "Method local variable index out of bounds: max %d, given %d",
-                                 method->max_locals, argv);
-    }
-    const VMValue *operand_stack = GET_OPERAND_STACK(frame) + sp;
+    const VMValue *operand_stack = GET_OPERAND_STACK(frame) + sp + argv - 1;
     VMValue *locals = GET_LOCALS(new_frame);
-    for (int i = 0; i < argv; ++i) {
-        locals[i] = operand_stack[argv - i - 1];
+    if (argv == 1) {
+        memcpy(locals, operand_stack, VM_VALUE_SIZE);
+    }else {
+        for (int i = 0; i < argv; ++i) {
+            memcpy(locals+i, operand_stack--, VM_VALUE_SIZE);
+        }
     }
     frame->sp = sp + argv;
 }
@@ -109,37 +100,23 @@ extern inline void pvm_pop_stack_frame(RuntimeContext *context) {
 }
 
 
-extern inline void pvm_set_local_value(RuntimeContext *context, const uint16_t index, const VMValue *value) {
-#if VM_DEBUG_ENABLE
-    g_assert(value != NULL);
-#endif
+extern inline void pvm_set_local_value(const RuntimeContext *context, const uint16_t index, const VMValue *value) {
     const VirtualStackFrame *frame = context->frame;
-    const uint16_t max_locals = frame->max_locals;
-    if (index > max_locals) {
-        context->throw_exception(context, "Local index out of bounds.");
-    }
     VMValue *locals = GET_LOCALS(frame);
     uint8_t *ptr = (uint8_t *) (locals + index);
     memcpy(ptr, value, VM_VALUE_SIZE);
 }
 
-extern inline void pvm_get_local_value(RuntimeContext *context, const uint16_t index, VMValue *value) {
+extern inline void pvm_get_local_value(const RuntimeContext *context, const uint16_t index, VMValue *value) {
     const VirtualStackFrame *frame = context->frame;
-    const uint16_t max_locals = frame->max_locals;
-    if (index > max_locals) {
-        context->throw_exception(context, "Local index out if bound.");
-    }
     const VMValue *ptr = GET_LOCALS(frame) + index;
     memcpy(value, ptr, VM_VALUE_SIZE);
 }
 
 
-extern inline VMValue *pvm_get_operand(RuntimeContext *context) {
+extern inline VMValue *pvm_get_operand(const RuntimeContext *context) {
     const VirtualStackFrame *frame = context->frame;
     const uint32_t sp = frame->sp;
-    if (sp >= frame->max_stacks) {
-        context->throw_exception(context, "Stack index out of bound.");
-    }
     VMValue *operand_stack = GET_OPERAND_STACK(frame);
     return operand_stack + sp;
 }

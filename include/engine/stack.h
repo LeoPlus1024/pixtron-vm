@@ -16,7 +16,7 @@
  *       following the typical downward-growing stack convention.
  * @warning Passing a context with a NULL operand stack will result in undefined behavior.
  */
-extern inline void pvm_push_operand(RuntimeContext *context, const VMValue *value);
+extern inline void pvm_push_operand(const RuntimeContext *context, const VMValue *value);
 
 
 /**
@@ -37,7 +37,7 @@ extern inline void pvm_push_operand(RuntimeContext *context, const VMValue *valu
  * @warning Passing a NULL context results in undefined behavior.
  * @see PixtronVM_CheckStackBounds
  */
-extern inline VMValue *pvm_pop_operand(RuntimeContext *context);
+extern inline VMValue *pvm_pop_operand(const RuntimeContext *context);
 
 
 /**
@@ -101,7 +101,7 @@ extern inline void pvm_pop_stack_frame(RuntimeContext *context);
  * @param index Local variable table slot index
  * @param variant Variant value to store in the local variable table
  */
-extern inline void pvm_set_local_value(RuntimeContext *context, uint16_t index, const VMValue *value);
+extern inline void pvm_set_local_value(const RuntimeContext *context, uint16_t index, const VMValue *value);
 
 /**
 * Get a value from the current frame's local variable table
@@ -109,7 +109,7 @@ extern inline void pvm_set_local_value(RuntimeContext *context, uint16_t index, 
 * @param index Local variable table slot index
 * @param variant Pointer to store the retrieved variant value
 */
-extern inline void pvm_get_local_value(RuntimeContext *context, uint16_t index, VMValue *value);
+extern inline void pvm_get_local_value(const RuntimeContext *context, uint16_t index, VMValue *value);
 
 /**
  * Retrieves the current top operand pointer from the VM's operand stack.
@@ -119,6 +119,6 @@ extern inline void pvm_get_local_value(RuntimeContext *context, uint16_t index, 
  * @return Pointer to the operand at the current stack top.
  * @throws Exception If stack pointer (SP) exceeds stack capacity.
  */
-extern inline VMValue *pvm_get_operand(RuntimeContext *context);
+extern inline VMValue *pvm_get_operand(const RuntimeContext *context);
 
 #endif //VIRTUALSTACK_H

@@ -88,16 +88,13 @@ struct _VirtualStackFrame;
 typedef struct _VirtualStackFrame {
     // Method
     const Method *method;
-    // // local variable
-    // VMValue *locals;
-    // // Operand stack
-    // VMValue *operand_stack;
-    // Program counter
     uint32_t pc;
     // Stack pointer
     uint32_t sp;
     uint32_t max_stacks;
     uint32_t max_locals;
+    // Point to klass bytecode area
+    uint8_t *bytecode;
     // Previous stack frame
     struct _VirtualStackFrame *pre;
 } VirtualStackFrame;

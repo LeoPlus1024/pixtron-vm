@@ -11,7 +11,7 @@
  * @param context Runtime context containing code segment pointer and VM state
  * @return guint8 The 8-bit unsigned integer value read
  */
-extern inline uint8_t pvm_bytecode_read_u8(RuntimeContext *context);
+extern inline uint8_t pvm_bytecode_read_u8(const RuntimeContext *context);
 
 /**
  * @brief Reads a variant-type immediate value from the VM's code segment
@@ -23,7 +23,7 @@ extern inline uint8_t pvm_bytecode_read_u8(RuntimeContext *context);
  * @param context Runtime context containing code segment pointer and VM state
  * @param variant [out] Destination structure for the parsed variant value
  */
-extern inline void pvm_bytecode_read_imm(RuntimeContext *context, Type type, VMValue *value);
+extern inline void pvm_bytecode_read_imm(const RuntimeContext *context, Type type, VMValue *value);
 
 /**
  * @brief Reads a 32-bit unsigned integer from the VM's code segment
@@ -34,7 +34,7 @@ extern inline void pvm_bytecode_read_imm(RuntimeContext *context, Type type, VMV
  * @param context Runtime context containing code segment pointer and VM state
  * @return guint32 The 32-bit unsigned integer value read
  */
-extern inline uint32_t pvm_bytecode_read_u32(RuntimeContext *context);
+extern inline uint32_t pvm_bytecode_read_u32(const RuntimeContext *context);
 
 /**
  * @brief Reads a 16-bit unsigned integer from the VM's code segment
@@ -45,7 +45,7 @@ extern inline uint32_t pvm_bytecode_read_u32(RuntimeContext *context);
  * @param context Runtime context containing code segment pointer and VM state
  * @return guint16 The 16-bit unsigned integer value read
  */
-extern inline uint16_t pvm_bytecode_read_u16(RuntimeContext *context);
+extern inline uint16_t pvm_bytecode_read_u16(const RuntimeContext *context);
 
 
 #endif //BC_READER_H
