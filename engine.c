@@ -341,6 +341,36 @@ static inline void pvm_newarray(RuntimeContext *context) {
     value->type = TYPE_ARRAY;
 }
 
+static inline void pvm_setarray(RuntimeContext *context) {
+    const VMValue *value = pvm_pop_operand(context);
+    const VMValue *idx_value = pvm_pop_operand(context);
+    const VMValue *arr_value = pvm_pop_operand(context);
+    const Array *array = (Array *) (arr_value->obj);
+    const int32_t index = idx_value->i32;
+#if VM_DEBUG_ENABLE
+    if (ARRAY_INDEX_OUT_OF_BOUND_CHECK(array, index)) {
+        context->throw_exception(context, "Array index out of bounds.");
+    }
+#endif
+    pvm_array_value_set(array, index, value);
+}
+
+
+static inline void pvm_getarray(RuntimeContext *context) {
+    const VMValue *value = pvm_pop_operand(context);
+    VMValue *object = pvm_get_operand(context);
+    const Array *array = (Array *) (object->obj);
+    const int32_t index = value->i32;
+#if VM_DEBUG_ENABLE
+    if (ARRAY_INDEX_OUT_OF_BOUND_CHECK(array, index)) {
+        context->throw_exception(context, "Array index out of bounds.");
+    }
+#endif
+    const void *ptr = pvm_array_value_get(array, index);
+    memcpy(object->obj, ptr, array->length);
+    object->type = array->type;
+}
+
 
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     RuntimeContext *context = pvm_init_runtime_context();
@@ -383,7 +413,9 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         &&lshl,
         &&lshr,
         &&lushr,
-        &&array
+        &&newarray,
+        &&setarray,
+        &&getarray,
     };
 
 #define DISPATCH  do {  \
@@ -501,8 +533,14 @@ lshr:
 lushr:
     pvm_lshx(context, LUSHR);
     DISPATCH
-array:
+newarray:
     pvm_newarray(context);
+    DISPATCH
+setarray:
+    pvm_setarray(context);
+    DISPATCH
+getarray:
+    pvm_getarray(context);
     DISPATCH
 finally:
     pvm_free_runtime_context(&context);

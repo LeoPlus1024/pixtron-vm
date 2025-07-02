@@ -25,3 +25,10 @@ extern inline void pvm_array_value_set(const Array *array, const int index, cons
     void *dst = array->data + index * size;
     memcpy(dst, from, size);
 }
+
+
+extern inline void *pvm_array_value_get(const Array *array, const int index) {
+    const Type type = array->type;
+    const uint8_t size = TYPE_SIZE[type];
+    return array->data + index * size;
+}
