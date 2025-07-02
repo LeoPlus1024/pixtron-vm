@@ -24,4 +24,9 @@ public class Redirect implements Expr {
         bytes[2] = (byte) (offset >>> 8);
         return bytes;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s %s", opcode.getMnemonic(), label);
+    }
 }

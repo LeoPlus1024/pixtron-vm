@@ -38,6 +38,11 @@ static inline VirtualStackFrame *pvm_ipush_stack_frame(RuntimeContext *context, 
 extern inline void pvm_push_operand(const RuntimeContext *context, const VMValue *value) {
     VirtualStackFrame *frame = context->frame;
     const int32_t sp = (int32_t) (frame->sp - 1);
+#if VM_DEBUG_ENABLE
+    if (sp < 0) {
+        context->throw_exception(context, "Stack pointer out of bounds.");
+    }
+#endif
     frame->sp = sp;
     uint8_t *stack_top = (uint8_t *) (GET_OPERAND_STACK(frame) + sp);
     memcpy(stack_top, value, VM_VALUE_SIZE);
@@ -77,9 +82,9 @@ extern inline void pvm_push_stack_frame(RuntimeContext *context, const Method *m
     VMValue *locals = GET_LOCALS(new_frame);
     if (argv == 1) {
         memcpy(locals, operand_stack, VM_VALUE_SIZE);
-    }else {
+    } else {
         for (int i = 0; i < argv; ++i) {
-            memcpy(locals+i, operand_stack--, VM_VALUE_SIZE);
+            memcpy(locals + i, operand_stack--, VM_VALUE_SIZE);
         }
     }
     frame->sp = sp + argv;
@@ -102,15 +107,20 @@ extern inline void pvm_pop_stack_frame(RuntimeContext *context) {
 
 extern inline void pvm_set_local_value(const RuntimeContext *context, const uint16_t index, const VMValue *value) {
     const VirtualStackFrame *frame = context->frame;
-    VMValue *locals = GET_LOCALS(frame);
-    uint8_t *ptr = (uint8_t *) (locals + index);
-    memcpy(ptr, value, VM_VALUE_SIZE);
+    VMValue *locals = GET_LOCALS(frame) + index;
+    memcpy(locals, value, VM_VALUE_SIZE);
 }
 
-extern inline void pvm_get_local_value(const RuntimeContext *context, const uint16_t index, VMValue *value) {
+extern inline void pvm_copy_local_value(const RuntimeContext *context, const uint16_t index, VMValue *value) {
     const VirtualStackFrame *frame = context->frame;
     const VMValue *ptr = GET_LOCALS(frame) + index;
     memcpy(value, ptr, VM_VALUE_SIZE);
+}
+
+extern inline VMValue *pvm_get_local_value(const RuntimeContext *context, uint16_t index) {
+    const VirtualStackFrame *frame = context->frame;
+    VMValue *value = GET_LOCALS(frame) + index;
+    return value;
 }
 
 

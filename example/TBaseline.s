@@ -2,7 +2,7 @@
 
 @import {   currentTimeNano , printNanoDiff             } from System
 
-
+; 斐波那契数朴素递归实现
 @func fib(int n) : int
     %stacks 3
     %locals 1

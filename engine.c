@@ -13,18 +13,38 @@
 #include "helper.h"
 #include "istring.h"
 #include "array.h"
-
-#if VM_DEBUG_ENABLE
 #include "op_gen.h"
-#endif
+
+#define DISPATCH  do {  \
+        Opcode opcode = pvm_bytecode_read_u8(context);                    \
+       if(VM_DEBUG_ENABLE) {            \
+            const char *opcode_name = pvm_opcode_name(opcode);   \
+            const Method *method = context->frame->method;    \
+            const char *method_name = method->toString(method); \
+            const uint32_t pc = context->frame->pc - 1;                  \
+            g_debug("(%04d)%s => %s",pc,method_name,opcode_name);    \
+        }                          \
+        switch (opcode) {    \
+            case LOAD:      \
+                pvm_load(context);  \
+                break;                 \
+            case STORE:                   \
+                pvm_store(context);        \
+                break;                        \
+            default:                        \
+                goto *opcode_table[opcode];         \
+        }                                \
+        goto dispath0;            \
+    }while (0);
 
 
 static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, const Opcode opcode) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
 
-    const Type t0 = target_operand->type;
     const Type t1 = source_operand->type;
+#if VM_DEBUG_ENABLE
+    const Type t0 = target_operand->type;
     if (t0 != t1) {
         context->throw_exception(
             context,
@@ -33,6 +53,7 @@ static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, 
             TYPE_NAME[t1]
         );
     }
+#endif
 
     if (opcode == ADD) {
         APPLY_COMPOUND_OPERATOR(target_operand, source_operand, +, context);
@@ -40,13 +61,11 @@ static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, 
         APPLY_COMPOUND_OPERATOR(target_operand, source_operand, -, context);
     } else if (opcode == MUL) {
         APPLY_COMPOUND_OPERATOR(target_operand, source_operand, *, context);
-    } else if (opcode == DIV) {
+    } else {
         if (TYPE_SMALL_INTEGER(t1) && source_operand->i32 == 0 || TYPE_BIGGER_INTEGER(t1) && source_operand->i64 == 0) {
             context->throw_exception(context, "Divisor cannot be zero.");
         }
         APPLY_COMPOUND_OPERATOR(target_operand, source_operand, /, context);
-    } else {
-        context->throw_exception(context, "Canonical binary operation '%02x' is not supported.", opcode);
     }
 }
 
@@ -54,7 +73,7 @@ static inline void pvm_goto(RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
     const int16_t offset = (int16_t) pvm_bytecode_read_u16(context);
     // Offset contain current opcode
-    frame->pc = frame->pc + offset - 2;
+    frame->pc = frame->pc - offset - 3;
 }
 
 static inline void pvm_ifeq_ifne(RuntimeContext *context, const Opcode opcode) {
@@ -131,9 +150,7 @@ static inline void pvm_store(RuntimeContext *context) {
     // Global variable
     if (s == FIELD) {
         pvm_set_klass_field(context, index, value);
-    }
-    // Local variable
-    else if (s == LOCAL) {
+    } else {
         pvm_set_local_value(context, index, value);
     }
 }
@@ -151,7 +168,7 @@ static inline void pvm_load(RuntimeContext *context) {
         const uint16_t index = pvm_bytecode_read_u16(context);
         switch (source) {
             case LOCAL:
-                pvm_get_local_value(context, index, &value);
+                pvm_copy_local_value(context, index, &value);
                 break;
             case CONST:
                 pvm_get_klass_constant(context, index, &value);
@@ -159,6 +176,7 @@ static inline void pvm_load(RuntimeContext *context) {
             default:
                 pvm_get_klass_field(context, index, &value);
         }
+#if VM_DEBUG_ENABLE
         if (type != value.type) {
             context->throw_exception(
                 context,
@@ -167,6 +185,7 @@ static inline void pvm_load(RuntimeContext *context) {
                 TYPE_NAME[value.type]
             );
         }
+#endif
     }
     pvm_push_operand(context, &value);
 }
@@ -336,15 +355,15 @@ static inline void pvm_newarray(RuntimeContext *context) {
 #endif
     const Type type = pvm_bytecode_read_u16(context);
     const uint32_t length = value->i32;
-    void *obj = pvm_new_array(type, length);
+    Array *obj = pvm_new_array(type, length);
     value->obj = obj;
     value->type = TYPE_ARRAY;
 }
 
 static inline void pvm_setarray(RuntimeContext *context) {
-    const VMValue *value = pvm_pop_operand(context);
-    const VMValue *idx_value = pvm_pop_operand(context);
     const VMValue *arr_value = pvm_pop_operand(context);
+    const VMValue *idx_value = pvm_pop_operand(context);
+    const VMValue *value = pvm_pop_operand(context);
     const Array *array = (Array *) (arr_value->obj);
     const int32_t index = idx_value->i32;
 #if VM_DEBUG_ENABLE
@@ -357,18 +376,48 @@ static inline void pvm_setarray(RuntimeContext *context) {
 
 
 static inline void pvm_getarray(RuntimeContext *context) {
-    const VMValue *value = pvm_pop_operand(context);
-    VMValue *object = pvm_get_operand(context);
-    const Array *array = (Array *) (object->obj);
-    const int32_t index = value->i32;
+    const VMValue *idx_val = pvm_pop_operand(context);
+    VMValue *arr_val = pvm_get_operand(context);
+    const Array *array = (Array *) (arr_val->obj);
+    const int32_t index = idx_val->i32;
 #if VM_DEBUG_ENABLE
     if (ARRAY_INDEX_OUT_OF_BOUND_CHECK(array, index)) {
         context->throw_exception(context, "Array index out of bounds.");
     }
 #endif
-    const void *ptr = pvm_array_value_get(array, index);
-    memcpy(object->obj, ptr, array->length);
-    object->type = array->type;
+    void *ptr = pvm_array_value_get(array, index);
+    const Type t_ele = array->type;
+    if (TYPE_SMALL_INTEGER(t_ele)) {
+        int32_t tmp = 0;
+        memcpy(&tmp, ptr, TYPE_SIZE[t_ele]);
+        arr_val->i32 = tmp;
+    } else if (TYPE_BIGGER_INTEGER(t_ele) || t_ele == TYPE_DOUBLE) {
+        memcpy(&(arr_val->i64), ptr, TYPE_SIZE[t_ele]);
+    } else {
+        arr_val->obj = ptr;
+    }
+    arr_val->type = array->type;
+}
+
+static inline void pvm_iinc(RuntimeContext *context) {
+    const uint16_t index = pvm_bytecode_read_u16(context);
+    const int8_t offset = (int8_t) pvm_bytecode_read_u8(context);
+    VMValue *value = pvm_get_local_value(context, index);
+    switch (value->type) {
+        case TYPE_BYTE:
+        case TYPE_SHORT:
+        case TYPE_INT:
+            value->i32 += offset;
+            break;
+        case TYPE_LONG:
+            value->i64 += offset;
+            break;
+        case TYPE_DOUBLE:
+            value->f64 += offset;
+            break;
+        default:
+            context->throw_exception(context, "iinc instruction only support number type.");
+    }
 }
 
 
@@ -414,24 +463,11 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         &&lshr,
         &&lushr,
         &&newarray,
-        &&setarray,
         &&getarray,
+        &&setarray,
+        &&iinc
     };
 
-#define DISPATCH  do {  \
-        Opcode opcode = pvm_bytecode_read_u8(context);                    \
-        switch (opcode) {    \
-            case LOAD:      \
-                pvm_load(context);  \
-                break;                 \
-            case STORE:                   \
-                pvm_store(context);        \
-                break;                        \
-            default:                        \
-                goto *opcode_table[opcode];         \
-        }                                \
-        goto dispath0;            \
-    }while (0);
 dispath0:
     DISPATCH
 load:
@@ -541,6 +577,9 @@ setarray:
     DISPATCH
 getarray:
     pvm_getarray(context);
+    DISPATCH
+iinc:
+    pvm_iinc(context);
     DISPATCH
 finally:
     pvm_free_runtime_context(&context);

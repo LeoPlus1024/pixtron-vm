@@ -73,6 +73,7 @@ public class Helper {
             case "bool" -> Type.BOOL;
             case "ptr" -> Type.REF;
             case "str" -> Type.STRING;
+            case "arr" -> Type.ARRAY;
             default -> throw new IllegalStateException("Unexpected value: " + suffix);
         };
     }

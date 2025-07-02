@@ -79,7 +79,7 @@ public class Tokenizer {
                 }
                 // Opcode/Type/Identifier
                 default -> {
-                    if (Character.isDigit(chr)) {
+                    if (Character.isDigit(chr) || chr == Constants.MINUS) {
                         String text = charSequence.readUtilEncounter(' ', Constants.TAB, Constants.CR, Constants.LF);
                         yield LexerUtil.createDigitToken(line, column, text);
                     }

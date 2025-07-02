@@ -41,7 +41,10 @@ public enum Opcode {
     LSHL("ishl", 29),
     LSHR("ishr", 30),
     LUSHR("lushr", 21),
-    NEW_ARRAY("newarray", 32);
+    NEW_ARRAY("newarray", 32),
+    GET_ARRAY("getarray",33),
+    SET_ARRAY("setarray",34),
+    IINC("iinc", 35);
 
     private final byte value;
     private final String mnemonic;

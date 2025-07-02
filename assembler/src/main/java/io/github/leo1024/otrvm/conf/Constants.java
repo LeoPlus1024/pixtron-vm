@@ -9,6 +9,7 @@ public class Constants {
     public static final char SPACE = ' ';
     public static final char DOT = '.';
     public static final char COMMA = ',';
+    public static final char MINUS = '-';
     public static final char LEFT_PAREN = '(';
     public static final char RIGHT_PAREN = ')';
     public static final char COMMENT = '#';

@@ -206,8 +206,9 @@ public class Parser {
                  F2L, I2L, I2F, L2I, L2F,
                  ICMP, LCMP, DCMP, RET,
                  ISHL, ISHR, IUSHR, LSHL,
-                 LSHR, LUSHR -> new Simple(opcode);
+                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY -> new Simple(opcode);
             case CALL -> parserCallExpr();
+            case IINC -> parseIinc();
             case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT -> {
                 String label = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
                 yield new Redirect(opcode, label);
@@ -215,6 +216,17 @@ public class Parser {
             default -> throw ParserException.create(token, "Unsupported opcode.");
         };
         context.addExpr(expr);
+    }
+
+    private Expr parseIinc() {
+        int index = Helper.convertVarRefIndex(this.tokenSequence.consume());
+        Helper.expect(tokenSequence, Constants.COMMA);
+        Token token = Helper.expect(this.tokenSequence, TokenKind.INTEGER);
+        int value = Integer.parseInt(token.getValue());
+        if (value > 127 || value < -128) {
+            throw ParserException.create(token, "IINC value must between -128 and 127.");
+        }
+        return new Iinc(index, value);
     }
 
     private Expr parserAssert() {

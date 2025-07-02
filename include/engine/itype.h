@@ -141,6 +141,7 @@ typedef struct _RuntimeContext {
     const PixtronVM *vm;
     // Stack
     const uint8_t *stack;
+
     // Exception throw callback
     void (*throw_exception)(struct _RuntimeContext *context, gchar *fmt, ...);
 } RuntimeContext;

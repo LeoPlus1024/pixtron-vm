@@ -109,7 +109,9 @@ extern inline void pvm_set_local_value(const RuntimeContext *context, uint16_t i
 * @param index Local variable table slot index
 * @param variant Pointer to store the retrieved variant value
 */
-extern inline void pvm_get_local_value(const RuntimeContext *context, uint16_t index, VMValue *value);
+extern inline void pvm_copy_local_value(const RuntimeContext *context, uint16_t index, VMValue *value);
+
+extern inline VMValue *pvm_get_local_value(const RuntimeContext *context, uint16_t index);
 
 /**
  * Retrieves the current top operand pointer from the VM's operand stack.

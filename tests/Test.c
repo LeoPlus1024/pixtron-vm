@@ -11,9 +11,9 @@ void exec_main(const char *klass_name) {
 
 
 int main(int argc, char *argv[]) {
-    // exec_main("TString");
-    // exec_main("TLogic");
-    // exec_main("TMath");
+    exec_main("TString");
+    exec_main("TLogic");
+    exec_main("TMath");
     exec_main("TArray");
-    // exec_main("TBaseline");
+    exec_main("TBaseline");
 }

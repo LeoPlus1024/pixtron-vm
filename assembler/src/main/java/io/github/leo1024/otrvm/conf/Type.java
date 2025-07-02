@@ -12,7 +12,8 @@ public enum Type {
     BOOL("bool", 6, 1),
     REF("ref", 7, 8),
     VOID("void", 8, 0),
-    STRING("string", 9, 0);
+    STRING("string", 9, 0),
+    ARRAY("array", 10, 0),;
 
     private final String symbol;
     private final int id;

@@ -31,5 +31,8 @@
     LSHR,
     LUSHR,
     NEWARRAY,
+    GETARRAY,
+    SETARRAY,
+    IINC
 
 
