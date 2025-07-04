@@ -67,6 +67,37 @@ bigger_float: \
     break; \
 } while(0)
 
+#define IFXX(context, op)                                                     \
+    do {                                                                      \
+        const VMValue *value = pvm_pop_operand(context);                      \
+        const int32_t flag = value->i32;                                      \
+        VirtualStackFrame *frame = context->frame;                            \
+        const int16_t offset = (int16_t)pvm_bytecode_read_int16(context) - 2; \
+        if (flag op 0) {                                                      \
+            frame->pc += offset;                                              \
+        }                                                                     \
+    } while (0)
+
+#define XCMP(context,op)    \
+    do {                                                                            \
+        const VMValue *source_operand = pvm_pop_operand(context);                   \
+        VMValue *targe_operand = pvm_get_operand(context);                          \
+        targe_operand->i32 = SIGN_CMP(targe_operand->op, source_operand->op);       \
+        targe_operand->type = TYPE_INT;                                             \
+    } while(0)
+
+#define DISPATCH  do {                                                              \
+        Opcode opcode = (Opcode)pvm_bytecode_read_int8(context);                    \
+       if(VM_DEBUG_ENABLE) {                                                        \
+            extern char *pvm_opcode_name(Opcode opcode);                            \
+            const char *opcode_name = pvm_opcode_name(opcode);                      \
+            const Method *method = context->frame->method;                          \
+            const char *method_name = method->toString(method);                     \
+            const uint32_t pc = context->frame->pc - 1;                             \
+            g_debug("(%04d)%s => %s",pc,method_name,opcode_name);                   \
+        }                                                                           \
+        goto *opcode_table[opcode];                                                 \
+    } while (0)
 
 extern void pvm_call_method(const CallMethodParam *callMethodParam);
 

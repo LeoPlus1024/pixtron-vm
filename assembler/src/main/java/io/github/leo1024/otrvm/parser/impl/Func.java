@@ -56,4 +56,9 @@ public class Func extends Context implements Expr {
             default -> throw new ParserException("Invalid option.");
         }
     }
+
+    @Override
+    public String toString() {
+        return funcMeta.getFuncName();
+    }
 }

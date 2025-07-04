@@ -1,5 +1,10 @@
-    LOAD,
-    STORE,
+    LI8,
+    LI16,
+    LI32,
+    LI64,
+    LF64,
+    LLOCAL,
+    SLOCAL,
     ADD,
     SUB,
     MUL,
@@ -33,6 +38,6 @@
     NEWARRAY,
     GETARRAY,
     SETARRAY,
-    IINC
-
-
+    IINC,
+    LFIELD,
+    SFIELD,

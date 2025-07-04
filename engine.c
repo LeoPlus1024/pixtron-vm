@@ -17,29 +17,6 @@
 #include "op_gen.h"
 #endif
 
-#define DISPATCH  do {  \
-        Opcode opcode = pvm_bytecode_read_u8(context);                    \
-       if(VM_DEBUG_ENABLE) {            \
-            extern char *pvm_opcode_name(Opcode opcode);    \
-            const char *opcode_name = pvm_opcode_name(opcode);   \
-            const Method *method = context->frame->method;    \
-            const char *method_name = method->toString(method); \
-            const uint32_t pc = context->frame->pc - 1;                  \
-            g_debug("(%04d)%s => %s",pc,method_name,opcode_name);    \
-        }                          \
-        switch (opcode) {    \
-            case LOAD:      \
-                pvm_load(context);  \
-                break;                 \
-            case STORE:                   \
-                pvm_store(context);        \
-                break;                        \
-            default:                        \
-                goto *opcode_table[opcode];         \
-        }                                \
-        goto dispath0;            \
-    }while (0);
-
 
 static inline void pvm_add(RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
@@ -71,124 +48,95 @@ static inline void pvm_div(RuntimeContext *context) {
 
 static inline void pvm_goto(RuntimeContext *context) {
     VirtualStackFrame *frame = context->frame;
-    const int16_t offset = (int16_t) pvm_bytecode_read_u16(context);
-    // Offset contain current opcode
-    frame->pc = frame->pc - offset - 3;
+    const int16_t offset = pvm_bytecode_read_int16(context);
+    const uint32_t pc = frame->pc;
+    frame->pc = pc - offset - 3;
 }
 
-static inline void pvm_ifeq_ifne(RuntimeContext *context, const Opcode opcode) {
-    const VMValue *value = pvm_pop_operand(context);
-    const bool ifeq = opcode == IFEQ;
-    VirtualStackFrame *frame = context->frame;
-    const uint16_t pc = frame->pc;
-    if ((value->i32 == 0) == ifeq) {
-        const int16_t offset = (int16_t) pvm_bytecode_read_u16(context);
-        frame->pc = pc + offset;
-    } else {
-        frame->pc = pc + 2;
-    }
-}
 
-static inline void pvm_less_granter_than_equal(RuntimeContext *context, Opcode opcode) {
-    const int16_t offset = (int16_t) pvm_bytecode_read_u16(context);
-    const VMValue *value = pvm_pop_operand(context);
-    const int32_t flag = value->i32;
-    bool jump_branch = false;
-
-    switch (opcode) {
-        case IFLE: jump_branch = (flag <= 0);
-            break;
-        case IFLT: jump_branch = (flag < 0);
-            break;
-        case IFGE: jump_branch = (flag >= 0);
-            break;
-        case IFGT: jump_branch = (flag > 0);
-            break;
-        default: break;
-    }
-
-    if (jump_branch) {
-        context->frame->pc += (offset - 2);
-    }
-}
-
-static inline void pvm_cmp(RuntimeContext *context, const Opcode opcode) {
-    const VMValue *source_operand = pvm_pop_operand(context);
-    VMValue *targe_operand = pvm_get_operand(context);
-    switch (opcode) {
-        case ICMP:
-            targe_operand->i32 = SIGN_CMP(targe_operand->i32, source_operand->i32);
-            break;
-        case DCMP:
-            targe_operand->i32 = SIGN_CMP(targe_operand->f64, source_operand->f64);
-            break;
-        case LCMP:
-            targe_operand->i32 = SIGN_CMP(targe_operand->i64, source_operand->i64);
-            break;
-        default:
-            context->throw_exception(context, "unsupported cmp opcode:%02x", opcode);
-    }
-    targe_operand->type = TYPE_INT;
-}
-
-static inline void pvm_conv(RuntimeContext *context, const Opcode opcode) {
+static inline void pvm_i2f_l2f(RuntimeContext *context) {
     VMValue *value = pvm_get_operand(context);
-    if (opcode == I2F || opcode == L2F) {
-        pvm_value_to_double(value);
-    } else if (opcode == I2L || opcode == F2L) {
-        pvm_value_to_long(value);
-    } else if (opcode == F2I || opcode == L2I) {
-        pvm_value_to_int(value);
+    switch (value->type) {
+#define HANDLE_CASE(type,field) \
+case type: value->f64 = (double)(value->field);  break;
+        HANDLE_CASE(TYPE_INT, i32)
+        HANDLE_CASE(TYPE_LONG, i64)
+        default: assert(0);
+#undef HANDLE_CASE
     }
+    value->type = TYPE_DOUBLE;
 }
 
-static inline void pvm_store(RuntimeContext *context) {
+static inline void pvm_i2l_f2l(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+    switch (value->type) {
+#define HANDLE_CASE(type,field) \
+case type: value->i64 = (int64_t)(value->field);  break;
+        HANDLE_CASE(TYPE_SHORT, i32);
+        HANDLE_CASE(TYPE_DOUBLE, f64);
+        default: assert(0);
+#undef HANDLE_CASE
+    }
+    value->type = TYPE_LONG;
+}
+
+static inline void pvm_f2i_l2i(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+    switch (value->type) {
+#define HANDLE_CASE(type,field) \
+case type: value->i32 = (int32_t)(value->field);  break;
+        HANDLE_CASE(TYPE_LONG, i64);
+        HANDLE_CASE(TYPE_DOUBLE, f64);
+        default: assert(0);
+#undef HANDLE_CASE
+    }
+    value->type = TYPE_INT;
+}
+
+
+static inline void pvm_slocal(RuntimeContext *context) {
+    const VMValue *index = pvm_pop_operand(context);
     const VMValue *value = pvm_pop_operand(context);
-    const uint8_t subOps = pvm_bytecode_read_u8(context);
-    const DataSource s = OPS_DATA_SOURCE(subOps);
-    const uint16_t index = pvm_bytecode_read_u16(context);
-    // Global variable
-    if (s == FIELD) {
-        pvm_set_klass_field(context, index, value);
-    } else {
-        pvm_set_local_value(context, index, value);
-    }
+    pvm_set_local_value(context, index->i32, value);
+}
+
+static inline void pvm_llocal(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+    const uint16_t index = value->i32;
+    pvm_copy_local_value(context, index, value);
 }
 
 
-static inline void pvm_load(RuntimeContext *context) {
-    VMValue value;
-    const uint8_t subOps = pvm_bytecode_read_u8(context);
-    const DataSource source = OPS_DATA_SOURCE(subOps);
-    const Type type = OPS_DATA_TYPE(subOps);
-    // Immediate
-    if (source == IMM) {
-        pvm_bytecode_read_imm(context, type, &value);
-    } else {
-        const uint16_t index = pvm_bytecode_read_u16(context);
-        switch (source) {
-            case LOCAL:
-                pvm_copy_local_value(context, index, &value);
-                break;
-            case CONST:
-                pvm_get_klass_constant(context, index, &value);
-                break;
-            default:
-                pvm_get_klass_field(context, index, &value);
-        }
-#if VM_DEBUG_ENABLE
-        if (type != value.type) {
-            context->throw_exception(
-                context,
-                "Load value type mismatch the expected type is:'%s' and the actual type is:'%s'",
-                TYPE_NAME[type],
-                TYPE_NAME[value.type]
-            );
-        }
-#endif
-    }
-    pvm_push_operand(context, &value);
+static inline void pvm_load_int8(RuntimeContext *context) {
+    VMValue *value = pvm_next_operand(context);
+    value->i8 = pvm_bytecode_read_int8(context);
+    value->type = TYPE_BYTE;
 }
+
+static inline void pvm_load_int16(RuntimeContext *context) {
+    VMValue *value = pvm_next_operand(context);
+    value->i16 = pvm_bytecode_read_int16(context);
+    value->type = TYPE_SHORT;
+}
+
+static inline void pvm_load_int32(RuntimeContext *context) {
+    VMValue *value = pvm_next_operand(context);
+    value->i32 = pvm_bytecode_read_int32(context);
+    value->type = TYPE_INT;
+}
+
+static inline void pvm_load_int64(RuntimeContext *context) {
+    VMValue *value = pvm_next_operand(context);
+    value->i64 = pvm_bytecode_read_int64(context);
+    value->type = TYPE_LONG;
+}
+
+static inline void pvm_load_f64(RuntimeContext *context) {
+    VMValue *value = pvm_next_operand(context);
+    value->f64 = pvm_bytecode_read_f64(context);
+    value->type = TYPE_DOUBLE;
+}
+
 
 extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...) {
     const VirtualStackFrame *frame = context->frame;
@@ -235,19 +183,19 @@ static inline VMValue *pvm_ret(RuntimeContext *context) {
     if (hasRetVal) {
         value = pvm_pop_operand(context);
     }
-    VMValue *retVal = NULL;
+    VMValue *ret_val = NULL;
     pvm_pop_stack_frame(context);
     if (frame->pre == NULL) {
         context->exit = exit;
-        retVal = pvm_mem_cpy(value,VM_VALUE_SIZE);
+        ret_val = pvm_mem_cpy(value,VM_VALUE_SIZE);
     } else if (value != NULL) {
         pvm_push_operand(context, value);
     }
-    return retVal;
+    return ret_val;
 }
 
 static inline void pvm_call(RuntimeContext *context) {
-    const uint16_t index = pvm_bytecode_read_u16(context);
+    const uint16_t index = pvm_bytecode_read_int16(context);
     const Method *method = pvm_get_method(context, index);
     if (method->native_func) {
         pvm_ffi_call(context, method);
@@ -257,7 +205,7 @@ static inline void pvm_call(RuntimeContext *context) {
 }
 
 static void inline pvm_assert(RuntimeContext *context) {
-    const uint16_t index = pvm_bytecode_read_u16(context);
+    const uint16_t index = pvm_bytecode_read_int16(context);
     VMValue value;
     pvm_get_klass_constant(context, index, &value);
     if (value.type != TYPE_STRING) {
@@ -273,57 +221,50 @@ static void inline pvm_assert(RuntimeContext *context) {
     context->throw_exception(context, "Assert fail:%s", message);
 }
 
-
-static void inline pvm_ishx(RuntimeContext *context, Opcode opcode) {
+static void inline pvm_ishr(RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
-    if (target_operand->type != TYPE_INT || source_operand->type != TYPE_INT) {
-        context->throw_exception(context, "ishl instruction only support small integer.");
-    }
     const int32_t bit = source_operand->i32 & 0x1F;
-
-    switch (opcode) {
-        case IUSHR: {
-            uint32_t value = (uint32_t) target_operand->i32;
-            value = value >> bit;
-            target_operand->i32 = (int32_t) value;
-            break;
-        }
-        case ISHR:
-            target_operand->i32 = target_operand->i32 >> bit;
-            break;
-        case ISHL:
-            target_operand->i32 = target_operand->i32 << bit;
-            break;
-        default: ;
-    }
+    target_operand->i32 = target_operand->i32 >> bit;
 }
 
-static void inline pvm_lshx(RuntimeContext *context, Opcode opcode) {
+static void inline pvm_iushr(RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
-    if (TYPE_BIGGER_INTEGER(target_operand->type) || source_operand->type != TYPE_INT) {
-        context->throw_exception(
-            context, "lshl instruction the first operand must is long and the second operand must is integer.");
-    }
-    const int32_t bit = source_operand->i32 & 0x3F;
-    const int64_t value = target_operand->i64;
-    switch (opcode) {
-        case LUSHR: {
-            uint64_t tmp = (uint64_t) value;
-            tmp >>= bit;
-            target_operand->i64 = (int64_t) tmp;
-            break;
-        }
-        case LSHR:
-            target_operand->i64 = value >> bit;
-            break;
-        case LSHL:
-            target_operand->i64 = value << bit;
-            break;
-        default: ;
-    }
+    const int32_t bit = source_operand->i32 & 0x1F;
+    target_operand->i32 = target_operand->i32 << bit;
 }
+
+static void inline pvm_ishl(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+    const int32_t bit = source_operand->i32 & 0x1F;
+    const uint32_t value = (uint32_t) target_operand->i32;
+    target_operand->i32 = (int32_t) (value >> bit);
+}
+
+static void inline pvm_lshr(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+    const int32_t bit = source_operand->i32 & 0x1F;
+    target_operand->i64 = target_operand->i64 >> bit;
+}
+
+static void inline pvm_lushr(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+    const int32_t bit = source_operand->i32 & 0x1F;
+    target_operand->i64 = target_operand->i64 << bit;
+}
+
+static void inline pvm_lshl(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+    const int32_t bit = source_operand->i32 & 0x1F;
+    const uint32_t value = (uint32_t) target_operand->i64;
+    target_operand->i64 = (int32_t) (value >> bit);
+}
+
 
 static inline RuntimeContext *pvm_init_runtime_context() {
     RuntimeContext *context = pvm_mem_calloc(sizeof(RuntimeContext));
@@ -353,7 +294,7 @@ static inline void pvm_newarray(RuntimeContext *context) {
         context->throw_exception(context, "Array length require a int value but it is %s", TYPE_NAME[value->type]);
     }
 #endif
-    const Type type = pvm_bytecode_read_u16(context);
+    const Type type = pvm_bytecode_read_int16(context);
     const uint32_t length = value->i32;
     Array *obj = pvm_new_array(type, length);
     value->obj = obj;
@@ -400,8 +341,8 @@ static inline void pvm_getarray(RuntimeContext *context) {
 }
 
 static inline void pvm_iinc(RuntimeContext *context) {
-    const uint16_t index = pvm_bytecode_read_u16(context);
-    const int8_t offset = (int8_t) pvm_bytecode_read_u8(context);
+    const uint16_t index = pvm_bytecode_read_int16(context);
+    const int8_t offset = pvm_bytecode_read_int8(context);
     VMValue *value = pvm_get_local_value(context, index);
     switch (value->type) {
         case TYPE_BYTE:
@@ -420,6 +361,18 @@ static inline void pvm_iinc(RuntimeContext *context) {
     }
 }
 
+static inline void pvm_lfield(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+    const uint32_t index = value->i32;
+    pvm_get_klass_field(context, index, value);
+}
+
+static inline void pvm_sfield(RuntimeContext *context) {
+    const VMValue *value = pvm_pop_operand(context);
+    const uint32_t index = value->i32;
+    pvm_set_klass_field(context, index, value);
+}
+
 
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     RuntimeContext *context = pvm_init_runtime_context();
@@ -427,161 +380,178 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     const VMValue **args = callMethodParam->args;
     pvm_create_stack_frame(context, method, callMethodParam->argv, args);
 
-    VMValue *retVal = NULL;
-
-    static void *opcode_table[] = {
-        &&load,
-        &&store,
-        &&add,
-        &&sub,
-        &&mul,
-        &&div,
-        &&goto0,
-        &&ret0,
-        &&i2l,
-        &&i2f,
-        &&l2i,
-        &&l2f,
-        &&f2i,
-        &&f2l,
-        &&call,
-        &&ifeq,
-        &&ifne,
-        &&iflt,
-        &&ifge,
-        &&ifgt,
-        &&ifle,
-        &&icmp,
-        &&lcmp,
-        &&dcmp,
-        &&pop,
-        &&assert0,
-        &&ishl,
-        &&ishr,
-        &&iushr,
-        &&lshl,
-        &&lshr,
-        &&lushr,
-        &&newarray,
-        &&getarray,
-        &&setarray,
-        &&iinc
+    static const void *opcode_table[] = {
+        [LI8] = &&li8,
+        [LI16] = &&li16,
+        [LI32] = &&li32,
+        [LI64] = &&li64,
+        [LF64] = &&lf64,
+        [SLOCAL] = &&slocal,
+        [LLOCAL] = &&llocal,
+        [ADD] = &&add,
+        [SUB] = &&sub,
+        [MUL] = &&mul,
+        [DIV] = &&div,
+        [GOTO] = &&goto0,
+        [RET] = &&ret,
+        [L2F] = &&i2f_l2f,
+        [I2F] = &&i2f_l2f,
+        [L2I] = &&f2i_l2i,
+        [F2I] = &&f2i_l2i,
+        [I2L] = &&i2l_f2l,
+        [F2L] = &&i2l_f2l,
+        [CALL] = &&call,
+        [IFEQ] = &&ifeq,
+        [IFNE] = &&ifne,
+        [ASSERT] = &&assert0,
+        [POP] = &&pop,
+        [NEWARRAY] = &&newarray,
+        [GETARRAY] = &&getarray,
+        [SETARRAY] = &&setarray,
+        [IINC] = &&iinc,
+        [IFLE] = &&ifle,
+        [IFLT] = &&iflt,
+        [IFGE] = &&ifge,
+        [IFGT] = &&ifgt,
+        [ICMP] = &&icmp,
+        [DCMP] = &&dcmp,
+        [LCMP] = &&lcmp,
+        [ISHR] = &&ishr,
+        [ISHL] = &&ishl,
+        [IUSHR] = &&iushr,
+        [LUSHR] = &&lushr,
+        [LSHL] = &&lshl,
+        [LSHR] = &&lshr,
+        [LFIELD] = &&lfield,
+        [SFIELD] = &&sfield,
     };
-
-dispath0:
-    DISPATCH
-load:
-    pvm_load(context);
-    DISPATCH
-store:
-    pvm_store(context);
-    DISPATCH
+    VMValue *ret_val = NULL;
+    DISPATCH;
+li8:
+    pvm_load_int8(context);
+    DISPATCH;
+li16:
+    pvm_load_int16(context);
+    DISPATCH;
+li32:
+    pvm_load_int32(context);
+    DISPATCH;
+li64:
+    pvm_load_int64(context);
+    DISPATCH;
+lf64:
+    pvm_load_f64(context);
+    DISPATCH;
+slocal:
+    pvm_slocal(context);
+    DISPATCH;
+llocal:
+    pvm_llocal(context);
+    DISPATCH;
 add:
     pvm_add(context);
-    DISPATCH
+    DISPATCH;
 sub:
     pvm_sub(context);
-    DISPATCH
+    DISPATCH;
 mul:
     pvm_mul(context);
-    DISPATCH
+    DISPATCH;
 div:
     pvm_div(context);
-    DISPATCH
+    DISPATCH;
 goto0:
     pvm_goto(context);
-    DISPATCH
-ret0:
-    retVal = pvm_ret(context);
+    DISPATCH;
+ret:
+    ret_val = pvm_ret(context);
     if (context->exit) {
         goto finally;
     }
-    DISPATCH
-i2l:
-    pvm_conv(context, I2L);
-    DISPATCH
-i2f:
-    pvm_conv(context, I2F);
-    DISPATCH
-l2i:
-    pvm_conv(context, L2I);
-    DISPATCH
-l2f:
-    pvm_conv(context, L2F);
-    DISPATCH
-f2i:
-    pvm_conv(context, F2I);
-    DISPATCH
-f2l:
-    pvm_conv(context, F2L);
-    DISPATCH
+    DISPATCH;
+i2f_l2f:
+    pvm_i2f_l2f(context);
+    DISPATCH;
+f2i_l2i:
+    pvm_f2i_l2i(context);
+    DISPATCH;
+i2l_f2l:
+    pvm_i2l_f2l(context);
+    DISPATCH;
 call:
     pvm_call(context);
-    DISPATCH
+    DISPATCH;
 ifeq:
-    pvm_ifeq_ifne(context, IFEQ);
-    DISPATCH
+    IFXX(context, ==);
+    DISPATCH;
 ifne:
-    pvm_ifeq_ifne(context, IFNE);
-    DISPATCH
-ifle:
-    pvm_less_granter_than_equal(context, IFLE);
-    DISPATCH
-ifgt:
-    pvm_less_granter_than_equal(context, IFGT);
-    DISPATCH
-ifge:
-    pvm_less_granter_than_equal(context, IFGE);
-    DISPATCH
-iflt:
-    pvm_less_granter_than_equal(context, IFLT);
-    DISPATCH
-icmp:
-    pvm_cmp(context, ICMP);
-    DISPATCH
-lcmp:
-    pvm_cmp(context, LCMP);
-    DISPATCH
-dcmp:
-    pvm_cmp(context, DCMP);
-    DISPATCH
-pop:
-    pvm_pop_operand(context);
-    DISPATCH
+    IFXX(context, !=);
+    DISPATCH;
 assert0:
     pvm_assert(context);
-    DISPATCH
-ishl:
-    pvm_ishx(context, ISHL);
-    DISPATCH
-ishr:
-    pvm_ishx(context, ISHR);
-    DISPATCH
-iushr:
-    pvm_ishx(context, IUSHR);
-    DISPATCH
-lshl:
-    pvm_lshx(context, LSHL);
-    DISPATCH
-lshr:
-    pvm_lshx(context, LSHR);
-    DISPATCH
-lushr:
-    pvm_lshx(context, LUSHR);
-    DISPATCH
-newarray:
-    pvm_newarray(context);
-    DISPATCH
-setarray:
-    pvm_setarray(context);
-    DISPATCH
+    DISPATCH;
+pop:
+    pvm_pop_operand(context);
+    DISPATCH;
 getarray:
     pvm_getarray(context);
-    DISPATCH
+    DISPATCH;
+setarray:
+    pvm_setarray(context);
+    DISPATCH;
+newarray:
+    pvm_newarray(context);
+    DISPATCH;
 iinc:
     pvm_iinc(context);
-    DISPATCH
+    DISPATCH;
+ifle:
+    IFXX(context, <=);
+    DISPATCH;
+iflt:
+    IFXX(context, <);
+    DISPATCH;
+ifgt:
+    IFXX(context, >);
+    DISPATCH;
+ifge:
+    IFXX(context, >=);
+    DISPATCH;
+icmp:
+    XCMP(context, i32);
+    DISPATCH;
+dcmp:
+    XCMP(context, f64);
+    DISPATCH;
+lcmp:
+    XCMP(context, i64);
+    DISPATCH;
+ishr:
+    pvm_ishr(context);
+    DISPATCH;
+iushr:
+    pvm_iushr(context);
+    DISPATCH;
+ishl:
+    pvm_ishl(context);
+    DISPATCH;
+lshl:
+    pvm_lshl(context);
+    DISPATCH;
+lshr:
+    pvm_lshr(context);
+    DISPATCH;
+lushr:
+    pvm_lushr(context);
+    DISPATCH;
+lfield:
+    pvm_lfield(context);
+    DISPATCH;
+sfield:
+    pvm_sfield(context);
+    DISPATCH;
+
 finally:
     pvm_free_runtime_context(&context);
-    g_thread_exit(retVal);
+    g_thread_exit(ret_val);
 }

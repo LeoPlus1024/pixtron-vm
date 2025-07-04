@@ -200,13 +200,12 @@ public class Parser {
         Expr expr = switch (opcode) {
             case ASSERT -> parserAssert();
             case NEW_ARRAY -> parseNewArray();
-            case LOAD, GET_FIELD, LOAD_CONST -> parseLoadExpr(opcode);
-            case STORE, SET_FIELD -> parseStoreExpr(opcode);
+            case LI8, LI16, LI32, LI64, LF64 -> parseLoadExpr(opcode);
             case ADD, SUB, MUL, DIV, F2I,
                  F2L, I2L, I2F, L2I, L2F,
                  ICMP, LCMP, DCMP, RET,
                  ISHL, ISHR, IUSHR, LSHL,
-                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY -> new Simple(opcode);
+                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY, LFIELD, LLOCAL, SFIELD, SLOCAL -> new Simple(opcode);
             case CALL -> parserCallExpr();
             case IINC -> parseIinc();
             case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT -> {
@@ -236,37 +235,13 @@ public class Parser {
     }
 
     private Expr parseLoadExpr(final Opcode opcode) {
-        Helper.expect(this.tokenSequence, Constants.DOT);
-        Type type = Helper.convertOperandType(this.tokenSequence);
         Token token = this.tokenSequence.consume();
         Helper.requireTokenNotNull(token, "Load instruct missing operand.");
-        boolean immediate = token.isImmediate();
-        if (!immediate && !token.tokenKindIn(TokenKind.REF_VAR)) {
-            throw ParserException.create(token, "Load instruct can't use immediate or ref var.");
+        Object value = Helper.convertLiteral(token);
+        if (!(value instanceof Number immValue)) {
+            throw new ParserException("Load only support number immediate.");
         }
-        final DataFrom from;
-        if (opcode == Opcode.GET_FIELD) {
-            if (immediate) {
-                throw new ParserException("Global variable can't use immediate.");
-            }
-            from = DataFrom.GL;
-        } else if (opcode == Opcode.LOAD_CONST) {
-            from = DataFrom.CONSTANT;
-        } else {
-            from = token.isImmediate() ? DataFrom.IMM : DataFrom.LC;
-        }
-        int index = 0;
-        Number immValue = null;
-        if (immediate) {
-            Object value = Helper.convertLiteral(token);
-            if (!(value instanceof Number)) {
-                throw new ParserException("Load only support number immediate.");
-            }
-            immValue = (Number) value;
-        } else {
-            index = Helper.convertVarRefIndex(token);
-        }
-        return new Load(type, from, immValue, index);
+        return new Load(opcode, immValue);
     }
 
     private NewArray parseNewArray() {
@@ -275,13 +250,14 @@ public class Parser {
         return new NewArray(type);
     }
 
-    private Expr parseStoreExpr(Opcode opcode) {
-        Helper.expect(this.tokenSequence, Constants.DOT);
-        Type type = Helper.convertOperandType(this.tokenSequence);
-        DataFrom from = opcode == Opcode.STORE ? DataFrom.LC : DataFrom.GL;
-        int index = Helper.convertVarRefIndex(this.tokenSequence.consume());
-        return new Store(from, index, type);
-    }
+//    private Expr parseStoreExpr(Opcode opcode) {
+//        Token token = this.tokenSequence.consume();
+//        Object value = Helper.convertLiteral(token);
+//        if (!(value instanceof Number immValue)) {
+//            throw new ParserException("Load only support number immediate.");
+//        }
+//        return new Store(opcode, immValue.intValue());
+//    }
 
     private Expr parserCallExpr() {
         Token methodName = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);

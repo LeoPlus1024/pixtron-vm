@@ -123,4 +123,7 @@ extern inline VMValue *pvm_get_local_value(const RuntimeContext *context, uint16
  */
 extern inline VMValue *pvm_get_operand(const RuntimeContext *context);
 
+
+extern inline VMValue *pvm_next_operand(const RuntimeContext *context);
+
 #endif //VIRTUALSTACK_H

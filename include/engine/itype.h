@@ -156,21 +156,6 @@ typedef struct {
 
 #define VM_VALUE_SIZE (sizeof(VMValue))
 
-/**
- * Convert a Variant to double-precision floating point representation
- * @param value Pointer to the value to convert (modified in-place)
- */
-extern inline void pvm_value_to_double(VMValue *value);
-
-/**
- * Convert a Variant to 64-bit integer (long) representation
- * @param value Pointer to the value to convert (modified in-place)
- */
-extern inline void pvm_value_to_long(VMValue *value);
-
-
-extern inline void pvm_value_to_int(VMValue *value);
-
 
 extern inline uint8_t pvm_load_typed_value_from_buffer(Type type, VMValue *value, const uint8_t *buf);
 #endif //ITYPE_H

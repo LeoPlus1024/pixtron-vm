@@ -6,22 +6,26 @@
 @func fib(int n) : int
     %stacks 3
     %locals 1
-    load.i32 $0
-    load.i32 1
+    li32 0
+    llocal
+    li32 1
     icmp
     ifle ret0
-    load.i32 $0
-    load.i32 1
+    li32 0
+    llocal
+    li32 1
     sub
     call fib
-    load.i32 $0
-    load.i32 2
+    li32 0
+    llocal
+    li32 2
     sub
     call fib
     add
     ret
 ret0:
-    load.i32 $0
+    li32 0
+    llocal
     ret
 @end
 
@@ -30,10 +34,12 @@ ret0:
     %stacks 3
     %locals 1
     call currentTimeNano
-    store.i64 $0
-    load.i32 40
+    li32 0
+    slocal
+    li32 40
     call fib
-    load.i64 $0
+    li32 0
+    llocal
     call currentTimeNano
     call printNanoDiff
     ret

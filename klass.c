@@ -8,12 +8,13 @@
 #include "itype.h"
 #include "helper.h"
 #include "istring.h"
+#include "config.h"
 
 #define MAGIC (0xFFAABBCC)
 #define FILE_SUFFIX_LEN (strlen(".klass"))
 #define IS_KLASS_FILE(fileName) (g_str_has_suffix(fileName, ".klass"))
 
-static inline  char *PixtronVM_MethodToString(const Method *method) {
+static inline char *PixtronVM_MethodToString(const Method *method) {
     GString *str = g_string_new(NULL);
     const Type retType = method->ret;
     const char *retTypeName;
@@ -253,7 +254,7 @@ finally:
     return klass;
 }
 
-static inline  Klass *pvm_load_klass(const PixtronVM *vm, const char *klassName, GError **error) {
+static inline Klass *pvm_load_klass(const PixtronVM *vm, const char *klassName, GError **error) {
     GFile *dir = NULL;
     Klass *klass = NULL;
     GFile *klassFile = NULL;
@@ -334,10 +335,12 @@ extern inline void pvm_set_klass_field(RuntimeContext *context, const guint16 in
     const Klass *klass = pvm_check_field_index(context, index);
     const Field *field = klass->fields + index;
     const VMValue *_value = field->value;
+#if VM_DEBUG_ENABLE
     // Type check
     if (_value->type != value->type) {
         context->throw_exception(context, "Klass field type is:%d but value type is:%d.", _value->type, value->type);
     }
+#endif
     memcpy(field->value, value, VM_VALUE_SIZE);
 }
 
@@ -346,7 +349,7 @@ extern inline void pvm_get_klass_constant(RuntimeContext *context, const uint16_
     const uint16_t constSize = klass->const_size;
     if (index >= constSize) {
         context->throw_exception(context, "Constant pool index out of bounds: requested #%d (valid range: 0-%d)", index,
-                                constSize);
+                                 constSize);
     }
     memcpy(value, klass->constants[index], VM_VALUE_SIZE);
 }
@@ -356,7 +359,7 @@ extern inline Method *pvm_get_method(RuntimeContext *context, const uint16_t ind
     const uint32_t method_count = klass->method_count;
     if (index >= method_count) {
         context->throw_exception(context, "Method index out of range current index is [%d] but max index is [%d].",
-                                index, method_count);
+                                 index, method_count);
         return NULL;
     }
     return klass->methods[index];

@@ -130,3 +130,16 @@ extern inline VMValue *pvm_get_operand(const RuntimeContext *context) {
     VMValue *operand_stack = GET_OPERAND_STACK(frame);
     return operand_stack + sp;
 }
+
+extern inline VMValue *pvm_next_operand(const RuntimeContext *context) {
+    VirtualStackFrame *frame = context->frame;
+    const int32_t sp = (int32_t) frame->sp - 1;
+#if VM_DEBUG_ENABLE
+    if (sp < 0) {
+        context->throw_exception(context, "Stack pointer out of bounds.");
+    }
+#endif
+    VMValue *operand_stack = GET_OPERAND_STACK(frame);
+    frame->sp = sp;
+    return operand_stack + sp;
+}
