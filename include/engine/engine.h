@@ -46,29 +46,27 @@
  *
  * @warning Target operand modification has no rollback mechanism on failure
  */
-#define APPLY_COMPOUND_OPERATOR( \
-    targetOperand, \
-    sourceOperand, \
-    compoundOp, \
-    executionContext \
-) \
+#define APPLY_COMPOUND_OPERATOR(target, source, op) \
 do { \
-    switch ((targetOperand)->type) { \
-        case TYPE_BYTE: \
-        case TYPE_SHORT: \
-        case TYPE_INT: \
-            (targetOperand)->i32 compoundOp##= (sourceOperand)->i32; \
-            break; \
-        case TYPE_LONG: \
-            (targetOperand)->i64 compoundOp##= (sourceOperand)->i64; \
-            break; \
-        case TYPE_DOUBLE: \
-            (targetOperand)->f64 compoundOp##= (sourceOperand)->f64; \
-            break; \
-        default:    \
-            pvm_thrown_exception(executionContext ,"Not support compound operator."); \
-    } \
+    static const void* const jump_table[] = { \
+        [TYPE_BYTE]    = &&small_integer, \
+        [TYPE_SHORT]   = &&small_integer, \
+        [TYPE_INT]     = &&small_integer, \
+        [TYPE_LONG]    = &&bigger_integer, \
+        [TYPE_DOUBLE]  = &&bigger_float \
+    }; \
+    goto *jump_table[(target)->type]; \
+small_integer: \
+    (target)->i32 op##= (source)->i32; \
+    break; \
+bigger_integer: \
+    (target)->i64 op##= (source)->i64; \
+    break; \
+bigger_float: \
+    (target)->f64 op##= (source)->f64; \
+    break; \
 } while(0)
+
 
 extern void pvm_call_method(const CallMethodParam *callMethodParam);
 

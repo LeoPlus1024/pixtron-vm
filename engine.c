@@ -13,11 +13,14 @@
 #include "helper.h"
 #include "istring.h"
 #include "array.h"
+#if VM_DEBUG_ENABLE
 #include "op_gen.h"
+#endif
 
 #define DISPATCH  do {  \
         Opcode opcode = pvm_bytecode_read_u8(context);                    \
        if(VM_DEBUG_ENABLE) {            \
+            extern char *pvm_opcode_name(Opcode opcode);    \
             const char *opcode_name = pvm_opcode_name(opcode);   \
             const Method *method = context->frame->method;    \
             const char *method_name = method->toString(method); \
@@ -38,35 +41,32 @@
     }while (0);
 
 
-static inline void pvm_exec_canonical_binary_operation(RuntimeContext *context, const Opcode opcode) {
+static inline void pvm_add(RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
+    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, +);
+}
 
+static inline void pvm_sub(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, -);
+}
+
+static inline void pvm_mul(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, *);
+}
+
+static inline void pvm_div(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
     const Type t1 = source_operand->type;
-#if VM_DEBUG_ENABLE
-    const Type t0 = target_operand->type;
-    if (t0 != t1) {
-        context->throw_exception(
-            context,
-            "Operand type mismatch the first operand is:'%s' and the second operand is:'%s'.",
-            TYPE_NAME[t0],
-            TYPE_NAME[t1]
-        );
+    if (TYPE_SMALL_INTEGER(t1) && source_operand->i32 == 0 || TYPE_BIGGER_INTEGER(t1) && source_operand->i64 == 0) {
+        context->throw_exception(context, "Divisor cannot be zero.");
     }
-#endif
-
-    if (opcode == ADD) {
-        APPLY_COMPOUND_OPERATOR(target_operand, source_operand, +, context);
-    } else if (opcode == SUB) {
-        APPLY_COMPOUND_OPERATOR(target_operand, source_operand, -, context);
-    } else if (opcode == MUL) {
-        APPLY_COMPOUND_OPERATOR(target_operand, source_operand, *, context);
-    } else {
-        if (TYPE_SMALL_INTEGER(t1) && source_operand->i32 == 0 || TYPE_BIGGER_INTEGER(t1) && source_operand->i64 == 0) {
-            context->throw_exception(context, "Divisor cannot be zero.");
-        }
-        APPLY_COMPOUND_OPERATOR(target_operand, source_operand, /, context);
-    }
+    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, /);
 }
 
 static inline void pvm_goto(RuntimeContext *context) {
@@ -477,16 +477,16 @@ store:
     pvm_store(context);
     DISPATCH
 add:
-    pvm_exec_canonical_binary_operation(context, ADD);
+    pvm_add(context);
     DISPATCH
 sub:
-    pvm_exec_canonical_binary_operation(context, SUB);
+    pvm_sub(context);
     DISPATCH
 mul:
-    pvm_exec_canonical_binary_operation(context, MUL);
+    pvm_mul(context);
     DISPATCH
 div:
-    pvm_exec_canonical_binary_operation(context, DIV);
+    pvm_div(context);
     DISPATCH
 goto0:
     pvm_goto(context);
