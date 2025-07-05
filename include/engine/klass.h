@@ -1,6 +1,6 @@
 #ifndef KLASS_H
 #define KLASS_H
-#include "itype.h"
+#include "ptype.h"
 
 /**
  * Retrieves a class (Klass) by name from the virtual machine's class table.

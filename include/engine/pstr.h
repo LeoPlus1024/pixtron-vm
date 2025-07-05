@@ -1,23 +1,23 @@
 #ifndef I_STRING_H
 #define I_STRING_H
-#include "itype.h"
+#include "ptype.h"
 
 typedef struct {
     uint32_t len;
     char *str;
-} String;
+} PStr;
 
 
-extern String *pvm_string_const_pool_add(const PixtronVM *vm, const String *str);
+extern PStr *pvm_string_const_pool_add(const PixtronVM *vm, const PStr *str);
 
 
-extern bool pvm_string_equal(const String *a, const String *b);
+extern bool pvm_string_equal(const PStr *a, const PStr *b);
 
 
-extern uint32_t pvm_string_hash(const String *str);
+extern uint32_t pvm_string_hash(const PStr *str);
 
 
-extern String *pvm_string_new(const char *str, uint32_t len);
+extern PStr *pvm_string_new(const char *str, uint32_t len);
 
 
 /**
@@ -34,6 +34,6 @@ extern String *pvm_string_new(const char *str, uint32_t len);
  *         - Caller is responsible for memory deallocation
  *         - Returns NULL on failure
  */
-extern char *pvm_string_to_cstr(const String *str);
+extern char *pvm_string_to_cstr(const PStr *str);
 
 #endif //I_STRING_H

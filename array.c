@@ -1,6 +1,6 @@
 #include "array.h"
 #include "memory.h"
-#include "object.h"
+#include "pobject.h"
 
 static inline void pvm_array_destructor(Array *array) {
     if (array->length == 0) {

@@ -1,6 +1,6 @@
 #ifndef ARRAY_H
 #define ARRAY_H
-#include "itype.h"
+#include "ptype.h"
 
 typedef struct {
     Type type;

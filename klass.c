@@ -4,15 +4,32 @@
 #include <gio/gio.h>
 
 #include "memory.h"
-#include "ierror.h"
-#include "itype.h"
+#include "perr.h"
 #include "helper.h"
-#include "istring.h"
+#include "pstr.h"
 #include "config.h"
 
 #define MAGIC (0xFFAABBCC)
 #define FILE_SUFFIX_LEN (strlen(".klass"))
 #define IS_KLASS_FILE(fileName) (g_str_has_suffix(fileName, ".klass"))
+
+extern inline uint8_t pvm_load_typed_value_from_buffer(const Type type, VMValue *value, const uint8_t *buf) {
+    const uint8_t size = TYPE_SIZE[type];
+    switch (type) {
+        case TYPE_BYTE:
+        case TYPE_BOOL:
+            value->i32 = (int32_t) *(const int8_t *) buf;
+            break;
+        case TYPE_SHORT:
+            value->i32 = *(const int16_t *) buf;
+            break;
+        default:
+            memcpy(value, buf, size);
+    }
+    value->type = type;
+    return size;
+}
+
 
 static inline char *PixtronVM_MethodToString(const Method *method) {
     GString *str = g_string_new(NULL);
@@ -86,11 +103,11 @@ static inline int32_t pvm_build_constant(const PixtronVM *vm, Klass *klass, cons
         }
         const int32_t length = *((int32_t *) (buf + position));
         position += 4;
-        String string = {
+        PStr string = {
             length,
             (char *) (buf + position)
         };
-        String *ptr = pvm_string_const_pool_add(vm, &string);
+        PStr *ptr = pvm_string_const_pool_add(vm, &string);
         VMValue *constVal = pvm_mem_calloc(sizeof(VMValue));
         constVal->type = TYPE_STRING;
         constVal->obj = ptr;

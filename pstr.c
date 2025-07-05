@@ -1,11 +1,11 @@
-#include "istring.h"
+#include "pstr.h"
 
 #include <stdio.h>
 
 #include "memory.h"
-#include "object.h"
+#include "pobject.h"
 
-static void pvm_string_destructor(const String *str) {
+static void pvm_string_destructor(const PStr *str) {
     char *ptr = str->str;
     if (ptr == NULL) {
         return;
@@ -13,21 +13,21 @@ static void pvm_string_destructor(const String *str) {
     pvm_mem_free(TO_REF(ptr));
 }
 
-extern String *pvm_string_const_pool_add(const PixtronVM *vm, const String *str) {
+extern PStr *pvm_string_const_pool_add(const PixtronVM *vm, const PStr *str) {
     GHashTable *table = vm->string_constants;
     if (g_hash_table_contains(table, str)) {
         return g_hash_table_lookup(table, str);
     }
-    String *text = pvm_string_new(str->str, str->len);
+    PStr *text = pvm_string_new(str->str, str->len);
     g_hash_table_insert(table, text, text);
     return text;
 }
 
-extern bool pvm_string_equal(const String *a, const String *b) {
+extern bool pvm_string_equal(const PStr *a, const PStr *b) {
     return a == b;
 }
 
-extern uint32_t pvm_string_hash(const String *str) {
+extern uint32_t pvm_string_hash(const PStr *str) {
     const char *p = str->str;
     uint32_t n = str->len;
     uint32_t h = 0;
@@ -41,9 +41,9 @@ extern uint32_t pvm_string_hash(const String *str) {
     return h;
 }
 
-extern String *pvm_string_new(const char *str, const uint32_t len) {
+extern PStr *pvm_string_new(const char *str, const uint32_t len) {
     g_assert(str!=NULL);
-    String *text = pvm_object_new(sizeof(String), (ObjectDestructor) pvm_string_destructor, 1);
+    PStr *text = pvm_object_new(sizeof(PStr), (ObjectDestructor) pvm_string_destructor, 1);
     char *cc = pvm_mem_calloc(len);
     memcpy(cc, str, len);
     text->len = len;
@@ -51,7 +51,7 @@ extern String *pvm_string_new(const char *str, const uint32_t len) {
     return text;
 }
 
-extern char *pvm_string_to_cstr(const String *str) {
+extern char *pvm_string_to_cstr(const PStr *str) {
     if (str == NULL || str->len == 0) {
         return NULL;
     }

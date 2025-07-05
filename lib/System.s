@@ -6,4 +6,4 @@
 
 @func  @native printNanoDiff(long base,long now) : void @end
 
-@func @native println(string text):void @end
+@func @native println(object value):void @end

@@ -1,10 +1,14 @@
-#ifndef ITYPE_H
-#define ITYPE_H
-
-#include "opcode.h"
-#include <stdint.h>
+#ifndef PTYPE_H
+#define PTYPE_H
 #include <glib.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include "vm.h"
+
+typedef struct _VMValue VMValue;
+
+
+typedef struct _Method Method;
 
 typedef struct _VMValue {
     union {
@@ -19,15 +23,12 @@ typedef struct _VMValue {
     Type type;
 } VMValue;
 
-typedef union {
-    int8_t i8;
-    int16_t i16;
-    int32_t i32;
-    int64_t i64;
-    double f64;
-} VMSmallValue;
 
-struct VM;
+typedef struct {
+    const Method *method;
+    uint16_t argv;
+    const VMValue **args;
+} CallMethodParam;
 
 typedef struct {
     Type type;
@@ -58,6 +59,17 @@ typedef struct {
     VMValue *value;
 } Field;
 
+typedef enum:uint16_t {
+    V1_0 = 1,
+    V1_1,
+    V1_2,
+    V1_3,
+    V1_4,
+    V1_5,
+    V1_6,
+    V1_7,
+} Version;
+
 typedef struct _Klass {
     // Magic
     uint32_t magic;
@@ -83,6 +95,20 @@ typedef struct _Klass {
     char *library;
 } Klass;
 
+typedef struct {
+    // 魔数
+    uint32_t magic;
+    // 版本号
+    Version version;
+    // 数据偏移量
+    uint32_t dataOffset;
+    // 数据长度
+    uint32_t dataLength;
+    // 代码偏移量
+    uint32_t codeOffset;
+} BinaryHeader;
+
+
 struct _VirtualStackFrame;
 
 typedef struct _VirtualStackFrame {
@@ -98,20 +124,6 @@ typedef struct _VirtualStackFrame {
     // Previous stack frame
     struct _VirtualStackFrame *pre;
 } VirtualStackFrame;
-
-typedef struct {
-    // 魔数
-    uint32_t magic;
-    // 版本号
-    Version version;
-    // 数据偏移量
-    uint32_t dataOffset;
-    // 数据长度
-    uint32_t dataLength;
-    // 代码偏移量
-    uint32_t codeOffset;
-} BinaryHeader;
-
 
 typedef struct VM {
     // Klass path
@@ -147,15 +159,6 @@ typedef struct _RuntimeContext {
 } RuntimeContext;
 
 
-typedef struct {
-    const Method *method;
-    uint16_t argv;
-    const VMValue **args;
-} CallMethodParam;
+#define VM_VALUE_SIZE sizeof(VMValue)
 
-
-#define VM_VALUE_SIZE (sizeof(VMValue))
-
-
-extern inline uint8_t pvm_load_typed_value_from_buffer(Type type, VMValue *value, const uint8_t *buf);
-#endif //ITYPE_H
+#endif

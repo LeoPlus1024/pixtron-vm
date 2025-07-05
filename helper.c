@@ -3,11 +3,11 @@
 #include <dlfcn.h>
 #include <glib.h>
 #include <stdio.h>
-#include "ierror.h"
+#include "perr.h"
 #include <stdbool.h>
 #include <ffi.h>
 
-#include "istring.h"
+#include "pstr.h"
 #include "memory.h"
 #include "stack.h"
 
@@ -19,6 +19,7 @@
 #else
 #define LIB_SUFFIX ".so"
 #endif
+#include "config.h"
 
 #define DY_SUFFIX_LEN sizeof(LIB_SUFFIX)
 
@@ -104,9 +105,11 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
     for (int i = argv - 1; i >= 0; --i) {
         const MethodParam *param = method->args + i;
         VMValue *operand = pvm_pop_operand(context);
+#if VM_DEBUG_ENABLE
         if (operand->type != param->type) {
             context->throw_exception(context, "FFI call only one argument that is the same type.");
         }
+#endif
         const Type type = param->type;
         switch (type) {
             case TYPE_BOOL:
@@ -134,6 +137,8 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
                 arg_types[i] = &ffi_type_pointer;
                 if (type == TYPE_STRING) {
                     copies[i] = pvm_string_to_cstr(operand->obj);
+                } else if (type == TYPE_OBJECT) {
+                    copies[i] = operand;
                 } else {
                     copies[i] = (operand->obj);
                 }

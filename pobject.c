@@ -1,4 +1,4 @@
-#include "object.h"
+#include "pobject.h"
 #include <glib.h>
 #include "memory.h"
 

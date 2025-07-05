@@ -1,6 +1,6 @@
 @namespace Fib
 
-@import {   currentTimeNano , printNanoDiff             } from System
+@import {   currentTimeNano , printNanoDiff , println            } from System
 
 ; 斐波那契数朴素递归实现
 @func fib(int n) : int
@@ -28,13 +28,16 @@ ret0:
 
 @func main() : void
     %stacks 3
-    %locals 1
+    %locals 2
     call currentTimeNano
     slocal 0
     li32 40
     call fib
+    slocal 1
     llocal 0
     call currentTimeNano
+    llocal 1
+    call println
     call printNanoDiff
     ret
 @end

@@ -1,6 +1,10 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-#include "itype.h"
+#include "ptype.h"
+
+typedef enum:uint8_t {
+#include "opcode.txt"
+} Opcode;
 
 #define TYPE_BIGGER_INTEGER(value) (value == TYPE_LONG)
 

@@ -1,6 +1,6 @@
 #ifndef BC_READER_H
 #define BC_READER_H
-#include "itype.h"
+#include "ptype.h"
 
 /**
  * @brief Reads an 8-bit signed integer from the VM's code segment

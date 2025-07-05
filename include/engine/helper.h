@@ -1,6 +1,6 @@
 #ifndef HELPER_H
 #define HELPER_H
-#include "itype.h"
+#include "ptype.h"
 
 /**
  * Calculates the full buffer size needed to store a null-terminated C string.

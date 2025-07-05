@@ -1,6 +1,6 @@
 #ifndef VIRTUALSTACK_H
 #define VIRTUALSTACK_H
-#include "itype.h"
+#include "ptype.h"
 /**
  * Pushes a value onto the RuntimeContext's operand stack.
  *

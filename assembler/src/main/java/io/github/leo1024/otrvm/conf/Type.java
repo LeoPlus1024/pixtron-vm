@@ -13,7 +13,9 @@ public enum Type {
     REF("ref", 7, 8),
     VOID("void", 8, 0),
     STRING("string", 9, 0),
-    ARRAY("array", 10, 0),;
+    ARRAY("array", 10, 0),
+    OBJECT("object", 11, 0),
+    ;
 
     private final String symbol;
     private final int id;

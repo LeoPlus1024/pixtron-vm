@@ -11,13 +11,13 @@
 #include <dlfcn.h>
 
 #include "helper.h"
-#include "istring.h"
+#include "pstr.h"
 #include "array.h"
-#include "object.h"
+#include "pobject.h"
+#include <glib.h>
 #if VM_DEBUG_ENABLE
 #include "op_gen.h"
 #endif
-
 
 static inline void pvm_add(RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
@@ -175,7 +175,7 @@ static void inline pvm_assert(RuntimeContext *context) {
         context->throw_exception(context, "Except a string type but it is '%s'", TYPE_NAME[value.type]);
     }
     const char *message;
-    const String *obj = (String *) value.obj;
+    const PStr *obj = (PStr *) value.obj;
     if (obj != NULL) {
         message = obj->str;
     } else {

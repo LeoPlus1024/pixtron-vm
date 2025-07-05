@@ -2,7 +2,50 @@
 #define VM_H
 #include <stdint.h>
 
-typedef struct VMValue Value;
+// 类型标记（操作数中使用）
+typedef enum:uint16_t {
+    NIL = 0,
+    TYPE_BYTE,
+    TYPE_SHORT,
+    TYPE_INT,
+    TYPE_LONG,
+    TYPE_DOUBLE,
+    TYPE_BOOL,
+    TYPE_REF,
+    TYPE_VOID,
+    TYPE_STRING,
+    TYPE_ARRAY,
+    TYPE_OBJECT,
+} Type;
+
+
+static const uint8_t TYPE_SIZE[] = {
+    [NIL] = 0,
+    [TYPE_BYTE] = 1,
+    [TYPE_SHORT] = 2,
+    [TYPE_INT] = 4,
+    [TYPE_LONG] = 8,
+    [TYPE_DOUBLE] = 8,
+    [TYPE_BOOL] = 1,
+    [TYPE_REF] = 8,
+    [TYPE_ARRAY] = 8,
+};
+
+static const char *const TYPE_NAME[] = {
+    "null",
+    "byte",
+    "short",
+    "int",
+    "long",
+    "double",
+    "bool",
+    "object",
+    "void",
+    "string",
+    "array"
+};
+
+typedef struct _VMValue Value;
 typedef struct PixtronVM VM;
 
 
@@ -47,32 +90,36 @@ extern Value *pvm_create_double_value(double f64);
  * Extracts 8-bit integer from VMValue
  * @param value VMValue created with CreateByte()
  */
-extern int8_t pvm_value_get_byte(Value *value);
+extern int8_t pvm_value_get_byte(const Value *value);
 
 /**
  * Extracts 16-bit integer from VMValue
  * @param value VMValue created with CreateShort()
  */
-extern int16_t pvm_value_get_short(Value *value);
+extern int16_t pvm_value_get_short(const Value *value);
 
 /**
  * Extracts 32-bit integer from VMValue
  * @param value VMValue created with CreateInt()
  */
-extern int32_t pvm_value_get_int(Value *value);
+extern int32_t pvm_value_get_int(const Value *value);
 
 /**
  * Extracts 64-bit integer from VMValue
  * @param value VMValue created with CreateLong()
  */
-extern int64_t pvm_value_get_long(Value *value);
+extern int64_t pvm_value_get_long(const Value *value);
 
 /**
  * Extracts 64-bit float from VMValue
  * @param value VMValue created with CreateFloat()
  * @note Returns bit-identical NaN values if present
  */
-extern double pvm_value_get_double(Value *value);
+extern double pvm_value_get_double(const Value *value);
+
+extern const char *pvm_value_get_string(const Value *value);
+
+extern Type pvm_get_value_type(const Value *value);
 
 /**
  * Releases a VMValue and its resources

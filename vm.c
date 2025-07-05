@@ -7,7 +7,7 @@
 
 #include "klass.h"
 #include "engine.h"
-#include "istring.h"
+#include "pstr.h"
 #include "config.h"
 
 extern Value *pvm_create_byte_value(const int8_t i8) {
@@ -45,39 +45,54 @@ extern Value *pvm_create_double_value(const double f64) {
     return (Value *) value;
 }
 
-extern int8_t pvm_value_get_byte(Value *value) {
+extern int8_t pvm_value_get_byte(const Value *value) {
     g_assert(value != NULL);
     const VMValue *val = (VMValue *) value;
     g_assert(val->type == TYPE_BYTE);
     return val->i8;
 }
 
-extern int16_t pvm_value_get_short(Value *value) {
+extern int16_t pvm_value_get_short(const Value *value) {
     g_assert(value != NULL);
     const VMValue *val = (VMValue *) value;
     g_assert(val->type == TYPE_SHORT);
     return val->i16;
 }
 
-extern int32_t pvm_value_get_int(Value *value) {
+extern int32_t pvm_value_get_int(const Value *value) {
     g_assert(value != NULL);
     const VMValue *val = (VMValue *) value;
     g_assert(val->type == TYPE_INT);
     return val->i32;
 }
 
-extern int64_t pvm_value_get_long(Value *value) {
+extern int64_t pvm_value_get_long(const Value *value) {
     g_assert(value != NULL);
     const VMValue *val = (VMValue *) value;
     g_assert(val->type == TYPE_LONG);
     return val->i64;
 }
 
-extern double pvm_value_get_double(Value *value) {
+extern double pvm_value_get_double(const Value *value) {
     g_assert(value != NULL);
     const VMValue *val = (VMValue *) value;
     g_assert(val->type == TYPE_DOUBLE);
     return val->f64;
+}
+
+
+extern const char *pvm_value_get_string(const Value *value) {
+    g_assert(value != NULL);
+    g_assert(value->type == TYPE_STRING);
+    const PStr *str = (PStr *) value->obj;
+    if (str == NULL) {
+        NULL;
+    }
+    return str->str;
+}
+
+extern Type pvm_get_value_type(const Value *value) {
+    return value->type;
 }
 
 
