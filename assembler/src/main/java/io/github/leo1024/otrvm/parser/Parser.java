@@ -200,12 +200,13 @@ public class Parser {
         Expr expr = switch (opcode) {
             case ASSERT -> parserAssert();
             case NEW_ARRAY -> parseNewArray();
-            case LI8, LI16, LI32, LI64, LF64, LFIELD, LLOCAL, SFIELD, SLOCAL -> parseLoadExpr(opcode);
+            case LI8, LI16, LI32, LI64, LF64 -> parseLoadExpr(opcode);
+            case LFIELD, LLOCAL, SFIELD, SLOCAL, SREFDEC, SREFINC -> parseIndexExpr(opcode);
             case ADD, SUB, MUL, DIV, F2I,
                  F2L, I2L, I2F, L2I, L2F,
                  ICMP, LCMP, DCMP, RET,
                  ISHL, ISHR, IUSHR, LSHL,
-                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY -> new Simple(opcode);
+                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY, REFINC, REFDEC -> new Simple(opcode);
             case CALL -> parserCallExpr();
             case IINC -> parseIinc();
             case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT -> {
@@ -218,14 +219,19 @@ public class Parser {
     }
 
     private Expr parseIinc() {
-        int index = Helper.convertVarRefIndex(this.tokenSequence.consume());
+        short index = Helper.checkOpcodeIdx(this.tokenSequence);
         Helper.expect(tokenSequence, Constants.COMMA);
         Token token = Helper.expect(this.tokenSequence, TokenKind.INTEGER);
-        int value = Integer.parseInt(token.getValue());
+        int value = token.toInt();
         if (value > 127 || value < -128) {
             throw ParserException.create(token, "IINC value must between -128 and 127.");
         }
         return new Iinc(index, value);
+    }
+
+
+    private Expr parseIndexExpr(final Opcode opcode) {
+        return new Index(opcode, Helper.checkOpcodeIdx(this.tokenSequence));
     }
 
     private Expr parserAssert() {
@@ -246,17 +252,14 @@ public class Parser {
     private NewArray parseNewArray() {
         Helper.expect(this.tokenSequence, Constants.DOT);
         Type type = Helper.convertOperandType(this.tokenSequence);
-        return new NewArray(type);
+        Token token = Helper.requireTokenNotNull(this.tokenSequence.consume(), "Array length missing.");
+        Object object = Helper.convertLiteral(token);
+        if (!(object instanceof Number number)) {
+            throw ParserException.create(token, "NewArray length only support integer immediate.");
+        }
+        return new NewArray(type, number.intValue());
     }
 
-//    private Expr parseStoreExpr(Opcode opcode) {
-//        Token token = this.tokenSequence.consume();
-//        Object value = Helper.convertLiteral(token);
-//        if (!(value instanceof Number immValue)) {
-//            throw new ParserException("Load only support number immediate.");
-//        }
-//        return new Store(opcode, immValue.intValue());
-//    }
 
     private Expr parserCallExpr() {
         Token methodName = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);

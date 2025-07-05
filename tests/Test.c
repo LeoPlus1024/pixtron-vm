@@ -1,5 +1,3 @@
-#include <stdio.h>
-
 #include "vm.h"
 
 
@@ -12,4 +10,5 @@ void exec_main(const char *klass_name) {
 
 int main(int argc, char *argv[]) {
     exec_main("Fib");
+    exec_main("Array");
 }

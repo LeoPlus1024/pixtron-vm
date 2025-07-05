@@ -15,15 +15,19 @@ extern inline void *pvm_object_new(uint64_t size,
     return CONVERT_TO_OBJECT(header);
 }
 
-extern inline void pvm_object_retain(void *object) {
-    g_assert(object!=NULL);
+extern inline void pvm_object_refinc(void *object) {
+    if (object == NULL) {
+        return;
+    }
     ObjectHeader *header = GET_OBJECT_HEADER(object);
     atomic_uint_least64_t * counter = &(header->rc);
     atomic_fetch_add(counter, 1);
 }
 
-extern inline void pvm_object_release(void *object) {
-    g_assert(object!=NULL);
+extern inline void pvm_object_refdec(void *object) {
+    if (object == NULL) {
+        return;
+    }
     ObjectHeader *header = GET_OBJECT_HEADER(object);
     atomic_uint_least64_t * counter = &(header->rc);
     const uint64_t pre = atomic_fetch_sub(counter, 1);
@@ -31,5 +35,5 @@ extern inline void pvm_object_release(void *object) {
         return;
     }
     header->destructor(object);
-    pvm_mem_free(&object);
+    pvm_mem_free(TO_REF(header));
 }

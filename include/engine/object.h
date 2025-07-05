@@ -77,7 +77,7 @@ extern inline void *pvm_object_new(uint64_t size, const ObjectDestructor destruc
  * @warning Calling with invalid pointers causes undefined behavior.
  *          Always pair with matching PixtronVM_Release calls.
  */
-extern inline void pvm_object_retain(void *object);
+extern inline void pvm_object_refinc(void *object);
 
 /**
  * @brief Decreases the reference count and potentially destroys the object.
@@ -96,6 +96,6 @@ extern inline void pvm_object_retain(void *object);
  *
  * @concurrency Thread-safe: uses atomic operations with full memory barriers.
  */
-extern inline void pvm_object_release(void *object);
+extern inline void pvm_object_refdec(void *object);
 
 #endif

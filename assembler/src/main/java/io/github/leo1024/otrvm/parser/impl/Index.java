@@ -4,21 +4,20 @@ import io.github.leo1024.otrvm.conf.Opcode;
 import io.github.leo1024.otrvm.parser.Expr;
 import io.github.leo1024.otrvm.util.ByteUtil;
 
-public class Iinc implements Expr {
-    private final int value;
+public class Index implements Expr {
+    private final Opcode opcode;
     private final short index;
 
-    public Iinc(short index, int value) {
+    public Index(Opcode opcode, short index) {
+        this.opcode = opcode;
         this.index = index;
-        this.value = value;
     }
 
     @Override
     public byte[] toBytes() {
-        byte[] bytes = new byte[4];
-        bytes[0] = Opcode.IINC.getValue();
+        byte[] bytes = new byte[3];
+        bytes[0] = opcode.getValue();
         ByteUtil.appendShort2Bytes(bytes, 1, index);
-        bytes[3] = (byte) value;
         return bytes;
     }
 }

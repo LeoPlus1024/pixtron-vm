@@ -41,3 +41,7 @@
     IINC,
     LFIELD,
     SFIELD,
+    REFINC,
+    REFDEC,
+    SREFINC,
+    SREFDEC

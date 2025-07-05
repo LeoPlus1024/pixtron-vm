@@ -92,16 +92,13 @@ public class Helper {
         }
     }
 
-    public static int convertVarRefIndex(Token token) {
-        if (token == null || !token.tokenKindIn(TokenKind.REF_VAR)) {
-            throw ParserException.create(token, "Can't convert token  to var ref index.");
+    public static short checkOpcodeIdx(final TokenSequence tokenSequence) {
+        Token token = Helper.expect(tokenSequence, TokenKind.INTEGER);
+        int index = token.toInt();
+        if (index < 0 || index > 0xffff) {
+            throw ParserException.create(token, "Index out of range.");
         }
-        String value = token.getValue().substring(1);
-        int index = Integer.parseInt(value);
-        if ((index & 0xFFFF0000) != 0) {
-            throw ParserException.create(token, "Exceed variable refence max value.");
-        }
-        return index;
+        return (short) index;
     }
 
 }

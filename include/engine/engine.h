@@ -2,15 +2,13 @@
 #define ENGINE_H
 #include "itype.h"
 
-#define OPS_DATA_TYPE(value) ((value >> 4) & 0x0f)
-
-#define OPS_DATA_SOURCE(value) (value & 0x0f)
-
 #define TYPE_BIGGER_INTEGER(value) (value == TYPE_LONG)
 
 #define TYPE_INTEGER(value) (value == TYPE_INT)
 
 #define TYPE_SMALL_INTEGER(value) (value == TYPE_BYTE || value == TYPE_SHORT || value == TYPE_INT)
+
+#define TYPE_REFERENCE(type) (type == TYPE_REF || type == TYPE_STRING || type == TYPE_ARRAY)
 /**
  * @brief Safe sign-aware comparison macro for two values of the same type.
  *
@@ -100,7 +98,5 @@ bigger_float: \
     } while (0)
 
 extern void pvm_call_method(const CallMethodParam *callMethodParam);
-
-extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...);
 
 #endif //ENGINE_H

@@ -26,7 +26,7 @@ public class Load implements Expr {
             case LI8 -> Type.BYTE;
             case LI32 -> Type.INT;
             case LI64 -> Type.LONG;
-            case LI16, SLOCAL, LLOCAL, SFIELD,LFIELD -> Type.SHORT;
+            case LI16 -> Type.SHORT;
             default -> throw new RuntimeException("Unsupported opcode.");
         };
     }
@@ -39,5 +39,10 @@ public class Load implements Expr {
         byte[] immBytes = ByteUtil.convertSpecSizeToBytes(this.type, this.immValue);
         System.arraycopy(immBytes, 0, data, 1, immBytes.length);
         return data;
+    }
+
+    @Override
+    public String toString() {
+        return opcode.getMnemonic();
     }
 }

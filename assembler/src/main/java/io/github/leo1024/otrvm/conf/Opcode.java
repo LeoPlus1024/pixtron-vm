@@ -48,7 +48,11 @@ public enum Opcode {
     SET_ARRAY("setarray", 39),
     IINC("iinc", 40),
     LFIELD("lfield", 41),
-    SFIELD("sfield", 42);
+    SFIELD("sfield", 42),
+    REFINC("refinc", 43),
+    REFDEC("refdec", 44),
+    SREFINC("srefinc",45),
+    SREFDEC("srefdec",46);
 
     private final byte value;
     private final String mnemonic;

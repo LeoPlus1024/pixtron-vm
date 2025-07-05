@@ -33,4 +33,6 @@ extern inline bool pvm_lookup_native_handle(const Klass *klass, Method *method, 
  */
 extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method);
 
+extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...);
+
 #endif //HELPER_H

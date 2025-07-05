@@ -87,4 +87,8 @@ public class Token {
         }
         return false;
     }
+
+    public int toInt() {
+        return Integer.parseInt(this.value);
+    }
 }

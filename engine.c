@@ -13,6 +13,7 @@
 #include "helper.h"
 #include "istring.h"
 #include "array.h"
+#include "object.h"
 #if VM_DEBUG_ENABLE
 #include "op_gen.h"
 #endif
@@ -138,44 +139,6 @@ static inline void pvm_lf64(RuntimeContext *context) {
 }
 
 
-extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...) {
-    const VirtualStackFrame *frame = context->frame;
-    const Method *method = frame->method;
-    const gchar *threadName = g_thread_get_name(g_thread_self());
-    gchar *methodName = method->toString(method);
-    va_list vaList;
-    va_start(vaList, fmt);
-    const char *message = g_strdup_vprintf(fmt, vaList);
-    va_end(vaList);
-    g_printerr(
-        "\n*******************************************************************************\n"
-        "*                    VIRTUAL MACHINE CRASH - FATAL ERROR                       *\n"
-        "*******************************************************************************\n"
-        "* Thread: %-60s *\n"
-        "* Method: (%p) %-60s *\n"
-        "*                                                                             *\n"
-        "* [ERROR]: %-64s*\n"
-        "*                                                                             *\n"
-        "* Execution State:                                                            *\n"
-        "*   Program Counter: 0x%08x (instruction #%d)                         *\n"
-        "*   Stack Pointer:   0x%08x (depth: %d)                             *\n"
-        "*                                                                             *\n"
-        "*******************************************************************************\n\n",
-        threadName ? threadName : "<unnamed-thread>",
-        method,
-        methodName,
-        message, // error message
-        frame->pc, // pc
-        frame->pc, // pc
-        frame, // sp
-        context->stack_depth, // stack deep
-        frame->max_stacks // max stack deep
-    );
-    g_free(methodName);
-    g_free((gpointer) message);
-    g_thread_exit(NULL);
-}
-
 static inline VMValue *pvm_ret(RuntimeContext *context) {
     const VirtualStackFrame *frame = context->frame;
     const VMValue *value = NULL;
@@ -288,22 +251,17 @@ static inline void pvm_free_runtime_context(RuntimeContext **context) {
 }
 
 static inline void pvm_newarray(RuntimeContext *context) {
-    VMValue *value = pvm_get_operand(context);
-#if VM_DEBUG_ENABLE
-    if (value->type != TYPE_INT) {
-        context->throw_exception(context, "Array length require a int value but it is %s", TYPE_NAME[value->type]);
-    }
-#endif
     const Type type = pvm_bytecode_read_int16(context);
-    const uint32_t length = value->i32;
+    const uint32_t length = pvm_bytecode_read_int32(context);
+    VMValue *value = pvm_next_operand(context);
     Array *obj = pvm_new_array(type, length);
     value->obj = obj;
     value->type = TYPE_ARRAY;
 }
 
 static inline void pvm_setarray(RuntimeContext *context) {
-    const VMValue *arr_value = pvm_pop_operand(context);
     const VMValue *idx_value = pvm_pop_operand(context);
+    const VMValue *arr_value = pvm_pop_operand(context);
     const VMValue *value = pvm_pop_operand(context);
     const Array *array = (Array *) (arr_value->obj);
     const int32_t index = idx_value->i32;
@@ -373,6 +331,50 @@ static inline void pvm_sfield(RuntimeContext *context) {
     pvm_set_klass_field(context, index, value);
 }
 
+static inline void pvm_srefinc(RuntimeContext *context) {
+    const uint16_t index = pvm_bytecode_read_int16(context);
+    const VMValue *value = pvm_get_local_value(context, index);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_STRING && value->type != TYPE_REF) {
+        context->throw_exception(context, "refinc only support reference.");
+    }
+#endif
+    pvm_object_refinc(value->obj);
+}
+
+static inline void pvm_srefdec(RuntimeContext *context) {
+    const uint16_t index = pvm_bytecode_read_int16(context);
+    const VMValue *value = pvm_get_local_value(context, index);
+#if VM_DEBUG_ENABLE
+    const Type type = value->type;
+    if (!TYPE_REFERENCE(type)) {
+        context->throw_exception(context, "refdec only support reference.");
+    }
+#endif
+    pvm_object_refdec(value->obj);
+}
+
+static inline void pvm_refinc(RuntimeContext *context) {
+    const VMValue *value = pvm_pop_operand(context);
+#if VM_DEBUG_ENABLE
+    const Type type = value->type;
+    if (!TYPE_REFERENCE(type)) {
+        context->throw_exception(context, "refinc only support reference.");
+    }
+#endif
+    pvm_object_refinc(value->obj);
+}
+
+static inline void pvm_refdec(RuntimeContext *context) {
+    const VMValue *value = pvm_pop_operand(context);
+#if VM_DEBUG_ENABLE
+    const Type type = value->type;
+    if (!TYPE_REFERENCE(type)) {
+        context->throw_exception(context, "refinc only support reference.");
+    }
+#endif
+    pvm_object_refdec(value->obj);
+}
 
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     RuntimeContext *context = pvm_init_runtime_context();
@@ -424,6 +426,10 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         [LSHR] = &&lshr,
         [LFIELD] = &&lfield,
         [SFIELD] = &&sfield,
+        [SREFDEC] = &&srefdec,
+        [SREFINC] = &&srefinc,
+        [REFINC] = &&refinc,
+        [REFDEC] = &&refdec,
     };
     VMValue *ret_val = NULL;
     DISPATCH;
@@ -550,7 +556,18 @@ lfield:
 sfield:
     pvm_sfield(context);
     DISPATCH;
-
+srefinc:
+    pvm_srefinc(context);
+    DISPATCH;
+srefdec:
+    pvm_srefdec(context);
+    DISPATCH;
+refdec:
+    pvm_refdec(context);
+    DISPATCH;
+refinc:
+    pvm_refinc(context);
+    DISPATCH;
 finally:
     pvm_free_runtime_context(&context);
     g_thread_exit(ret_val);
