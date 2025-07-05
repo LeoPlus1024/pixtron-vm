@@ -1,4 +1,4 @@
-#include "helper.h"
+#include "phelper.h"
 
 #include <dlfcn.h>
 #include <glib.h>
@@ -8,8 +8,8 @@
 #include <ffi.h>
 
 #include "pstr.h"
-#include "memory.h"
-#include "stack.h"
+#include "pmem.h"
+#include "pstack.h"
 
 #ifdef _WIN64
 #define LIB_SUFFIX ".dll"

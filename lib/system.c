@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "ptype.h"
-#include "vm.h"
+#include "pvm.h"
 
 int64_t currentTimeNano() {
     struct timespec ts;

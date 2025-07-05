@@ -1,4 +1,4 @@
-#include "vm.h"
+#include "pvm.h"
 
 
 void exec_main(const char *klass_name) {

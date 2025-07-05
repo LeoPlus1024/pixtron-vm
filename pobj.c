@@ -1,6 +1,6 @@
-#include "pobject.h"
+#include "pobj.h"
 #include <glib.h>
-#include "memory.h"
+#include "pmem.h"
 
 
 extern inline void *pvm_object_new(uint64_t size,

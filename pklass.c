@@ -1,11 +1,11 @@
-#include "klass.h"
+#include "pklass.h"
 
 #include <stdio.h>
 #include <gio/gio.h>
 
-#include "memory.h"
+#include "pmem.h"
 #include "perr.h"
-#include "helper.h"
+#include "phelper.h"
 #include "pstr.h"
 #include "config.h"
 

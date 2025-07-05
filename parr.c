@@ -1,24 +1,24 @@
-#include "array.h"
-#include "memory.h"
-#include "pobject.h"
+#include "parr.h"
+#include "pmem.h"
+#include "pobj.h"
 
-static inline void pvm_array_destructor(Array *array) {
+static inline void pvm_array_destructor(PArr *array) {
     if (array->length == 0) {
         return;
     }
     pvm_mem_free(TO_REF(array->data));
 }
 
-extern inline Array *pvm_new_array(const Type type, const uint32_t length) {
+extern inline PArr *pvm_new_array(const Type type, const uint32_t length) {
     const uint8_t size = TYPE_SIZE[type];
-    Array *array = pvm_object_new(sizeof(Array), (ObjectDestructor) pvm_array_destructor, 1);
+    PArr *array = pvm_object_new(sizeof(PArr), (ObjectDestructor) pvm_array_destructor, 1);
     array->type = type;
     array->length = length;
     array->data = pvm_mem_calloc(size * length);
     return array;
 }
 
-extern inline void pvm_array_value_set(const Array *array, const int index, const VMValue *value) {
+extern inline void pvm_array_value_set(const PArr *array, const int index, const VMValue *value) {
     const Type type = array->type;
     const void *from = &(value->i64);
     const uint8_t size = TYPE_SIZE[type];
@@ -27,7 +27,7 @@ extern inline void pvm_array_value_set(const Array *array, const int index, cons
 }
 
 
-extern inline void *pvm_array_value_get(const Array *array, const int index) {
+extern inline void *pvm_array_value_get(const PArr *array, const int index) {
     const Type type = array->type;
     const uint8_t size = TYPE_SIZE[type];
     return array->data + index * size;

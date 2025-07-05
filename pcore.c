@@ -1,19 +1,19 @@
-#include "engine.h"
+#include "pcore.h"
 
 #include <assert.h>
 #include <config.h>
 #include <stdbool.h>
 
-#include "bc_reader.h"
-#include "klass.h"
-#include "memory.h"
-#include "stack.h"
+#include "pbcread.h"
+#include "pklass.h"
+#include "pmem.h"
+#include "pstack.h"
 #include <dlfcn.h>
 
-#include "helper.h"
+#include "phelper.h"
 #include "pstr.h"
-#include "array.h"
-#include "pobject.h"
+#include "parr.h"
+#include "pobj.h"
 #include <glib.h>
 #if VM_DEBUG_ENABLE
 #include "op_gen.h"
@@ -254,7 +254,7 @@ static inline void pvm_newarray(RuntimeContext *context) {
     const Type type = pvm_bytecode_read_int16(context);
     const uint32_t length = pvm_bytecode_read_int32(context);
     VMValue *value = pvm_next_operand(context);
-    Array *obj = pvm_new_array(type, length);
+    PArr *obj = pvm_new_array(type, length);
     value->obj = obj;
     value->type = TYPE_ARRAY;
 }
@@ -263,7 +263,7 @@ static inline void pvm_setarray(RuntimeContext *context) {
     const VMValue *idx_value = pvm_pop_operand(context);
     const VMValue *arr_value = pvm_pop_operand(context);
     const VMValue *value = pvm_pop_operand(context);
-    const Array *array = (Array *) (arr_value->obj);
+    const PArr *array = (PArr *) (arr_value->obj);
     const int32_t index = idx_value->i32;
 #if VM_DEBUG_ENABLE
     if (ARRAY_INDEX_OUT_OF_BOUND_CHECK(array, index)) {
@@ -277,7 +277,7 @@ static inline void pvm_setarray(RuntimeContext *context) {
 static inline void pvm_getarray(RuntimeContext *context) {
     const VMValue *idx_val = pvm_pop_operand(context);
     VMValue *arr_val = pvm_get_operand(context);
-    const Array *array = (Array *) (arr_val->obj);
+    const PArr *array = (PArr *) (arr_val->obj);
     const int32_t index = idx_val->i32;
 #if VM_DEBUG_ENABLE
     if (ARRAY_INDEX_OUT_OF_BOUND_CHECK(array, index)) {

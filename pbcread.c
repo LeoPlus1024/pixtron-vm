@@ -1,4 +1,4 @@
-#include "bc_reader.h"
+#include "pbcread.h"
 
 
 extern inline int8_t pvm_bytecode_read_int8(const RuntimeContext *context) {

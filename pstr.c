@@ -2,8 +2,8 @@
 
 #include <stdio.h>
 
-#include "memory.h"
-#include "pobject.h"
+#include "pmem.h"
+#include "pobj.h"
 
 static void pvm_string_destructor(const PStr *str) {
     char *ptr = str->str;

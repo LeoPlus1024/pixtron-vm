@@ -1,4 +1,4 @@
-#include "stack.h"
+#include "pstack.h"
 
 #include <config.h>
 #include <stdio.h>

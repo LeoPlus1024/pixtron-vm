@@ -1,12 +1,12 @@
-#include "vm.h"
+#include "pvm.h"
 
 #include <locale.h>
 #include <stdio.h>
 
-#include "memory.h"
+#include "pmem.h"
 
-#include "klass.h"
-#include "engine.h"
+#include "pklass.h"
+#include "pcore.h"
 #include "pstr.h"
 #include "config.h"
 

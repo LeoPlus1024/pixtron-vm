@@ -3,7 +3,7 @@
 #include <glib.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include "vm.h"
+#include "pvm.h"
 
 typedef struct _VMValue VMValue;
 
