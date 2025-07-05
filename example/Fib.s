@@ -1,4 +1,4 @@
-@namespace TBaseline
+@namespace Fib
 
 @import {   currentTimeNano , printNanoDiff             } from System
 
@@ -6,26 +6,22 @@
 @func fib(int n) : int
     %stacks 3
     %locals 1
-    li32 0
-    llocal
+    llocal 0
     li32 1
     icmp
     ifle ret0
-    li32 0
-    llocal
+    llocal 0
     li32 1
     sub
     call fib
-    li32 0
-    llocal
+    llocal 0
     li32 2
     sub
     call fib
     add
     ret
 ret0:
-    li32 0
-    llocal
+    llocal 0
     ret
 @end
 
@@ -34,12 +30,10 @@ ret0:
     %stacks 3
     %locals 1
     call currentTimeNano
-    li32 0
-    slocal
+    slocal 0
     li32 40
     call fib
-    li32 0
-    llocal
+    llocal 0
     call currentTimeNano
     call printNanoDiff
     ret

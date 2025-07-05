@@ -42,9 +42,9 @@ public class Helper {
     }
 
 
-    public static void requireTokenNotNull(Token token, String message) {
+    public static Token requireTokenNotNull(Token token, String message) {
         if (token != null) {
-            return;
+            return token;
         }
         throw new ParserException(message);
     }

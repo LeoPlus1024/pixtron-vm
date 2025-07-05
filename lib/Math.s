@@ -3,18 +3,14 @@
 @func max(int a,int b):int
     %locals 2
     %stacks 2
-    li32 0
-    llocal
-    li32 1
-    llocal
+    llocal 0
+    llocal 1
     icmp
     iflt blarger
-    li32 0
-    llocal
+    llocal 0
     ret
 blarger:
-    li32 1
-    llocal
+    llocal 1
     ret
 @end
 

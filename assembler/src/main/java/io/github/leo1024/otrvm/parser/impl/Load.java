@@ -26,7 +26,7 @@ public class Load implements Expr {
             case LI8 -> Type.BYTE;
             case LI32 -> Type.INT;
             case LI64 -> Type.LONG;
-            case LI16 -> Type.SHORT;
+            case LI16, SLOCAL, LLOCAL, SFIELD,LFIELD -> Type.SHORT;
             default -> throw new RuntimeException("Unsupported opcode.");
         };
     }

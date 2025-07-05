@@ -200,12 +200,12 @@ public class Parser {
         Expr expr = switch (opcode) {
             case ASSERT -> parserAssert();
             case NEW_ARRAY -> parseNewArray();
-            case LI8, LI16, LI32, LI64, LF64 -> parseLoadExpr(opcode);
+            case LI8, LI16, LI32, LI64, LF64, LFIELD, LLOCAL, SFIELD, SLOCAL -> parseLoadExpr(opcode);
             case ADD, SUB, MUL, DIV, F2I,
                  F2L, I2L, I2F, L2I, L2F,
                  ICMP, LCMP, DCMP, RET,
                  ISHL, ISHR, IUSHR, LSHL,
-                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY, LFIELD, LLOCAL, SFIELD, SLOCAL -> new Simple(opcode);
+                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY -> new Simple(opcode);
             case CALL -> parserCallExpr();
             case IINC -> parseIinc();
             case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT -> {
@@ -235,8 +235,7 @@ public class Parser {
     }
 
     private Expr parseLoadExpr(final Opcode opcode) {
-        Token token = this.tokenSequence.consume();
-        Helper.requireTokenNotNull(token, "Load instruct missing operand.");
+        Token token = Helper.requireTokenNotNull(this.tokenSequence.consume(), "Load instruct missing operand.");
         Object value = Helper.convertLiteral(token);
         if (!(value instanceof Number immValue)) {
             throw new ParserException("Load only support number immediate.");

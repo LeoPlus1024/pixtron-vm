@@ -95,43 +95,43 @@ case type: value->i32 = (int32_t)(value->field);  break;
 
 
 static inline void pvm_slocal(RuntimeContext *context) {
-    const VMValue *index = pvm_pop_operand(context);
     const VMValue *value = pvm_pop_operand(context);
-    pvm_set_local_value(context, index->i32, value);
+    const uint16_t index = pvm_bytecode_read_int16(context);
+    pvm_set_local_value(context, index, value);
 }
 
 static inline void pvm_llocal(RuntimeContext *context) {
-    VMValue *value = pvm_get_operand(context);
-    const uint16_t index = value->i32;
+    const uint16_t index = pvm_bytecode_read_int16(context);
+    VMValue *value = pvm_next_operand(context);
     pvm_copy_local_value(context, index, value);
 }
 
 
-static inline void pvm_load_int8(RuntimeContext *context) {
+static inline void pvm_lint8(RuntimeContext *context) {
     VMValue *value = pvm_next_operand(context);
     value->i8 = pvm_bytecode_read_int8(context);
     value->type = TYPE_BYTE;
 }
 
-static inline void pvm_load_int16(RuntimeContext *context) {
+static inline void pvm_lint16(RuntimeContext *context) {
     VMValue *value = pvm_next_operand(context);
     value->i16 = pvm_bytecode_read_int16(context);
     value->type = TYPE_SHORT;
 }
 
-static inline void pvm_load_int32(RuntimeContext *context) {
+static inline void pvm_lint32(RuntimeContext *context) {
     VMValue *value = pvm_next_operand(context);
     value->i32 = pvm_bytecode_read_int32(context);
     value->type = TYPE_INT;
 }
 
-static inline void pvm_load_int64(RuntimeContext *context) {
+static inline void pvm_lint64(RuntimeContext *context) {
     VMValue *value = pvm_next_operand(context);
     value->i64 = pvm_bytecode_read_int64(context);
     value->type = TYPE_LONG;
 }
 
-static inline void pvm_load_f64(RuntimeContext *context) {
+static inline void pvm_lf64(RuntimeContext *context) {
     VMValue *value = pvm_next_operand(context);
     value->f64 = pvm_bytecode_read_f64(context);
     value->type = TYPE_DOUBLE;
@@ -362,14 +362,14 @@ static inline void pvm_iinc(RuntimeContext *context) {
 }
 
 static inline void pvm_lfield(RuntimeContext *context) {
-    VMValue *value = pvm_get_operand(context);
-    const uint32_t index = value->i32;
+    const uint32_t index = pvm_bytecode_read_int16(context);
+    VMValue *value = pvm_next_operand(context);
     pvm_get_klass_field(context, index, value);
 }
 
 static inline void pvm_sfield(RuntimeContext *context) {
+    const uint16_t index = pvm_bytecode_read_int16(context);
     const VMValue *value = pvm_pop_operand(context);
-    const uint32_t index = value->i32;
     pvm_set_klass_field(context, index, value);
 }
 
@@ -428,19 +428,19 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     VMValue *ret_val = NULL;
     DISPATCH;
 li8:
-    pvm_load_int8(context);
+    pvm_lint8(context);
     DISPATCH;
 li16:
-    pvm_load_int16(context);
+    pvm_lint16(context);
     DISPATCH;
 li32:
-    pvm_load_int32(context);
+    pvm_lint32(context);
     DISPATCH;
 li64:
-    pvm_load_int64(context);
+    pvm_lint64(context);
     DISPATCH;
 lf64:
-    pvm_load_f64(context);
+    pvm_lf64(context);
     DISPATCH;
 slocal:
     pvm_slocal(context);
