@@ -80,6 +80,12 @@ extern double pvm_value_get_double(const Value *value) {
     return val->f64;
 }
 
+extern bool pvm_value_get_bool(const Value *value) {
+    g_assert(value != NULL);
+    g_assert(value->type == TYPE_BOOL);
+    return value->i32 == 1;
+}
+
 
 extern const char *pvm_value_get_string(const Value *value) {
     g_assert(value != NULL);

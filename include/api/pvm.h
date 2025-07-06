@@ -1,5 +1,6 @@
 #ifndef VM_H
 #define VM_H
+#include <stdbool.h>
 #include <stdint.h>
 
 // 类型标记（操作数中使用）
@@ -116,6 +117,9 @@ extern int64_t pvm_value_get_long(const Value *value);
  * @note Returns bit-identical NaN values if present
  */
 extern double pvm_value_get_double(const Value *value);
+
+
+extern bool pvm_value_get_bool(const Value *value);
 
 extern const char *pvm_value_get_string(const Value *value);
 

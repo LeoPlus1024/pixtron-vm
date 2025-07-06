@@ -39,6 +39,9 @@ void println(const Value *value) {
         case TYPE_STRING:
             printf("%s\n", pvm_value_get_string(value));
             break;
+        case TYPE_BOOL:
+            printf("%s\n", pvm_value_get_bool(value) ? "true" : "false");
+            break;
         default:
             printf("%p\n", value->obj);
     }
