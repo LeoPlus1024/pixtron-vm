@@ -5,7 +5,7 @@ import io.github.leo1024.otrvm.conf.FuncMeta;
 import io.github.leo1024.otrvm.conf.FieldMeta;
 import io.github.leo1024.otrvm.conf.Type;
 import io.github.leo1024.otrvm.ex.ParserException;
-import io.github.leo1024.otrvm.parser.impl.Func;
+import io.github.leo1024.otrvm.parser.impl.FuncExpr;
 import io.github.leo1024.otrvm.util.ByteUtil;
 
 import java.nio.charset.StandardCharsets;
@@ -62,8 +62,8 @@ public class ASTBuilder extends Context {
     public List<FuncMeta> getFuncList() {
         return this.getExprList()
                 .stream()
-                .filter(it -> it instanceof Func)
-                .map(it -> ((Func) it).getFuncMeta())
+                .filter(it -> it instanceof FuncExpr)
+                .map(it -> ((FuncExpr) it).getFuncMeta())
                 .toList();
     }
 

@@ -5,21 +5,20 @@ import io.github.leo1024.otrvm.conf.Type;
 import io.github.leo1024.otrvm.parser.Expr;
 import io.github.leo1024.otrvm.util.ByteUtil;
 
-public class NewArray implements Expr {
+public class TypeExpr implements Expr {
     private final Type type;
-    private final int length;
+    private final Opcode opcode;
 
-    public NewArray(final Type type, final int length) {
+    public TypeExpr(final Opcode opcode, final Type type) {
         this.type = type;
-        this.length = length;
+        this.opcode = opcode;
     }
 
     @Override
     public byte[] toBytes() {
-        byte[] bytes = new byte[7];
-        bytes[0] = Opcode.NEW_ARRAY.getValue();
+        byte[] bytes = new byte[3];
+        bytes[0] = this.opcode.getValue();
         ByteUtil.appendType2Bytes(bytes, 1, type);
-        ByteUtil.appendInt2Bytes(bytes, 3, length);
         return bytes;
     }
 }

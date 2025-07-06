@@ -105,12 +105,12 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
     for (int i = argv - 1; i >= 0; --i) {
         const MethodParam *param = method->args + i;
         VMValue *operand = pvm_pop_operand(context);
+        const Type type = param->type;
 #if VM_DEBUG_ENABLE
-        if (operand->type != param->type) {
+        if (type != TYPE_OBJECT && operand->type != type) {
             context->throw_exception(context, "FFI call only one argument that is the same type.");
         }
 #endif
-        const Type type = param->type;
         switch (type) {
             case TYPE_BOOL:
             case TYPE_BYTE:

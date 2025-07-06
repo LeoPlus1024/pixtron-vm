@@ -6,7 +6,7 @@ import io.github.leo1024.otrvm.parser.Expr;
 import io.github.leo1024.otrvm.util.ByteUtil;
 
 
-public class Load implements Expr {
+public class LoadExpr implements Expr {
     /**
      * Operand size
      */
@@ -18,7 +18,7 @@ public class Load implements Expr {
      */
     private final Number immValue;
 
-    public Load(final Opcode opcode, Number immValue) {
+    public LoadExpr(final Opcode opcode, Number immValue) {
         this.opcode = opcode;
         this.immValue = immValue;
         this.type = switch (opcode) {

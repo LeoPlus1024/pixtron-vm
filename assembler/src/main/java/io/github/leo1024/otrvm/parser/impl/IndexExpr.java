@@ -4,11 +4,11 @@ import io.github.leo1024.otrvm.conf.Opcode;
 import io.github.leo1024.otrvm.parser.Expr;
 import io.github.leo1024.otrvm.util.ByteUtil;
 
-public class Index implements Expr {
+public class IndexExpr implements Expr {
     private final Opcode opcode;
     private final short index;
 
-    public Index(Opcode opcode, short index) {
+    public IndexExpr(Opcode opcode, short index) {
         this.opcode = opcode;
         this.index = index;
     }

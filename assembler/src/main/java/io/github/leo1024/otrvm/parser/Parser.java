@@ -4,7 +4,6 @@ import io.github.leo1024.otrvm.conf.*;
 import io.github.leo1024.otrvm.ex.ParserException;
 import io.github.leo1024.otrvm.lexer.Token;
 import io.github.leo1024.otrvm.parser.impl.*;
-import io.github.leo1024.otrvm.parser.impl.Math;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +71,7 @@ public class Parser {
         } else {
             Expr expr = switch (pseudo) {
                 case FUNC -> parseFunc(context);
-                case END -> new End();
+                case END -> new EndExpr();
                 default -> null;
             };
             context.addExpr(expr);
@@ -100,9 +99,9 @@ public class Parser {
         Helper.expect(this.tokenSequence, Constants.FROM);
         Token nameSpaceToken = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);
         for (String method : methods) {
-            FuncMeta funcMeta = new FuncMeta(true, nameSpaceToken.getValue(), new Id(method), Type.VOID, List.of(),
+            FuncMeta funcMeta = new FuncMeta(true, nameSpaceToken.getValue(), method, Type.VOID, List.of(),
                     false, null);
-            context.addExpr(new Func(context, funcMeta));
+            context.addExpr(new FuncExpr(context, funcMeta));
         }
     }
 
@@ -164,7 +163,7 @@ public class Parser {
             while (!emptyParam) {
                 Token paramType = Helper.expect(tokenSequence, TokenKind.TYPE);
                 Token paramName = Helper.expect(tokenSequence, TokenKind.IDENTIFIER);
-                FuncMeta.Param param = new FuncMeta.Param(paramName.toId(), paramType.toType());
+                FuncMeta.Param param = new FuncMeta.Param(paramName.getValue(), paramType.toType());
                 paramList.add(param);
                 if (!this.tokenSequence.checkToken(token -> token.valEqual(Constants.COMMA))) {
                     emptyParam = true;
@@ -178,8 +177,8 @@ public class Parser {
         if (declareRetType) {
             retType = Helper.expect(tokenSequence, TokenKind.TYPE).toType();
         }
-        FuncMeta funcMeta = new FuncMeta(false, null, name.toId(), retType, paramList, isNativeFunc, libNames);
-        Func func = new Func(context, funcMeta);
+        FuncMeta funcMeta = new FuncMeta(false, null, name.getValue(), retType, paramList, isNativeFunc, libNames);
+        FuncExpr func = new FuncExpr(context, funcMeta);
         while (!this.tokenSequence.checkToken(it -> Helper.checkPseudoToken(it, Pseudo.END))) {
             parseExpr(func);
         }
@@ -199,19 +198,19 @@ public class Parser {
         Opcode opcode = Opcode.of(token);
         Expr expr = switch (opcode) {
             case ASSERT -> parserAssert();
-            case NEW_ARRAY -> parseNewArray();
+            case NEW_ARRAY -> parseTypeExpr(opcode);
             case LI8, LI16, LI32, LI64, LF64 -> parseLoadExpr(opcode);
             case LFIELD, LLOCAL, SFIELD, SLOCAL, SREFDEC, SREFINC -> parseIndexExpr(opcode);
             case ADD, SUB, MUL, DIV, F2I,
                  F2L, I2L, I2F, L2I, L2F,
                  ICMP, LCMP, DCMP, RET,
                  ISHL, ISHR, IUSHR, LSHL,
-                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY, REFINC, REFDEC -> new Simple(opcode);
+                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY, REFINC, REFDEC -> new SimpleExpr(opcode);
             case CALL -> parserCallExpr();
             case IINC -> parseIinc();
             case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT -> {
                 String label = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
-                yield new Redirect(opcode, label);
+                yield new RedirectExpr(opcode, label);
             }
             default -> throw ParserException.create(token, "Unsupported opcode.");
         };
@@ -226,18 +225,18 @@ public class Parser {
         if (value > 127 || value < -128) {
             throw ParserException.create(token, "IINC value must between -128 and 127.");
         }
-        return new Iinc(index, value);
+        return new IincExpr(index, value);
     }
 
 
     private Expr parseIndexExpr(final Opcode opcode) {
-        return new Index(opcode, Helper.checkOpcodeIdx(this.tokenSequence));
+        return new IndexExpr(opcode, Helper.checkOpcodeIdx(this.tokenSequence));
     }
 
     private Expr parserAssert() {
         Token token = Helper.expect(this.tokenSequence, TokenKind.INTEGER);
         int index = Integer.parseInt(token.getValue());
-        return new Assert(index);
+        return new AssertExpr(index);
     }
 
     private Expr parseLoadExpr(final Opcode opcode) {
@@ -246,23 +245,18 @@ public class Parser {
         if (!(value instanceof Number immValue)) {
             throw new ParserException("Load only support number immediate.");
         }
-        return new Load(opcode, immValue);
+        return new LoadExpr(opcode, immValue);
     }
 
-    private NewArray parseNewArray() {
+    private TypeExpr parseTypeExpr(final Opcode opcode) {
         Helper.expect(this.tokenSequence, Constants.DOT);
         Type type = Helper.convertOperandType(this.tokenSequence);
-        Token token = Helper.requireTokenNotNull(this.tokenSequence.consume(), "Array length missing.");
-        Object object = Helper.convertLiteral(token);
-        if (!(object instanceof Number number)) {
-            throw ParserException.create(token, "NewArray length only support integer immediate.");
-        }
-        return new NewArray(type, number.intValue());
+        return new TypeExpr(opcode, type);
     }
 
 
     private Expr parserCallExpr() {
         Token methodName = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);
-        return new Call(methodName.getValue());
+        return new CallExpr(methodName.getValue());
     }
 }

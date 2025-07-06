@@ -1,7 +1,6 @@
 package io.github.leo1024.otrvm.conf;
 
 import io.github.leo1024.otrvm.ISerializable;
-import io.github.leo1024.otrvm.parser.impl.Id;
 import io.github.leo1024.otrvm.util.ByteUtil;
 import io.github.leo1024.otrvm.util.CLanguageUtil;
 
@@ -11,17 +10,17 @@ import java.util.Optional;
 
 public class FuncMeta implements ISerializable {
     public static class Param {
-        final Id name;
+        final String name;
         final Type type;
 
 
-        public Param(Id name, Type type) {
+        public Param(String name, Type type) {
             this.name = name;
             this.type = type;
         }
     }
 
-    final Id name;
+    final String name;
     final Type retType;
     final List<Param> params;
     final String namespace;
@@ -35,7 +34,7 @@ public class FuncMeta implements ISerializable {
     int stacks;
 
 
-    public FuncMeta(boolean importFunc, String namespace, Id name, Type retType, List<Param> params, boolean nativeFunc, String libNames) {
+    public FuncMeta(boolean importFunc, String namespace, String name, Type retType, List<Param> params, boolean nativeFunc, String libNames) {
         this.name = name;
         this.retType = retType;
         this.params = params;
@@ -68,7 +67,7 @@ public class FuncMeta implements ISerializable {
 
     @Override
     public byte[] toBytes() {
-        byte[] nameBytes = CLanguageUtil.toCStyleStr(name.getValue());
+        byte[] nameBytes = CLanguageUtil.toCStyleStr(name);
         byte[] namespaceBytes = CLanguageUtil.toCStyleStr(Optional.ofNullable(namespace).orElse(""));
         int nameLength = nameBytes.length;
         int namespaceLength = namespaceBytes.length;
@@ -88,7 +87,7 @@ public class FuncMeta implements ISerializable {
         int paramsLength = 0;
         for (Param param : params) {
             // typeId(2) + nameBytes(contain '\0')
-            paramsLength += (2 + CLanguageUtil.toCStyleStr(param.name.getValue()).length);
+            paramsLength += (2 + CLanguageUtil.toCStyleStr(param.name).length);
         }
 
         int libNameLen = 0;
@@ -133,7 +132,7 @@ public class FuncMeta implements ISerializable {
 
         // Batch writer params
         for (Param param : params) {
-            byte[] paramNameBytes = CLanguageUtil.toCStyleStr(param.name.getValue());
+            byte[] paramNameBytes = CLanguageUtil.toCStyleStr(param.name);
             pos = ByteUtil.appendType2Bytes(data, pos, param.type);
             System.arraycopy(paramNameBytes, 0, data, pos, paramNameBytes.length);
             pos += paramNameBytes.length;
@@ -142,6 +141,6 @@ public class FuncMeta implements ISerializable {
     }
 
     public String getFuncName() {
-        return name.getValue();
+        return name;
     }
 }

@@ -4,11 +4,11 @@ package io.github.leo1024.otrvm.parser.impl;
 import io.github.leo1024.otrvm.conf.Opcode;
 import io.github.leo1024.otrvm.parser.Expr;
 
-public class Redirect implements Expr {
+public class RedirectExpr implements Expr {
     private final Opcode opcode;
     private final String label;
 
-    public Redirect(Opcode opcode, String label) {
+    public RedirectExpr(Opcode opcode, String label) {
         this.opcode = opcode;
         this.label = label;
     }

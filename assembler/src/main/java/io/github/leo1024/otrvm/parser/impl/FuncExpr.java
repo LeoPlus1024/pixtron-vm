@@ -10,12 +10,12 @@ import io.github.leo1024.otrvm.parser.Expr;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Func extends Context implements Expr {
+public class FuncExpr extends Context implements Expr {
 
     private final FuncMeta funcMeta;
     private final Map<String, LabelMeta> labelMap;
 
-    public Func(final Context parent, final FuncMeta funcMeta) {
+    public FuncExpr(final Context parent, final FuncMeta funcMeta) {
         super(parent);
         this.funcMeta = funcMeta;
         this.labelMap = new HashMap<>();

@@ -36,7 +36,7 @@ public class Assembler {
             outputStream.write(headerBytes);
             int offset = 0;
             for (Expr expr : builder.getExprList()) {
-                if (!(expr instanceof Func func)) {
+                if (!(expr instanceof FuncExpr func)) {
                     throw new ParserException("Only func define in top level.");
                 }
                 FuncMeta meta = func.getFuncMeta();
@@ -53,7 +53,7 @@ public class Assembler {
         return path.toFile();
     }
 
-    private byte[] parseFunc(Func func) {
+    private byte[] parseFunc(FuncExpr func) {
         byte[] bytes = new byte[1024];
         Map<Integer, LabelMeta> labelCorrectMap = new HashMap<>();
         int index = -1;
@@ -62,7 +62,7 @@ public class Assembler {
             final byte[] buf;
             index++;
             func.checkAndUpdateLabelPos(index, offset);
-            if (expr instanceof Redirect redirect) {
+            if (expr instanceof RedirectExpr redirect) {
                 String label = redirect.getLabel();
                 LabelMeta meta = func.getLabelMeta(label);
                 if (meta == null) {
@@ -73,7 +73,7 @@ public class Assembler {
                 }
                 int tmp = offset - meta.getPosition();
                 buf = redirect.toBytes((short) tmp);
-            } else if (expr instanceof Call call) {
+            } else if (expr instanceof CallExpr call) {
                 int funcIndex = builder.getFuncIndex(call.getMethodName());
                 buf = call.toBytes(funcIndex);
             } else {

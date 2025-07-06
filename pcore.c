@@ -252,9 +252,13 @@ static inline void pvm_free_runtime_context(RuntimeContext **context) {
 
 static inline void pvm_newarray(RuntimeContext *context) {
     const Type type = pvm_bytecode_read_int16(context);
-    const uint32_t length = pvm_bytecode_read_int32(context);
-    VMValue *value = pvm_next_operand(context);
-    PArr *obj = pvm_new_array(type, length);
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (!TYPE_INTEGER(value->type)) {
+        context->throw_exception(context, "Except a integer type but it is '%s'", TYPE_NAME[value->type]);
+    }
+#endif
+    PArr *obj = pvm_new_array(type, value->i32);
     value->obj = obj;
     value->type = TYPE_ARRAY;
 }

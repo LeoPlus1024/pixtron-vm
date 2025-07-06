@@ -4,7 +4,6 @@ import io.github.leo1024.otrvm.conf.Opcode;
 import io.github.leo1024.otrvm.conf.Pseudo;
 import io.github.leo1024.otrvm.conf.TokenKind;
 import io.github.leo1024.otrvm.conf.Type;
-import io.github.leo1024.otrvm.parser.impl.Id;
 
 public class Token {
     private final TokenKind kind;
@@ -62,10 +61,6 @@ public class Token {
         return "line " + getLine() + ":" + getColumn();
     }
 
-    public Id toId() {
-        return new Id(value);
-    }
-
     public Type toType() {
         return Type.of(value);
     }
@@ -79,14 +74,6 @@ public class Token {
         return false;
     }
 
-    public boolean isImmediate() {
-        for (TokenKind tokenKind : TokenKind.immediate()) {
-            if (this.kind == tokenKind) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public int toInt() {
         return Integer.parseInt(this.value);

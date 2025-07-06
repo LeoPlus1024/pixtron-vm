@@ -4,12 +4,11 @@ import io.github.leo1024.otrvm.ISerializable;
 import io.github.leo1024.otrvm.conf.Opcode;
 import io.github.leo1024.otrvm.parser.Expr;
 import io.github.leo1024.otrvm.util.ByteUtil;
-import io.github.leo1024.otrvm.util.CLanguageUtil;
 
-public class Call implements Expr, ISerializable {
+public class CallExpr implements Expr, ISerializable {
     private final String methodName;
 
-    public Call(final String methodName) {
+    public CallExpr(final String methodName) {
         this.methodName = methodName;
     }
 
