@@ -33,7 +33,7 @@ public class FieldMeta implements ISerializable {
 
         // Copy name bytes(without end char)
         System.arraycopy(nameBytes, 0, bytes, offset, nameBytes.length);
-        
+
         return bytes;
     }
 

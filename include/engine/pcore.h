@@ -74,9 +74,12 @@ bigger_float: \
         const VMValue *value = pvm_pop_operand(context);                      \
         const int32_t flag = value->i32;                                      \
         VirtualStackFrame *frame = context->frame;                            \
-        const int16_t offset = (int16_t)pvm_bytecode_read_int16(context) - 2; \
+        const uint32_t pc = frame->pc;                                        \
         if (flag op 0) {                                                      \
-            frame->pc += offset;                                              \
+            int16_t offset  = pvm_bytecode_read_int16(context);               \
+            frame->pc = pc + offset;                                          \
+        } else {                                                              \
+            frame->pc = pc +  2;                                              \
         }                                                                     \
     } while (0)
 
@@ -87,6 +90,23 @@ bigger_float: \
         targe_operand->i32 = SIGN_CMP(targe_operand->op, source_operand->op);       \
         targe_operand->type = TYPE_INT;                                             \
     } while(0)
+
+#define CMPX(context,op,except)    \
+    do {                                                                            \
+        const VMValue *source_operand = pvm_pop_operand(context);                   \
+        VMValue *targe_operand = pvm_get_operand(context);                          \
+        const int32_t value = SIGN_CMP(targe_operand->op, source_operand->op);      \
+        targe_operand->i32 = value == except;                                         \
+        targe_operand->type = TYPE_BOOL;                                            \
+    } while(0)
+
+#define LOAD_BOOL_CONST(context,op)                            \
+    do {                                                    \
+        VMValue *value = pvm_next_operand(context);         \
+        value->i32 = op;                                    \
+        value->type = TYPE_BOOL;                            \
+    } while (0)
+
 
 #define DISPATCH  do {                                                              \
         Opcode opcode = (Opcode)pvm_bytecode_read_int8(context);                    \

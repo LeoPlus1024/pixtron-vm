@@ -163,6 +163,14 @@ static inline void pvm_call(RuntimeContext *context) {
     if (method->native_func) {
         pvm_ffi_call(context, method);
     } else {
+#if VM_DEBUG_ENABLE
+        const Klass *klass = method->klass;
+        if (klass->constructor == method) {
+            context->throw_exception(
+                context,
+                "Class initialization methods cannot be called directly by user code. They are automatically invoked by the virtual machine during class loading and execute only once per class lifetime.");
+        }
+#endif
         pvm_push_stack_frame(context, method);
     }
 }
@@ -441,6 +449,19 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         [REFINC] = &&refinc,
         [REFDEC] = &&refdec,
         [LDC] = &&ldc,
+        [ICMP0] = &&icmp0,
+        [ICMP1] = &&icmp1,
+        [ICMPX] = &&icmpx,
+        [LCMP0] = &&lcmp0,
+        [LCMP1] = &&lcmp1,
+        [LCMPX] = &&lcmpx,
+        [DCMP0] = &&dcmp0,
+        [DCMP1] = &&dcmp1,
+        [DCMPX] = &&dcmpx,
+        [IFTRUE] = &&iftrue,
+        [IFFALSE] = &&iffalse,
+        [LTRUE] = &&ltrue,
+        [LFALSE] = &&lfalse,
     };
     VMValue *ret_val = NULL;
     DISPATCH;
@@ -543,6 +564,33 @@ dcmp:
 lcmp:
     XCMP(context, i64);
     DISPATCH;
+icmp0:
+    CMPX(context, i32, 0);
+    DISPATCH;
+icmp1:
+    CMPX(context, i32, 1);
+    DISPATCH;
+icmpx:
+    CMPX(context, i32, -1);
+    DISPATCH;
+lcmp0:
+    CMPX(context, i64, 0);
+    DISPATCH;
+lcmp1:
+    CMPX(context, i64, 1);
+    DISPATCH;
+lcmpx:
+    CMPX(context, i64, -1);
+    DISPATCH;
+dcmp0:
+    CMPX(context, f64, 0);
+    DISPATCH;
+dcmp1:
+    CMPX(context, f64, 1);
+    DISPATCH;
+dcmpx:
+    CMPX(context, f64, -1);
+    DISPATCH;
 ishr:
     pvm_ishr(context);
     DISPATCH;
@@ -581,6 +629,18 @@ refinc:
     DISPATCH;
 ldc:
     pvm_ldc(context);
+    DISPATCH;
+iftrue:
+    IFXX(context, !=);
+    DISPATCH;
+iffalse:
+    IFXX(context, ==);
+    DISPATCH;
+ltrue:
+    LOAD_BOOL_CONST(context, 1);
+    DISPATCH;
+lfalse:
+    LOAD_BOOL_CONST(context, 0);
     DISPATCH;
 finally:
     pvm_free_runtime_context(&context);

@@ -71,7 +71,7 @@ public class Assembler {
                 if (meta.isInvalid()) {
                     labelCorrectMap.put(offset + 1, meta);
                 }
-                int tmp = offset - meta.getPosition();
+                int tmp = meta.getPosition() - offset;
                 buf = redirect.toBytes((short) tmp);
             } else if (expr instanceof CallExpr call) {
                 int funcIndex = builder.getFuncIndex(call.getMethodName());

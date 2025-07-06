@@ -45,4 +45,17 @@
     REFDEC,
     SREFINC,
     SREFDEC,
-    LDC
+    LDC,
+    ICMP0,
+    ICMP1,
+    ICMPX,
+    LCMP0,
+    LCMP1,
+    LCMPX,
+    DCMP0,
+    DCMP1,
+    DCMPX,
+    IFTRUE,
+    IFFALSE,
+    LTRUE,
+    LFALSE

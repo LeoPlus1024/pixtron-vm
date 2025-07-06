@@ -53,7 +53,20 @@ public enum Opcode {
     REFDEC("refdec", 44),
     SREFINC("srefinc", 45),
     SREFDEC("srefdec", 46),
-    LDC("ldc", 47);
+    LDC("ldc", 47),
+    ICMP0("icmp0", 48),
+    ICMP1("icmp1", 49),
+    ICMPX("icmpx", 50),
+    LCMP0("lcmp0", 51),
+    LCMP1("lcmp1", 52),
+    LCMPX("lcmpx", 53),
+    DCMP0("dcmp0", 54),
+    DCMP1("dcmp1", 55),
+    DCMPX("dcmpx", 56),
+    IFTRUE("iftrue", 57),
+    IFFALSE("iffalse", 58),
+    LTRUE("ltrue", 59),
+    LFALSE("lfalse", 60);
 
     private final byte value;
     private final String mnemonic;

@@ -12,4 +12,5 @@ int main(int argc, char *argv[]) {
     exec_main("Fib");
     exec_main("Array");
     exec_main("Klass");
+    exec_main("Bool");
 }

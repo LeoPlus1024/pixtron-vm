@@ -204,10 +204,12 @@ public class Parser {
                  F2L, I2L, I2F, L2I, L2F,
                  ICMP, LCMP, DCMP, RET,
                  ISHL, ISHR, IUSHR, LSHL,
-                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY, REFINC, REFDEC -> new SimpleExpr(opcode);
+                 LSHR, LUSHR, GET_ARRAY, SET_ARRAY, REFINC, REFDEC,
+                 ICMP0, ICMP1, ICMPX, LCMP0, LCMP1, LCMPX, DCMP0,
+                 DCMP1, DCMPX, LTRUE, LFALSE -> new SimpleExpr(opcode);
             case CALL -> parserCallExpr();
             case IINC -> parseIinc();
-            case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT -> {
+            case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT, IFTRUE, IFFALSE -> {
                 String label = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
                 yield new RedirectExpr(opcode, label);
             }
