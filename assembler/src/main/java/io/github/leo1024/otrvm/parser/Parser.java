@@ -108,8 +108,7 @@ public class Parser {
     private void parseField(Context context) {
         Type type = Helper.expect(this.tokenSequence, TokenKind.TYPE).toType();
         String name = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
-        Object value = Helper.convertLiteral(Helper.expect(this.tokenSequence, TokenKind.immediate()));
-        FieldMeta fieldMeta = FieldMeta.of(type, name, value);
+        FieldMeta fieldMeta = new FieldMeta(type, name);
         context.addField(fieldMeta);
     }
 
@@ -200,7 +199,7 @@ public class Parser {
             case ASSERT -> parserAssert();
             case NEW_ARRAY -> parseTypeExpr(opcode);
             case LI8, LI16, LI32, LI64, LF64 -> parseLoadExpr(opcode);
-            case LFIELD, LLOCAL, SFIELD, SLOCAL, SREFDEC, SREFINC -> parseIndexExpr(opcode);
+            case LFIELD, LLOCAL, SFIELD, SLOCAL, SREFDEC, SREFINC, LDC -> parseIndexExpr(opcode);
             case ADD, SUB, MUL, DIV, F2I,
                  F2L, I2L, I2F, L2I, L2F,
                  ICMP, LCMP, DCMP, RET,

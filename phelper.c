@@ -244,5 +244,6 @@ extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...) {
     );
     g_free(methodName);
     g_free((gpointer) message);
+    g_thread_self();
     g_thread_exit(NULL);
 }

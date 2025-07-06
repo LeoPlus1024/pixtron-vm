@@ -380,6 +380,12 @@ static inline void pvm_refdec(RuntimeContext *context) {
     pvm_object_refdec(value->obj);
 }
 
+static void pvm_ldc(RuntimeContext *context) {
+    const uint16_t index = pvm_bytecode_read_int16(context);
+    VMValue *value = pvm_next_operand(context);
+    pvm_get_klass_constant(context, index, value);
+}
+
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     RuntimeContext *context = pvm_init_runtime_context();
     const Method *method = callMethodParam->method;
@@ -434,6 +440,7 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         [SREFINC] = &&srefinc,
         [REFINC] = &&refinc,
         [REFDEC] = &&refdec,
+        [LDC] = &&ldc,
     };
     VMValue *ret_val = NULL;
     DISPATCH;
@@ -572,7 +579,9 @@ refdec:
 refinc:
     pvm_refinc(context);
     DISPATCH;
+ldc:
+    pvm_ldc(context);
+    DISPATCH;
 finally:
     pvm_free_runtime_context(&context);
-    g_thread_exit(ret_val);
 }

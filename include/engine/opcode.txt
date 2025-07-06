@@ -44,4 +44,5 @@
     REFINC,
     REFDEC,
     SREFINC,
-    SREFDEC
+    SREFDEC,
+    LDC

@@ -51,8 +51,9 @@ public enum Opcode {
     SFIELD("sfield", 42),
     REFINC("refinc", 43),
     REFDEC("refdec", 44),
-    SREFINC("srefinc",45),
-    SREFDEC("srefdec",46);
+    SREFINC("srefinc", 45),
+    SREFDEC("srefdec", 46),
+    LDC("ldc", 47);
 
     private final byte value;
     private final String mnemonic;

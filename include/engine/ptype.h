@@ -93,6 +93,8 @@ typedef struct _Klass {
     uint32_t method_count;
     const struct VM *vm;
     char *library;
+    // Constructor
+    Method *constructor;
 } Klass;
 
 typedef struct {

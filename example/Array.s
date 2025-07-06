@@ -2,7 +2,6 @@
 
 @import {      println     }    from System
 
-
 @func main() : void
     %stacks 10
     %locals 10

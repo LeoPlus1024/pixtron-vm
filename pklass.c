@@ -8,26 +8,23 @@
 #include "phelper.h"
 #include "pstr.h"
 #include "config.h"
+#include "pcore.h"
 
 #define MAGIC (0xFFAABBCC)
 #define FILE_SUFFIX_LEN (strlen(".klass"))
 #define IS_KLASS_FILE(fileName) (g_str_has_suffix(fileName, ".klass"))
 
-extern inline uint8_t pvm_load_typed_value_from_buffer(const Type type, VMValue *value, const uint8_t *buf) {
-    const uint8_t size = TYPE_SIZE[type];
-    switch (type) {
-        case TYPE_BYTE:
-        case TYPE_BOOL:
-            value->i32 = (int32_t) *(const int8_t *) buf;
-            break;
-        case TYPE_SHORT:
-            value->i32 = *(const int16_t *) buf;
-            break;
-        default:
-            memcpy(value, buf, size);
+static inline void pvm_exec_klass_constructor(const Klass *klass) {
+    if (klass == NULL || klass->constructor == NULL) {
+        return;
     }
-    value->type = type;
-    return size;
+    const Method *method = klass->constructor;
+    const CallMethodParam param = {
+        method,
+        0,
+        NULL
+    };
+    pvm_call_method(&param);
 }
 
 
@@ -178,7 +175,6 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
         char *name = g_strdup((gchar *)(buf + position));
         position += pvm_get_cstr_len(name);
         VMValue *value = pvm_mem_calloc(VM_VALUE_SIZE);
-        position += pvm_load_typed_value_from_buffer(type, value, buf);
         value->type = type;
         field->name = name;
         field->value = value;
@@ -194,20 +190,20 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
         position += pvm_get_cstr_len(selfKlassName);
         const char *funcName = (char *) (buf + position);
         position += pvm_get_cstr_len(funcName);
+        Method *method = NULL;
         if (!g_str_equal(selfKlassName, "")) {
             const Klass *self_klass = pvm_get_klass(vm, selfKlassName, error);
             if (self_klass == NULL) {
                 goto finally;
             }
-            Method *method = pvm_get_method_by_name(self_klass, funcName);
+            method = pvm_get_method_by_name(self_klass, funcName);
             if (method == NULL) {
                 g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND, "Method %s not found in class %s", funcName,
                             selfKlassName);
                 goto finally;
             }
-            klass->methods[j] = method;
         } else {
-            Method *method = pvm_mem_calloc(sizeof(Method));
+            method = pvm_mem_calloc(sizeof(Method));
             method->klass = klass;
             method->native_func = *((uint8_t *) (buf + position)) == 1;
             position++;
@@ -243,7 +239,6 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
             }
             method->argv = argv;
             method->args = args;
-            klass->methods[j] = method;
             method->name = g_strdup(funcName);
             method->toString = PixtronVM_MethodToString;
             // Native method automatic calculate stack size
@@ -256,6 +251,14 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
                 method->max_stacks = method->ret != TYPE_VOID;
             }
         }
+        if (g_str_equal(method->name, "<cinit>")) {
+            if (klass->constructor != NULL) {
+                g_set_error(error, KLASS_DOMAIN, CONSTRUCTOR_REPEATED, "Multiple constructors in class %s", klassName);
+                goto finally;
+            }
+            klass->constructor = method;
+        }
+        klass->methods[j] = method;
         j++;
     }
     const uint64_t byteCodeSize = fileSize - position;
@@ -326,6 +329,7 @@ extern inline Klass *pvm_get_klass(const PixtronVM *vm, const char *klassName, G
     }
     klass = pvm_load_klass(vm, klassName, error);
     if (klass != NULL) {
+        pvm_exec_klass_constructor(klass);
         g_hash_table_insert(vm->klasses, klass->name, klass);
     }
     return klass;
@@ -438,6 +442,7 @@ extern inline void pvm_load_system_klass(const PixtronVM *vm, GError **error) {
         if (klass == NULL) {
             goto finally;
         }
+        pvm_exec_klass_constructor(klass);
         g_hash_table_insert(vm->klasses, klass->name, klass);
     }
 finally:
