@@ -14,35 +14,35 @@ extern Value *pvm_create_byte_value(const int8_t i8) {
     VMValue *value = pvm_mem_calloc(VM_VALUE_SIZE);
     value->i8 = i8;
     value->type = TYPE_BYTE;
-    return (Value *) value;
+    return value;
 }
 
 extern Value *pvm_create_short_value(const int16_t i16) {
     VMValue *value = pvm_mem_calloc(VM_VALUE_SIZE);
     value->i16 = i16;
     value->type = TYPE_SHORT;
-    return (Value *) value;
+    return value;
 }
 
 extern Value *pvm_create_int_value(const int32_t i32) {
     VMValue *value = pvm_mem_calloc(VM_VALUE_SIZE);
     value->i32 = i32;
     value->type = TYPE_INT;
-    return (Value *) value;
+    return value;
 }
 
 extern Value *pvm_create_long_value(const int64_t i64) {
     VMValue *value = pvm_mem_calloc(VM_VALUE_SIZE);
     value->i64 = i64;
     value->type = TYPE_LONG;
-    return (Value *) value;
+    return value;
 }
 
 extern Value *pvm_create_double_value(const double f64) {
     VMValue *value = pvm_mem_calloc(VM_VALUE_SIZE);
     value->f64 = f64;
     value->type = TYPE_DOUBLE;
-    return (Value *) value;
+    return value;
 }
 
 extern int8_t pvm_value_get_byte(const Value *value) {
@@ -87,14 +87,24 @@ extern bool pvm_value_get_bool(const Value *value) {
 }
 
 
-extern const char *pvm_value_get_string(const Value *value) {
+extern char *pvm_value_get_string(const Value *value) {
     g_assert(value != NULL);
     g_assert(value->type == TYPE_STRING);
-    const PStr *str = (PStr *) value->obj;
-    if (str == NULL) {
+    const PStr *pstr = (PStr *) value->obj;
+    const uint32_t len = pstr->len;
+    if (pstr == NULL || len == 0) {
         NULL;
     }
-    return str->str;
+    void *ptr = pvm_mem_calloc(len + 1);
+    memcpy(ptr, pstr->str, len);
+    return ptr;
+}
+
+extern void pvm_free_string(char **str) {
+    if (str == NULL || *str == NULL) {
+        return;
+    }
+    pvm_mem_free(CAST_REF(str));
 }
 
 extern Type pvm_get_value_type(const Value *value) {
@@ -194,20 +204,4 @@ extern void pvm_destroy(VM **vm) {
         return;
     }
     pvm_mem_free(CAST_REF(vm));
-}
-
-extern void pvm_free_value(Value **value) {
-    if (value == NULL) {
-        return;
-    }
-    pvm_mem_free(CAST_REF(value));
-}
-
-extern void pvm_free_values(const Value *value[], const uint64_t length) {
-    if (value == NULL) {
-        return;
-    }
-    for (uint64_t i = 0; i < length; i++) {
-        pvm_mem_free(TO_REF(value[i]));
-    }
 }

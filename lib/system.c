@@ -1,5 +1,3 @@
-#include <stdint.h>
-#include <time.h>
 #include <stdio.h>
 
 #include "ptype.h"
@@ -37,7 +35,9 @@ void println(const Value *value) {
             printf("%ld\n", pvm_value_get_long(value));
             break;
         case TYPE_STRING:
-            printf("%s\n", pvm_value_get_string(value));
+            char *str = pvm_value_get_string(value);
+            printf("%s\n", str);
+            pvm_free_string(&str);
             break;
         case TYPE_BOOL:
             printf("%s\n", pvm_value_get_bool(value) ? "true" : "false");
