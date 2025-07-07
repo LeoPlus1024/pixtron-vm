@@ -75,6 +75,7 @@ typedef struct _Klass {
     uint32_t magic;
     // Version
     Version version;
+    char *file;
     // Constants size
     uint32_t const_size;
     // Constants

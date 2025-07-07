@@ -7,6 +7,7 @@ import io.github.leo1024.otrvm.parser.impl.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Parser {
     final TokenSequence tokenSequence;
@@ -23,7 +24,19 @@ public class Parser {
             throw ParserException.create(token, "Expect a namespace.");
         }
         String namespace = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
-        final ASTBuilder context = new ASTBuilder(namespace);
+        final boolean hasFileDef = this.tokenSequence.checkToken(it -> it.tokenKindIn(TokenKind.PSEUDO) && it.toPseudo() == Pseudo.FILE);
+        final String filename;
+        if (hasFileDef) {
+            final Token tmp = this.tokenSequence.consume();
+            final Object object = Helper.convertLiteral(tmp);
+            if (!(object instanceof String)) {
+                throw ParserException.create(tmp, "Expected String literal for filename.");
+            }
+            filename = object.toString();
+        } else {
+            filename = "??";
+        }
+        final ASTBuilder context = new ASTBuilder(namespace, filename);
         while (!tokenSequence.isEof()) {
             parseExpr(context);
         }
@@ -196,7 +209,6 @@ public class Parser {
         Token token = this.tokenSequence.consume();
         Opcode opcode = Opcode.of(token);
         Expr expr = switch (opcode) {
-            case ASSERT -> parserAssert();
             case NEW_ARRAY -> parseTypeExpr(opcode);
             case LI8, LI16, LI32, LI64, LF64 -> parseLoadExpr(opcode);
             case LFIELD, LLOCAL, SFIELD, SLOCAL, SREFDEC, SREFINC, LDC -> parseIndexExpr(opcode);
@@ -206,7 +218,8 @@ public class Parser {
                  ISHL, ISHR, IUSHR, LSHL,
                  LSHR, LUSHR, GET_ARRAY, SET_ARRAY, REFINC, REFDEC,
                  ICMP0, ICMP1, ICMPX, LCMP0, LCMP1, LCMPX, DCMP0,
-                 DCMP1, DCMPX, LTRUE, LFALSE -> new SimpleExpr(opcode);
+                 DCMP1, DCMPX, LTRUE, LFALSE, IAND, LAND, IOR, LOR,
+                 IXOR, LXOR, INOT, LNOT, THROW -> new SimpleExpr(opcode);
             case CALL -> parserCallExpr();
             case IINC -> parseIinc();
             case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT, IFTRUE, IFFALSE -> {
@@ -232,12 +245,6 @@ public class Parser {
 
     private Expr parseIndexExpr(final Opcode opcode) {
         return new IndexExpr(opcode, Helper.checkOpcodeIdx(this.tokenSequence));
-    }
-
-    private Expr parserAssert() {
-        Token token = Helper.expect(this.tokenSequence, TokenKind.INTEGER);
-        int index = Integer.parseInt(token.getValue());
-        return new AssertExpr(index);
     }
 
     private Expr parseLoadExpr(final Opcode opcode) {

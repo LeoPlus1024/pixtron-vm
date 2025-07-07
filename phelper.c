@@ -211,39 +211,29 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
 
 extern void pvm_thrown_exception(RuntimeContext *context, char *fmt, ...) {
     const VirtualStackFrame *frame = context->frame;
-    const Method *method = frame->method;
-    const gchar *threadName = g_thread_get_name(g_thread_self());
-    gchar *methodName = method->toString(method);
     va_list vaList;
     va_start(vaList, fmt);
-    const char *message = g_strdup_vprintf(fmt, vaList);
+    char *message = g_strdup_vprintf(fmt, vaList);
     va_end(vaList);
-    g_printerr(
-        "\n*******************************************************************************\n"
-        "*                    VIRTUAL MACHINE CRASH - FATAL ERROR                       *\n"
-        "*******************************************************************************\n"
-        "* Thread: %-60s *\n"
-        "* Method: (%p) %-60s *\n"
-        "*                                                                             *\n"
-        "* [ERROR]: %-64s*\n"
-        "*                                                                             *\n"
-        "* Execution State:                                                            *\n"
-        "*   Program Counter: 0x%08x (instruction #%d)                         *\n"
-        "*   Stack Pointer:   0x%08x (depth: %d)                             *\n"
-        "*                                                                             *\n"
-        "*******************************************************************************\n\n",
-        threadName ? threadName : "<unnamed-thread>",
-        method,
-        methodName,
-        message, // error message
-        frame->pc, // pc
-        frame->pc, // pc
-        frame, // sp
-        context->stack_depth, // stack deep
-        frame->max_stacks // max stack deep
-    );
-    g_free(methodName);
-    g_free((gpointer) message);
+    const char *thread_name = g_thread_get_name(g_thread_self());
+    GString *str = g_string_new(NULL);
+    g_string_printf(str, "Exception in thread \"%s\":%s\n", thread_name, message);
+    const VirtualStackFrame *pre = frame;
+    uint32_t stack_depth = 0;
+    while (pre != NULL) {
+        if (stack_depth > VM_EXCEPT_STACK_DEPTH) {
+            break;
+        }
+        const Method *method = pre->method;
+        const Klass *klass = method->klass;
+        g_string_append_printf(str, "   at %s.%s(%s)\n", klass->name, method->name, klass->file);
+        pre = pre->pre;
+        stack_depth++;
+    }
+    char *except_stacks = g_string_free(str, FALSE);
+    g_printerr(except_stacks);
+    g_free(except_stacks);
+    g_free(message);
     g_thread_self();
     g_thread_exit(NULL);
 }

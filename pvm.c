@@ -186,7 +186,7 @@ extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *metho
             method_param->args[i] = (VMValue *) args[i];
         }
     }
-    GThread *thread = g_thread_new("Main Thread", (GThreadFunc) pvm_call_method, (gpointer) method_param);
+    GThread *thread = g_thread_new("main", (GThreadFunc) pvm_call_method, (gpointer) method_param);
     Value *value = g_thread_join(thread);
     if (argv > 0) {
         pvm_mem_free(CAST_REF(&(method_param->args)));

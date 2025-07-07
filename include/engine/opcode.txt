@@ -28,7 +28,7 @@
     LCMP,
     DCMP,
     POP,
-    ASSERT,
+    THROW,
     ISHL,
     ISHR,
     IUSHR,
@@ -58,4 +58,12 @@
     IFTRUE,
     IFFALSE,
     LTRUE,
-    LFALSE
+    LFALSE,
+    IAND,
+    LAND,
+    IXOR,
+    LXOR,
+    IOR,
+    LOR,
+    INOT,
+    LNOT

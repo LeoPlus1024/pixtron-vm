@@ -36,7 +36,7 @@ public enum Opcode {
     LCMP("lcmp", 27),
     DCMP("dcmp", 28),
     POP("pop", 29),
-    ASSERT("assert", 30),
+    THROW("throw", 30),
     ISHL("ishl", 31),
     ISHR("ishr", 32),
     IUSHR("iushr", 33),
@@ -66,7 +66,15 @@ public enum Opcode {
     IFTRUE("iftrue", 57),
     IFFALSE("iffalse", 58),
     LTRUE("ltrue", 59),
-    LFALSE("lfalse", 60);
+    LFALSE("lfalse", 60),
+    IAND("iand", 61),
+    LAND("land", 62),
+    IXOR("ixor", 63),
+    LXOR("lxor", 64),
+    IOR("ior", 65),
+    LOR("lor", 66),
+    INOT("inot", 67),
+    LNOT("lnot", 68);
 
     private final byte value;
     private final String mnemonic;

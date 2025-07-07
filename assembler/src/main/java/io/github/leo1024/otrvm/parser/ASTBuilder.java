@@ -35,12 +35,14 @@ public class ASTBuilder extends Context {
     }
 
     final Map<String, FieldMeta> fileMetaMap;
+    final String filename;
     final String namespace;
     final List<Constant> constants;
     String library;
 
-    public ASTBuilder(final String namespace) {
+    public ASTBuilder(final String namespace, final String filename) {
         super(null);
+        this.filename = filename;
         this.namespace = namespace;
         this.fileMetaMap = new TreeMap<>();
         this.constants = new ArrayList<>();
@@ -99,5 +101,9 @@ public class ASTBuilder extends Context {
 
     public String getLibrary() {
         return library;
+    }
+
+    public String getFilename() {
+        return filename;
     }
 }

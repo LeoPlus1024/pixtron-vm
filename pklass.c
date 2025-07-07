@@ -130,7 +130,7 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
         g_clear_object(&inputStream);
         return NULL;
     }
-    const goffset fileSize = g_file_info_get_size(fileInfo);
+    const int64_t fileSize = g_file_info_get_size(fileInfo);
     uint8_t buf[fileSize];
     g_input_stream_read_all(G_INPUT_STREAM(inputStream), buf, fileSize, NULL, NULL, error);
     g_input_stream_close(G_INPUT_STREAM(inputStream), NULL, NULL);
@@ -150,6 +150,9 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
     int32_t position = 4;
     klass->version = *((Version *) (buf + position));
     position += 2;
+    // Source file name
+    klass->file = g_strdup((char *)(buf+position));
+    position += pvm_get_cstr_len(klass->file);
     const uint8_t libraryFlag = *((uint8_t *) (buf + position));
     position++;
     if (libraryFlag) {

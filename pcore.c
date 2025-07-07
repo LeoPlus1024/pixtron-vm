@@ -175,21 +175,15 @@ static inline void pvm_call(RuntimeContext *context) {
     }
 }
 
-static void inline pvm_assert(RuntimeContext *context) {
-    const uint16_t index = pvm_bytecode_read_int16(context);
-    VMValue value;
-    pvm_get_klass_constant(context, index, &value);
-    if (value.type != TYPE_STRING) {
-        context->throw_exception(context, "Except a string type but it is '%s'", TYPE_NAME[value.type]);
+static void inline pvm_throw(RuntimeContext *context) {
+    const VMValue *value = pvm_pop_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_STRING) {
+        context->throw_exception(context, "Throwable must be a string (got %s)", TYPE_NAME[value->type]);
     }
-    const char *message;
-    const PStr *obj = (PStr *) value.obj;
-    if (obj != NULL) {
-        message = obj->str;
-    } else {
-        message = "??";
-    }
-    context->throw_exception(context, "Assert fail:%s", message);
+#endif
+    const PStr *pstr = value->obj;
+    context->throw_exception(context, pstr->str);
 }
 
 static void inline pvm_ishr(RuntimeContext *context) {
@@ -388,10 +382,114 @@ static inline void pvm_refdec(RuntimeContext *context) {
     pvm_object_refdec(value->obj);
 }
 
-static void pvm_ldc(RuntimeContext *context) {
+static inline void pvm_ldc(RuntimeContext *context) {
     const uint16_t index = pvm_bytecode_read_int16(context);
     VMValue *value = pvm_next_operand(context);
     pvm_get_klass_constant(context, index, value);
+}
+
+static inline void pvm_iand(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    const Type t0 = source_operand->type;
+    const Type t1 = target_operand->type;
+    if (t0 != t1 || t0 != TYPE_INT) {
+        context->throw_exception(
+            context, "Bitwise AND operator '&' requires both operands to be the same integer type");
+    }
+#endif
+    target_operand->i32 &= source_operand->i32;
+}
+
+static inline void pvm_land(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    const Type t0 = source_operand->type;
+    const Type t1 = target_operand->type;
+    if (t0 != t1 || t0 != TYPE_LONG) {
+        context->throw_exception(
+            context, "Bitwise AND operator '&' requires both operands to be the same long integer type");
+    }
+#endif
+    target_operand->i64 &= source_operand->i64;
+}
+
+static inline void pvm_ixor(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    const Type t0 = source_operand->type;
+    const Type t1 = target_operand->type;
+    if (t0 != t1 || t0 != TYPE_INT) {
+        context->throw_exception(
+            context, "Bitwise XOR operator '^' requires both operands to be the same integer type");
+    }
+#endif
+    target_operand->i32 ^= source_operand->i32;
+}
+
+static inline void pvm_lxor(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    const Type t0 = source_operand->type;
+    const Type t1 = target_operand->type;
+    if (t0 != t1 || t0 != TYPE_LONG) {
+        context->throw_exception(
+            context, "Bitwise XOR operator '^' requires both operands to be the same long type");
+    }
+#endif
+    target_operand->i64 ^= source_operand->i64;
+}
+
+static inline void pvm_ior(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    const Type t0 = source_operand->type;
+    const Type t1 = target_operand->type;
+    if (t0 != t1 || t0 != TYPE_INT) {
+        context->throw_exception(
+            context, "Bitwise OR operator '|' requires both operands to be the same integer type");
+    }
+#endif
+    target_operand->i32 |= source_operand->i32;
+}
+
+static inline void pvm_lor(RuntimeContext *context) {
+    const VMValue *source_operand = pvm_pop_operand(context);
+    VMValue *target_operand = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    const Type t0 = source_operand->type;
+    const Type t1 = target_operand->type;
+    if (t0 != t1 || t0 != TYPE_LONG) {
+        context->throw_exception(
+            context, "Bitwise OR operator '|' requires both operands to be the same long type");
+    }
+#endif
+    target_operand->i64 |= source_operand->i64;
+}
+
+static inline void pvm_inot(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_INT) {
+        context->throw_exception(context, "Bitwise NOT operator '~' requires operand to be an integer type");
+    }
+#endif
+    value->i32 = ~value->i32;
+}
+
+static inline void pvm_lnot(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_LONG) {
+        context->throw_exception(context, "Bitwise NOT operator '~' requires operand to be a long type");
+    }
+#endif
+    value->i32 = ~value->i32;
 }
 
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
@@ -399,7 +497,6 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     const Method *method = callMethodParam->method;
     const VMValue **args = callMethodParam->args;
     pvm_create_stack_frame(context, method, callMethodParam->argv, args);
-
     static const void *opcode_table[] = {
         [LI8] = &&li8,
         [LI16] = &&li16,
@@ -423,7 +520,7 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         [CALL] = &&call,
         [IFEQ] = &&ifeq,
         [IFNE] = &&ifne,
-        [ASSERT] = &&assert0,
+        [THROW] = &&thrown,
         [POP] = &&pop,
         [NEWARRAY] = &&newarray,
         [GETARRAY] = &&getarray,
@@ -462,6 +559,14 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         [IFFALSE] = &&iffalse,
         [LTRUE] = &&ltrue,
         [LFALSE] = &&lfalse,
+        [IAND] = &&iand,
+        [LAND] = &&land,
+        [IXOR] = &&ixor,
+        [LXOR] = &&lxor,
+        [IOR] = &&ior,
+        [LOR] = &&lor,
+        [INOT] = &&inot,
+        [LNOT] = &&lnot
     };
     VMValue *ret_val = NULL;
     DISPATCH;
@@ -525,8 +630,8 @@ ifeq:
 ifne:
     IFXX(context, !=);
     DISPATCH;
-assert0:
-    pvm_assert(context);
+thrown:
+    pvm_throw(context);
     DISPATCH;
 pop:
     pvm_pop_operand(context);
@@ -641,6 +746,30 @@ ltrue:
     DISPATCH;
 lfalse:
     LOAD_BOOL_CONST(context, 0);
+    DISPATCH;
+iand:
+    pvm_iand(context);
+    DISPATCH;
+land:
+    pvm_land(context);
+    DISPATCH;
+ixor:
+    pvm_ixor(context);
+    DISPATCH;
+lxor:
+    pvm_lxor(context);
+    DISPATCH;
+ior:
+    pvm_ior(context);
+    DISPATCH;
+lor:
+    pvm_lor(context);
+    DISPATCH;
+inot:
+    pvm_inot(context);
+    DISPATCH;
+lnot:
+    pvm_lnot(context);
     DISPATCH;
 finally:
     pvm_free_runtime_context(&context);

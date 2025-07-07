@@ -28,8 +28,7 @@ public class BinaryHeader implements ISerializable {
 
     @Override
     public byte[] toBytes() {
-        // Magic(4byte)+Version(2byte)
-        int length = 6;
+
         int fieldSize = this.fieldMetas.size();
         byte[][] fieldBytes = new byte[fieldSize][];
         int maxFieldSize = 0;
@@ -67,24 +66,36 @@ public class BinaryHeader implements ISerializable {
         }
         int pos = 0;
         int constSize = constants.size();
-        byte[] data = new byte[length + maxFuncSize + maxFieldSize
-            + 8
-            // Constant size
-            + 2
-            // library flag
-            + 1
-            + maxConstSize
-            + libraryLength
-            ];
+        byte[] fileBytes = CLanguageUtil.toCStyleStr(builder.getFilename());
+        int fileBytesLength = fileBytes.length;
+        byte[] data = new byte[/*Magic*/4
+                // Version
+                + 2
+                // Filename
+                + fileBytesLength
+                // Function size
+                + maxFuncSize
+                // Field size
+                + maxFieldSize
+                + 8
+                // Constant size
+                + 2
+                // library flag
+                + 1
+                + maxConstSize
+                + libraryLength
+                ];
 
         pos = ByteUtil.appendInt2Bytes(data, pos, magic);
         pos = ByteUtil.appendShort2Bytes(data, pos, version.getVersion());
-        data[pos++] = libraryLength == 0 ? (byte)0 : (byte)1;
+        System.arraycopy(fileBytes, 0, data, pos, fileBytesLength);
+        pos += fileBytesLength;
+        data[pos++] = libraryLength == 0 ? (byte) 0 : (byte) 1;
         if (libraryLength > 0) {
             System.arraycopy(libraryBytes, 0, data, pos, libraryLength);
             pos += libraryLength;
         }
-        pos = ByteUtil.appendShort2Bytes(data, pos, (short)constSize);
+        pos = ByteUtil.appendShort2Bytes(data, pos, (short) constSize);
 
         for (byte[] constByte : constBytes) {
             System.arraycopy(constByte, 0, data, pos, constByte.length);

@@ -70,9 +70,15 @@ public class Assembler {
                 }
                 if (meta.isInvalid()) {
                     labelCorrectMap.put(offset + 1, meta);
+                    buf = redirect.toBytes((short) 0);
+                } else {
+                    int tmp = meta.getPosition() - offset;
+                    // if label is before this opcode, the offset should be -1
+                    if (tmp < 0) {
+                        tmp = tmp - 1;
+                    }
+                    buf = redirect.toBytes((short) tmp);
                 }
-                int tmp = meta.getPosition() - offset;
-                buf = redirect.toBytes((short) tmp);
             } else if (expr instanceof CallExpr call) {
                 int funcIndex = builder.getFuncIndex(call.getMethodName());
                 buf = call.toBytes(funcIndex);
@@ -87,7 +93,7 @@ public class Assembler {
             offset += bufLength;
         }
         for (Map.Entry<Integer, LabelMeta> entry : labelCorrectMap.entrySet()) {
-            LabelMeta meta = entry.getValue();
+            final LabelMeta meta = entry.getValue();
             if (meta.isInvalid()) {
                 throw new ParserException("Can't find proper label position for label:%s".formatted(meta.getLabel()));
             }
