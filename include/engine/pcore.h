@@ -48,16 +48,19 @@ typedef enum:uint8_t {
  *
  * @warning Target operand modification has no rollback mechanism on failure
  */
-#define APPLY_COMPOUND_OPERATOR(target, source, op) \
-do { \
-    static const void* const jump_table[] = { \
-        [TYPE_BYTE]    = &&small_integer, \
-        [TYPE_SHORT]   = &&small_integer, \
-        [TYPE_INT]     = &&small_integer, \
-        [TYPE_LONG]    = &&bigger_integer, \
-        [TYPE_DOUBLE]  = &&bigger_float \
-    }; \
-    goto *jump_table[(target)->type]; \
+#define APPLY_COMPOUND_OPERATOR(target, source, op, context)                                                \
+do {                                                                                                        \
+    if (VM_DEBUG_ENABLE && (target->type != source->type)) {                                                   \
+        context->throw_exception(context, "Compound operator require two same type operand.");              \
+    }                                                                                                       \
+    static const void* const jump_table[] = {                \
+        [TYPE_BYTE]    = &&small_integer,                    \
+        [TYPE_SHORT]   = &&small_integer,                    \
+        [TYPE_INT]     = &&small_integer,                    \
+        [TYPE_LONG]    = &&bigger_integer,                   \
+        [TYPE_DOUBLE]  = &&bigger_float                      \
+    };                                                       \
+    goto *jump_table[(target)->type];                        \
 small_integer: \
     (target)->i32 op##= (source)->i32; \
     break; \

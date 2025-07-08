@@ -68,4 +68,12 @@
     INOT,
     LNOT,
     I2B,
-    I2S
+    I2S,
+    B2S,
+    B2I,
+    B2L,
+    B2D,
+    S2B,
+    S2I,
+    S2L,
+    S2D

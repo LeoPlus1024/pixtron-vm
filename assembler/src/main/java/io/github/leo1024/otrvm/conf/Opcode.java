@@ -76,7 +76,15 @@ public enum Opcode {
     INOT("inot", 67),
     LNOT("lnot", 68),
     I2B("i2b", 69),
-    I2S("i2s", 71);
+    I2S("i2s", 70),
+    B2S("b2s", 71),
+    B2I("b2i", 72),
+    B2L("b2l", 73),
+    B2D("b2d", 74),
+    S2B("s2b", 75),
+    S2I("s2i", 76),
+    S2L("s2l", 77),
+    S2D("s2d", 78);
 
     private final byte value;
     private final String mnemonic;

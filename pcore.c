@@ -22,19 +22,19 @@
 static inline void pvm_add(RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
-    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, +);
+    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, +, context);
 }
 
 static inline void pvm_sub(RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
-    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, -);
+    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, -, context);
 }
 
 static inline void pvm_mul(RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
-    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, *);
+    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, *, context);
 }
 
 static inline void pvm_div(RuntimeContext *context) {
@@ -44,7 +44,7 @@ static inline void pvm_div(RuntimeContext *context) {
     if (TYPE_SMALL_INTEGER(t1) && source_operand->i32 == 0 || TYPE_BIGGER_INTEGER(t1) && source_operand->i64 == 0) {
         context->throw_exception(context, "Divisor cannot be zero.");
     }
-    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, /);
+    APPLY_COMPOUND_OPERATOR(target_operand, source_operand, /, context);
 }
 
 static inline void pvm_goto(RuntimeContext *context) {
@@ -512,6 +512,94 @@ static inline void pvm_i2s(RuntimeContext *context) {
     value->i16 = (int16_t) value->i32;
 }
 
+static inline void pvm_b2s(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_BYTE) {
+        context->throw_exception(context, "b2s require a byte type.");
+    }
+#endif
+    value->i32 = (int32_t) value->i8;
+    value->type = TYPE_SHORT;
+}
+
+static inline void pvm_b2i(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_BYTE) {
+        context->throw_exception(context, "b2i require a byte type.");
+    }
+#endif
+    value->i32 = (int32_t) value->i8;
+    value->type = TYPE_INT;
+}
+
+static inline void pvm_b2l(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_BYTE) {
+        context->throw_exception(context, "b2l require a byte type.");
+    }
+#endif
+    value->i64 = (int64_t) value->i8;
+    value->type = TYPE_LONG;
+}
+
+static inline void pvm_b2d(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_BYTE) {
+        context->throw_exception(context, "b2d require a byte type.");
+    }
+#endif
+    value->f64 = (double) value->i8;
+    value->type = TYPE_DOUBLE;
+}
+
+static inline void pvm_s2b(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_SHORT) {
+        context->throw_exception(context, "s2b require a short type.");
+    }
+#endif
+    value->i32 = (int32_t) value->i16;
+    value->type = TYPE_BYTE;
+}
+
+static inline void pvm_s2i(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_SHORT) {
+        context->throw_exception(context, "s2i require a short type.");
+    }
+#endif
+    value->i32 = (int32_t) value->i16;
+    value->type = TYPE_INT;
+}
+
+static inline void pvm_s2l(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_SHORT) {
+        context->throw_exception(context, "s2l require a short type.");
+    }
+#endif
+    value->i64 = (int64_t) value->i16;
+    value->type = TYPE_LONG;
+}
+
+static inline void pvm_s2d(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_SHORT) {
+        context->throw_exception(context, "s2d require a short type.");
+    }
+#endif
+    value->f64 = (double) value->i16;
+    value->type = TYPE_DOUBLE;
+}
+
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     RuntimeContext *context = pvm_init_runtime_context();
     const Method *method = callMethodParam->method;
@@ -589,6 +677,15 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         [LNOT] = &&lnot,
         [I2B] = &&i2b,
         [I2S] = &&i2s,
+        [B2S] = &&b2s,
+        [B2I] = &&b2i,
+        [B2L] = &&b2l,
+        [B2D] = &&b2d,
+        [S2B] = &&s2b,
+        [S2I] = &&s2i,
+        [S2L] = &&s2l,
+        [S2D] = &&s2d,
+
     };
     VMValue *ret_val = NULL;
     DISPATCH;
@@ -798,6 +895,30 @@ i2b:
     DISPATCH;
 i2s:
     pvm_i2s(context);
+    DISPATCH;
+b2s:
+    pvm_b2s(context);
+    DISPATCH;
+b2i:
+    pvm_b2i(context);
+    DISPATCH;
+b2l:
+    pvm_b2l(context);
+    DISPATCH;
+b2d:
+    pvm_b2d(context);
+    DISPATCH;
+s2b:
+    pvm_s2b(context);
+    DISPATCH;
+s2i:
+    pvm_s2i(context);
+    DISPATCH;
+s2l:
+    pvm_s2l(context);
+    DISPATCH;
+s2d:
+    pvm_s2d(context);
     DISPATCH;
 finally:
     pvm_free_runtime_context(&context);

@@ -25,7 +25,7 @@ public class Parser {
         }
         String namespace = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
         final boolean hasFileDef = this.tokenSequence.checkToken(
-            it -> it.tokenKindIn(TokenKind.PSEUDO) && it.toPseudo() == Pseudo.FILE);
+                it -> it.tokenKindIn(TokenKind.PSEUDO) && it.toPseudo() == Pseudo.FILE);
         final String filename;
         if (hasFileDef) {
             final Token tmp = this.tokenSequence.consume();
@@ -61,7 +61,7 @@ public class Parser {
                 default -> {
                     Token token = this.tokenSequence.consume();
                     if (tokenKind == TokenKind.IDENTIFIER
-                        && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
+                            && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
                         context.addLabel(token.getValue());
                     } else {
                         throw ParserException.create(token, "Unexpected token.");
@@ -114,7 +114,7 @@ public class Parser {
         Token nameSpaceToken = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);
         for (String method : methods) {
             FuncMeta funcMeta = new FuncMeta(true, nameSpaceToken.getValue(), method, Type.VOID, List.of(),
-                false, null);
+                    false, null);
             context.addExpr(new FuncExpr(context, funcMeta));
         }
     }
@@ -144,7 +144,7 @@ public class Parser {
         Helper.expect(this.tokenSequence, Constants.LEFT_PAREN);
         Token libraryToken = Helper.expect(this.tokenSequence, TokenKind.STRING);
         Helper.expect(this.tokenSequence, Constants.RIGHT_PAREN);
-        ASTBuilder builder = (ASTBuilder)context;
+        ASTBuilder builder = (ASTBuilder) context;
         builder.setLibrary(libraryToken.getValue());
     }
 
@@ -185,7 +185,7 @@ public class Parser {
             Helper.expect(tokenSequence, Constants.RIGHT_PAREN);
         }
         boolean declareRetType = this.tokenSequence.checkToken(
-            token -> token != null && token.valEqual(Constants.COLON));
+                token -> token != null && token.valEqual(Constants.COLON));
         Type retType = null;
         if (declareRetType) {
             retType = Helper.expect(tokenSequence, TokenKind.TYPE).toType();
@@ -202,7 +202,7 @@ public class Parser {
     private void convertVMOpts(Context context) {
         VMOption option = VMOption.of(Helper.expect(this.tokenSequence, TokenKind.VM_OPTIONS));
         Object value = Helper.convertLiteral(
-            Helper.expect(this.tokenSequence, TokenKind.STRING, TokenKind.INTEGER, TokenKind.HEX, TokenKind.FLOAT));
+                Helper.expect(this.tokenSequence, TokenKind.STRING, TokenKind.INTEGER, TokenKind.HEX, TokenKind.FLOAT));
         context.setOption(option, value);
     }
 
@@ -220,7 +220,8 @@ public class Parser {
                  LSHR, LUSHR, GET_ARRAY, SET_ARRAY, REFINC, REFDEC,
                  ICMP0, ICMP1, ICMPX, LCMP0, LCMP1, LCMPX, DCMP0,
                  DCMP1, DCMPX, LTRUE, LFALSE, IAND, LAND, IOR, LOR,
-                 IXOR, LXOR, INOT, LNOT, THROW, I2B, I2S -> new SimpleExpr(opcode);
+                 IXOR, LXOR, INOT, LNOT, THROW, I2B, I2S, B2S,
+                 B2I, B2L, B2D, S2B, S2I, S2L, S2D -> new SimpleExpr(opcode);
             case CALL -> parserCallExpr();
             case IINC -> parseIinc();
             case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT, IFTRUE, IFFALSE -> {
