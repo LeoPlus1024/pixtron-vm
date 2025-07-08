@@ -1,5 +1,6 @@
 #include "pvm.h"
 
+#include <assert.h>
 #include <locale.h>
 #include <stdio.h>
 
@@ -46,50 +47,50 @@ extern Value *pvm_create_double_value(const double f64) {
 }
 
 extern int8_t pvm_value_get_byte(const Value *value) {
-    g_assert(value != NULL);
+    assert(value != NULL);
     const VMValue *val = (VMValue *) value;
-    g_assert(val->type == TYPE_BYTE);
+    assert(val->type == TYPE_BYTE);
     return val->i8;
 }
 
 extern int16_t pvm_value_get_short(const Value *value) {
-    g_assert(value != NULL);
+    assert(value != NULL);
     const VMValue *val = (VMValue *) value;
-    g_assert(val->type == TYPE_SHORT);
+    assert(val->type == TYPE_SHORT);
     return val->i16;
 }
 
 extern int32_t pvm_value_get_int(const Value *value) {
-    g_assert(value != NULL);
+    assert(value != NULL);
     const VMValue *val = (VMValue *) value;
-    g_assert(val->type == TYPE_INT);
+    assert(val->type == TYPE_INT);
     return val->i32;
 }
 
 extern int64_t pvm_value_get_long(const Value *value) {
-    g_assert(value != NULL);
+    assert(value != NULL);
     const VMValue *val = (VMValue *) value;
-    g_assert(val->type == TYPE_LONG);
+    assert(val->type == TYPE_LONG);
     return val->i64;
 }
 
 extern double pvm_value_get_double(const Value *value) {
-    g_assert(value != NULL);
+    assert(value != NULL);
     const VMValue *val = (VMValue *) value;
-    g_assert(val->type == TYPE_DOUBLE);
+    assert(val->type == TYPE_DOUBLE);
     return val->f64;
 }
 
 extern bool pvm_value_get_bool(const Value *value) {
-    g_assert(value != NULL);
-    g_assert(value->type == TYPE_BOOL);
+    assert(value != NULL);
+    assert(value->type == TYPE_BOOL);
     return value->i32 == 1;
 }
 
 
 extern char *pvm_value_get_string(const Value *value) {
-    g_assert(value != NULL);
-    g_assert(value->type == TYPE_STRING);
+    assert(value != NULL);
+    assert(value->type == TYPE_STRING);
     const PStr *pstr = (PStr *) value->obj;
     const uint32_t len = pstr->len;
     if (pstr == NULL || len == 0) {

@@ -1,5 +1,6 @@
 #include "pstr.h"
 
+#include <assert.h>
 #include <stdio.h>
 
 #include "pmem.h"
@@ -42,7 +43,7 @@ extern uint32_t pvm_string_hash(const PStr *str) {
 }
 
 extern PStr *pvm_string_new(const char *str, const uint32_t len) {
-    g_assert(str!=NULL);
+    assert(str!=NULL);
     PStr *text = pvm_object_new(sizeof(PStr), (ObjectDestructor) pvm_string_destructor, 1);
     char *cc = pvm_mem_calloc(len);
     memcpy(cc, str, len);

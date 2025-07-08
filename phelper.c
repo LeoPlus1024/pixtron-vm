@@ -19,12 +19,14 @@
 #else
 #define LIB_SUFFIX ".so"
 #endif
+#include <assert.h>
+
 #include "config.h"
 
 #define DY_SUFFIX_LEN sizeof(LIB_SUFFIX)
 
 extern inline int32_t pvm_get_cstr_len(const char *str) {
-    g_assert(str != NULL);
+    assert(str != NULL);
     const size_t len = strlen(str);
     return (int32_t) len + 1;
 }

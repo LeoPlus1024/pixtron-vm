@@ -492,6 +492,26 @@ static inline void pvm_lnot(RuntimeContext *context) {
     value->i32 = ~value->i32;
 }
 
+static inline void pvm_i2b(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_INT) {
+        context->throw_exception(context, "i2b require a int type.");
+    }
+#endif
+    value->i8 = (int8_t) value->i32;
+}
+
+static inline void pvm_i2s(RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+#if VM_DEBUG_ENABLE
+    if (value->type != TYPE_INT) {
+        context->throw_exception(context, "i2s require a int type.");
+    }
+#endif
+    value->i16 = (int16_t) value->i32;
+}
+
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     RuntimeContext *context = pvm_init_runtime_context();
     const Method *method = callMethodParam->method;
@@ -566,7 +586,9 @@ extern void pvm_call_method(const CallMethodParam *callMethodParam) {
         [IOR] = &&ior,
         [LOR] = &&lor,
         [INOT] = &&inot,
-        [LNOT] = &&lnot
+        [LNOT] = &&lnot,
+        [I2B] = &&i2b,
+        [I2S] = &&i2s,
     };
     VMValue *ret_val = NULL;
     DISPATCH;
@@ -770,6 +792,12 @@ inot:
     DISPATCH;
 lnot:
     pvm_lnot(context);
+    DISPATCH;
+i2b:
+    pvm_i2b(context);
+    DISPATCH;
+i2s:
+    pvm_i2s(context);
     DISPATCH;
 finally:
     pvm_free_runtime_context(&context);

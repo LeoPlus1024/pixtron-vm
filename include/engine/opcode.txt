@@ -66,4 +66,6 @@
     IOR,
     LOR,
     INOT,
-    LNOT
+    LNOT,
+    I2B,
+    I2S

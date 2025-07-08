@@ -1,4 +1,6 @@
 #include "pobj.h"
+
+#include <assert.h>
 #include <glib.h>
 #include "pmem.h"
 
@@ -6,8 +8,8 @@
 extern inline void *pvm_object_new(uint64_t size,
                                    const ObjectDestructor destructor,
                                    const uint64_t init_ref_count) {
-    g_assert(destructor != NULL);
-    g_assert(init_ref_count > 0);
+    assert(destructor != NULL);
+    assert(init_ref_count > 0);
     size += sizeof(ObjectHeader);
     ObjectHeader *header = pvm_mem_calloc(size);
     header->rc = init_ref_count;

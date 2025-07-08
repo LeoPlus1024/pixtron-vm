@@ -74,7 +74,9 @@ public enum Opcode {
     IOR("ior", 65),
     LOR("lor", 66),
     INOT("inot", 67),
-    LNOT("lnot", 68);
+    LNOT("lnot", 68),
+    I2B("i2b", 69),
+    I2S("i2s", 71);
 
     private final byte value;
     private final String mnemonic;

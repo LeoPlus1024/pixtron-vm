@@ -15,4 +15,5 @@ int main(int argc, char *argv[]) {
     exec_main("Bool");
     // exec_main("Throw");
     exec_main("Logic");
+    exec_main("Number");
 }
