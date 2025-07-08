@@ -28,7 +28,7 @@ static inline void pvm_exec_klass_constructor(const Klass *klass) {
 }
 
 
-static inline char *PixtronVM_MethodToString(const Method *method) {
+static inline char *pvm_method_tostring(const Method *method) {
     GString *str = g_string_new(NULL);
     const Type retType = method->ret;
     const char *retTypeName;
@@ -51,7 +51,7 @@ static inline char *PixtronVM_MethodToString(const Method *method) {
         }
     }
     g_string_append_c(str, ')');
-    g_string_append(str, " -> ");
+    g_string_append(str, ":");
     g_string_append(str, retTypeName);
     return g_string_free(str, FALSE);
 }
@@ -243,7 +243,7 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
             method->argv = argv;
             method->args = args;
             method->name = g_strdup(funcName);
-            method->toString = PixtronVM_MethodToString;
+            method->toString = pvm_method_tostring;
             // Native method automatic calculate stack size
             if (method->native_func) {
                 const bool success = pvm_lookup_native_handle(klass, method, error);

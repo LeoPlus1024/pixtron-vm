@@ -31,14 +31,14 @@ ret0:
     %locals 2
     call currentTimeNano
     slocal 0
-;    li32 40
     li32 5
     call fib
     slocal 1
-    llocal 0
     call currentTimeNano
     llocal 1
     call println
-    call printNanoDiff
+    llocal 0
+    sub
+    call println
     ret
 @end
