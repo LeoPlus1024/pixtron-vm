@@ -5,6 +5,9 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(VM_DEBUG_ENABLE "0")
 set(VM_STACK_SIZE "1024*1024")
+set(VM_EXCEPT_STACK_DEPTH "30")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto -O3")
 
 find_program(Python_EXECUTABLE python NO_CMAKE_FIND_ROOT_PATH)
 # if python can't find try find python3
