@@ -10,7 +10,7 @@ public enum Type {
     LONG("long", 4, 8),
     DOUBLE("double", 5, 8),
     BOOL("bool", 6, 1),
-    REF("ref", 7, 8),
+    HANDLE("handle", 7, 8),
     VOID("void", 8, 0),
     STRING("string", 9, 0),
     ARRAY("array", 10, 0),
@@ -39,7 +39,7 @@ public enum Type {
     }
 
     public boolean isPrimitive() {
-        return this != REF && this != VOID;
+        return this != HANDLE && this != VOID;
     }
 
     public int getId() {

@@ -97,7 +97,7 @@ extern char *pvm_value_get_string(const Value *value) {
         NULL;
     }
     void *ptr = pvm_mem_calloc(len + 1);
-    memcpy(ptr, pstr->str, len);
+    memcpy(ptr, pstr->value, len);
     return ptr;
 }
 
@@ -126,8 +126,7 @@ extern VM *pvm_init(const char *klass_path) {
 
     GHashTable *envs = g_hash_table_new(g_str_hash, g_str_equal);
     GHashTable *klasses = g_hash_table_new(g_str_hash, g_str_equal);
-    GHashTable *string_constants =
-            g_hash_table_new((GHashFunc) pvm_string_hash, (GEqualFunc) pvm_string_equal);
+    GHashTable *string_table = g_hash_table_new((GHashFunc) pvm_string_hash, (GEqualFunc) pvm_string_equal);
     if (klasses == NULL || envs == NULL) {
         fprintf(stderr, "VM init fail.");
         exit(-1);
@@ -149,13 +148,13 @@ extern VM *pvm_init(const char *klass_path) {
 
     vm->envs = envs;
     vm->klasses = klasses;
-    vm->string_constants = string_constants;
+    vm->string_table = string_table;
 
     GError *error = NULL;
     pvm_load_system_klass(vm, &error);
     if (error != NULL) {
         pvm_destroy((VM **) &vm);
-        g_printerr("Virtual machine init fail: %s\n", error->message);
+        g_printerr("%s", error->message);
         g_error_free(error);
         exit(-1);
     }
@@ -163,8 +162,8 @@ extern VM *pvm_init(const char *klass_path) {
 }
 
 
-extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *method_name, uint16_t argv,
-                         const Value *args[]) {
+extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *method_name, uint16_t argc,
+                         const Value *argv[]) {
     GError *error = NULL;
     const Klass *klass = pvm_get_klass((PixtronVM *) vm, klass_name, &error);
     if (klass == NULL) {
@@ -182,15 +181,15 @@ extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *metho
     method_param->argv = argv;
     method_param->method = method;
     if (argv > 0) {
-        method_param->args = pvm_mem_calloc(sizeof(Value *) * argv);
-        for (int i = 0; i < argv; ++i) {
-            method_param->args[i] = (VMValue *) args[i];
+        method_param->argv = pvm_mem_calloc(sizeof(Value *) * argc);
+        for (int i = 0; i < argc; ++i) {
+            method_param->argv[i] = (VMValue *) argv[i];
         }
     }
     GThread *thread = g_thread_new("main", (GThreadFunc) pvm_call_method, (gpointer) method_param);
     Value *value = g_thread_join(thread);
     if (argv > 0) {
-        pvm_mem_free(CAST_REF(&(method_param->args)));
+        pvm_mem_free(CAST_REF(&(method_param->argv)));
     }
     pvm_mem_free(TO_REF(method_param));
     return value;

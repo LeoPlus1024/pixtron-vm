@@ -15,4 +15,4 @@ blarger:
 @end
 
 ; Return the first argument raised to the power of the second argument
-@func @native pow(double a,double b) : double @end
+@func @native(destroy="xxxxxxx") pow(double a,double b) : double @end

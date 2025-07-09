@@ -4,6 +4,7 @@ import io.github.leo1024.otrvm.conf.FuncMeta;
 import io.github.leo1024.otrvm.conf.LabelMeta;
 import io.github.leo1024.otrvm.conf.VMOption;
 import io.github.leo1024.otrvm.ex.ParserException;
+import io.github.leo1024.otrvm.parser.ASTBuilder;
 import io.github.leo1024.otrvm.parser.Context;
 import io.github.leo1024.otrvm.parser.Expr;
 
@@ -58,7 +59,22 @@ public class FuncExpr extends Context implements Expr {
     }
 
     @Override
+    public int addConstant(String value) {
+        return getParent().addConstant(value);
+    }
+
+    @Override
     public String toString() {
-        return funcMeta.getFuncName();
+        return getConstant(funcMeta.getName()).toString();
+    }
+
+    @Override
+    public ASTBuilder.StrConst getConstant(int index) {
+        return getParent().getConstant(index);
+    }
+
+    @Override
+    public int getNamespace() {
+        return getParent().getNamespace();
     }
 }

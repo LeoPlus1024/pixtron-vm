@@ -7,49 +7,75 @@
 #include "pobj.h"
 
 static void pvm_string_destructor(const PStr *str) {
-    char *ptr = str->str;
-    if (ptr == NULL) {
+    char *ptr = str->value;
+    if (ptr == NULL || str->len <= 7) {
         return;
     }
     pvm_mem_free(TO_REF(ptr));
 }
 
-extern PStr *pvm_string_const_pool_add(const PixtronVM *vm, const PStr *str) {
-    GHashTable *table = vm->string_constants;
-    if (g_hash_table_contains(table, str)) {
-        return g_hash_table_lookup(table, str);
+extern PStr *pvm_string_intern(const PixtronVM *vm, const int32_t length, char *c_str) {
+    GHashTable *table = vm->string_table;
+    const PStr tmp = {
+        .len = length,
+        .value = c_str
+    };
+    PStr *pstr = g_hash_table_lookup(table, &tmp);
+    if (pstr != NULL) {
+        return pstr;
     }
-    PStr *text = pvm_string_new(str->str, str->len);
-    g_hash_table_insert(table, text, text);
-    return text;
+    pstr = pvm_string_new(c_str, length);
+    g_hash_table_insert(table, pstr, pstr);
+    return pstr;
 }
 
 extern bool pvm_string_equal(const PStr *a, const PStr *b) {
-    return a == b;
+    if (a == b) {
+        return true;
+    }
+    if (a->len != b->len) {
+        return false;
+    }
+    return memcmp(a->value, b->value, a->len) == 0;
 }
 
-extern uint32_t pvm_string_hash(const PStr *str) {
-    const char *p = str->str;
+extern uint32_t pvm_string_hash(PStr *str) {
+    if (str->hash_code != 0) {
+        return str->hash_code;
+    }
+    const char *p = str->value;
     uint32_t n = str->len;
     uint32_t h = 0;
 
-    /* 31 bit hash function */
     while (n--) {
         h = (h << 5) - h + *p;
         p++;
     }
 
+    str->hash_code = h;
     return h;
 }
 
 extern PStr *pvm_string_new(const char *str, const uint32_t len) {
     assert(str!=NULL);
-    PStr *text = pvm_object_new(sizeof(PStr), (ObjectDestructor) pvm_string_destructor, 1);
-    char *cc = pvm_mem_calloc(len);
-    memcpy(cc, str, len);
-    text->len = len;
-    text->str = cc;
-    return text;
+    PStr *pstr = pvm_object_new(sizeof(PStr), (ObjectDestructor) pvm_string_destructor, 1);
+    if (len <= 7) {
+        memcpy(pstr->values, str, len);
+        return pstr;
+    }
+    char *buffer = pvm_mem_calloc(len + 1);
+    memcpy(buffer, str, len);
+    pstr->len = len;
+    pstr->value = buffer;
+    return pstr;
+}
+
+extern inline char *pvm_string_get_data(const PStr *pstr) {
+    assert(pstr!=NULL);
+    if (pstr->len < 8) {
+        return pstr->values;
+    }
+    return pstr->value;
 }
 
 extern char *pvm_string_to_cstr(const PStr *str) {
@@ -57,7 +83,6 @@ extern char *pvm_string_to_cstr(const PStr *str) {
         return NULL;
     }
     const uint32_t len = str->len + 1;
-    char *c_str = pvm_mem_cpy(str->str, len);
-    c_str[len] = '\0';
+    char *c_str = pvm_mem_cpy(str->value, len);
     return c_str;
 }

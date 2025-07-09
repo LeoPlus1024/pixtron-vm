@@ -1,9 +1,6 @@
 @namespace Bool
 @import {       println     } from System
 
-@constant "iftrue exec....."
-@constant "iffalse exec......"
-
 @func main() : void
     %locals 1
     %stacks 2
@@ -14,11 +11,11 @@
     ltrue
     iftrue tlabel
 flabel:
-    ldc 1
+    ldc "iffalse exec......"
     call println
     ret
 tlabel:
-    ldc 0
+    ldc "iftrue exec....."
     call println
     lfalse
     iffalse flabel

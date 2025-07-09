@@ -2,22 +2,19 @@
 #define I_STRING_H
 #include "ptype.h"
 
-typedef struct {
-    uint32_t len;
-    char *str;
-} PStr;
 
-
-extern PStr *pvm_string_const_pool_add(const PixtronVM *vm, const PStr *str);
+extern PStr *pvm_string_intern(const PixtronVM *vm, int32_t length, char *c_str);
 
 
 extern bool pvm_string_equal(const PStr *a, const PStr *b);
 
 
-extern uint32_t pvm_string_hash(const PStr *str);
+extern uint32_t pvm_string_hash(PStr *str);
 
 
 extern PStr *pvm_string_new(const char *str, uint32_t len);
+
+extern inline  char *pvm_string_get_data(const PStr *pstr);
 
 
 /**

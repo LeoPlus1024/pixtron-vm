@@ -12,7 +12,7 @@ typedef enum:uint16_t {
     TYPE_LONG,
     TYPE_DOUBLE,
     TYPE_BOOL,
-    TYPE_REF,
+    TYPE_HANDLE,
     TYPE_VOID,
     TYPE_STRING,
     TYPE_ARRAY,
@@ -28,8 +28,9 @@ static const uint8_t TYPE_SIZE[] = {
     [TYPE_LONG] = 8,
     [TYPE_DOUBLE] = 8,
     [TYPE_BOOL] = 1,
-    [TYPE_REF] = 8,
+    [TYPE_HANDLE] = 8,
     [TYPE_ARRAY] = 8,
+    [TYPE_OBJECT] = 8,
 };
 
 static const char *const TYPE_NAME[] = {
@@ -236,8 +237,6 @@ extern void pvm_free_string(char **str);
 extern Type pvm_get_value_type(const Value *value);
 
 
-
-
 /**
  * Create a new PixtronVM instance
  *
@@ -251,8 +250,8 @@ extern VM *pvm_init(const char *klass_path);
  * @param vm Pointer to the PixtronVM instance to execute
  * @note This will run the VM until completion or until an error occurs
  */
-extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *method_name, uint16_t argv,
-                         const Value *args[]);
+extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *method_name, uint16_t argc,
+                         const Value *argv[]);
 
 /**
  * Invokes the parameterless main function within a PVM namespace.

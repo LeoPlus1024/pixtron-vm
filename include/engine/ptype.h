@@ -7,8 +7,23 @@
 
 typedef struct _VMValue VMValue;
 
-
 typedef struct _Method Method;
+
+typedef struct _PStr {
+    uint32_t len;
+    uint32_t hash_code;
+
+    union {
+        char *value;
+        char values[8];
+    };
+} PStr;
+
+
+typedef struct {
+    int index;
+    PStr *name;
+} Symbol;
 
 typedef struct _VMValue {
     union {
@@ -26,36 +41,39 @@ typedef struct _VMValue {
 
 typedef struct {
     const Method *method;
-    uint16_t argv;
-    const VMValue **args;
+    uint16_t argc;
+    const VMValue **argv;
 } CallMethodParam;
 
 typedef struct {
     Type type;
-    char *name;
+    Symbol *name;
 } MethodParam;
 
 struct _Method;
 
 typedef struct _Method {
-    char *name;
+    Symbol *name;
+    Symbol *cleanup;
     Type ret;
     uint16_t max_stacks;
     uint16_t max_locals;
     uint32_t offset;
     uint32_t end_offset;
-    uint16_t argv;
-    MethodParam *args;
+    uint16_t argc;
+    MethodParam *argv;
     struct _Klass *klass;
     bool native_func;
-    char *lib_name;
+    bool raw_str;
     void *native_handle;
+    // Native resource cleanup method
+    Method *m_cleanup;
 
     char * (*toString)(const struct _Method *);
 } Method;
 
 typedef struct {
-    char *name;
+    Symbol *name;
     VMValue *value;
 } Field;
 
@@ -70,16 +88,17 @@ typedef enum:uint16_t {
     V1_7,
 } Version;
 
+
 typedef struct _Klass {
     // Magic
     uint32_t magic;
     // Version
     Version version;
-    char *file;
+    Symbol *file;
     // Constants size
     uint32_t const_size;
     // Constants
-    VMValue **constants;
+    PStr **constants;
     // Class methods
     Method **methods;
     // Class bytecode
@@ -87,13 +106,13 @@ typedef struct _Klass {
     // Field meta data
     Field *fields;
     //Class name
-    char *name;
+    Symbol *name;
     // Field count
-    uint32_t fieldCount;
+    uint32_t fcount;
     // Method count
-    uint32_t method_count;
+    uint32_t mcount;
     const struct VM *vm;
-    char *library;
+    Symbol *library;
     // Constructor
     Method *constructor;
 } Klass;
@@ -136,7 +155,7 @@ typedef struct VM {
     // Classes
     GHashTable *klasses;
     // String constant pool
-    GHashTable *string_constants;
+    GHashTable *string_table;
 } PixtronVM;
 
 
@@ -160,6 +179,18 @@ typedef struct _RuntimeContext {
     // Exception throw callback
     void (*throw_exception)(struct _RuntimeContext *context, gchar *fmt, ...);
 } RuntimeContext;
+
+
+extern inline char *pvm_get_symbol_value(const Symbol *symbol);
+
+
+extern inline bool pvm_symbol_equal(const Symbol *a, const Symbol *b);
+
+
+extern inline bool pvm_symbol_cmp_cstr(const Symbol *symbol, const char *str);
+
+
+extern inline Symbol *pvm_symbol_dup(const Symbol *symbol);
 
 
 #define VM_VALUE_SIZE sizeof(VMValue)

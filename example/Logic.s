@@ -3,7 +3,6 @@
 
 @import {       println     }   from System
 
-@constant "AND result exception."
 
 @func iandTest(int a,int b,int expect) : void
         %locals 3
@@ -14,7 +13,7 @@
         llocal 2
         icmp
         ifeq pass
-        ldc 0
+        ldc "AND result exception."
         throw
 pass:
         ret
@@ -30,7 +29,7 @@ pass:
         llocal 2
         lcmp
         ifeq pass
-        ldc 0
+        ldc "AND result exception."
         throw
 pass:
         ret

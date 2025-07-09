@@ -183,10 +183,10 @@ static void inline pvm_throw(RuntimeContext *context) {
     }
 #endif
     const PStr *pstr = value->obj;
-    context->throw_exception(context, pstr->str);
+    context->throw_exception(context, pstr->value);
 }
 
-static void inline pvm_ishr(RuntimeContext *context) {
+static void inline pvm_ishr(const RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
     const int32_t bit = source_operand->i32 & 0x1F;
@@ -341,7 +341,7 @@ static inline void pvm_srefinc(RuntimeContext *context) {
     const uint16_t index = pvm_bytecode_read_int16(context);
     const VMValue *value = pvm_get_local_value(context, index);
 #if VM_DEBUG_ENABLE
-    if (value->type != TYPE_STRING && value->type != TYPE_REF) {
+    if (value->type != TYPE_STRING && value->type != TYPE_HANDLE) {
         context->throw_exception(context, "refinc only support reference.");
     }
 #endif
@@ -603,8 +603,8 @@ static inline void pvm_s2d(RuntimeContext *context) {
 extern void pvm_call_method(const CallMethodParam *callMethodParam) {
     RuntimeContext *context = pvm_init_runtime_context();
     const Method *method = callMethodParam->method;
-    const VMValue **args = callMethodParam->args;
-    pvm_create_stack_frame(context, method, callMethodParam->argv, args);
+    const VMValue **argv = callMethodParam->argv;
+    pvm_create_stack_frame(context, method, callMethodParam->argc, argv);
     static const void *opcode_table[] = {
         [LI8] = &&li8,
         [LI16] = &&li16,

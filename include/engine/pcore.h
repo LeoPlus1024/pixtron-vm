@@ -12,7 +12,7 @@ typedef enum:uint8_t {
 
 #define TYPE_SMALL_INTEGER(value) (value == TYPE_BYTE || value == TYPE_SHORT || value == TYPE_INT)
 
-#define TYPE_REFERENCE(type) (type == TYPE_REF || type == TYPE_STRING || type == TYPE_ARRAY)
+#define TYPE_REFERENCE(type) (type == TYPE_HANDLE || type == TYPE_STRING || type == TYPE_ARRAY)
 /**
  * @brief Safe sign-aware comparison macro for two values of the same type.
  *

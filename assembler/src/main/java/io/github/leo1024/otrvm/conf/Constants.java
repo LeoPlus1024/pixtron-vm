@@ -22,8 +22,9 @@ public class Constants {
     public static final char SEMICOLON = ';';
     public static final char LEFT_BRACKET = '{';
     public static final char RIGHT_BRACKET = '}';
+    public static final char EQUALS = '=';
     public static final String FROM = "from";
     public static char[] DELIMITERS = new char[]{
-            CR, LF, TAB, SPACE, DOT, COMMA, LEFT_PAREN, RIGHT_PAREN, DOUBLE_QUOTE, COLON, LEFT_BRACKET, RIGHT_BRACKET
+            CR, LF, TAB, SPACE, DOT, COMMA, LEFT_PAREN, RIGHT_PAREN, DOUBLE_QUOTE, COLON, LEFT_BRACKET, RIGHT_BRACKET, EQUALS
     };
 }

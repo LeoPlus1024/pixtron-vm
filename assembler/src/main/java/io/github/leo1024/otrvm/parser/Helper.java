@@ -71,7 +71,7 @@ public class Helper {
             case "i64" -> Type.LONG;
             case "f64" -> Type.DOUBLE;
             case "bool" -> Type.BOOL;
-            case "ptr" -> Type.REF;
+            case "handle" -> Type.HANDLE;
             case "str" -> Type.STRING;
             case "arr" -> Type.ARRAY;
             default -> throw new IllegalStateException("Unexpected value: " + suffix);

@@ -1,13 +1,11 @@
 @namespace Klass
 @import         {       println        }     from System
 
-@constant "Init constructor"
-
 @field string text
 
 @func <cinit>() :void
     %stacks 1
-    ldc 0
+    ldc "Init constructor"
     sfield 0
     lfield 0
     call println

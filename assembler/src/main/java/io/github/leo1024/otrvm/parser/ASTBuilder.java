@@ -3,7 +3,6 @@ package io.github.leo1024.otrvm.parser;
 import io.github.leo1024.otrvm.ISerializable;
 import io.github.leo1024.otrvm.conf.FuncMeta;
 import io.github.leo1024.otrvm.conf.FieldMeta;
-import io.github.leo1024.otrvm.conf.Type;
 import io.github.leo1024.otrvm.ex.ParserException;
 import io.github.leo1024.otrvm.parser.impl.FuncExpr;
 import io.github.leo1024.otrvm.util.ByteUtil;
@@ -12,40 +11,46 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class ASTBuilder extends Context {
-    public record Constant(Type type, Object value) implements ISerializable {
+    public record StrConst(String value) implements ISerializable {
 
         @Override
         public byte[] toBytes() {
-            if (type == Type.STRING) {
-                byte[] strBytes = ((String) value).getBytes(StandardCharsets.UTF_8);
-                int strBytesLen = strBytes.length;
-                // Type + Length + data length
-                byte[] bytes = new byte[2 + 4 + strBytesLen];
-                int pos = ByteUtil.appendType2Bytes(bytes, 0, Type.STRING);
-                pos = ByteUtil.appendInt2Bytes(bytes, pos, strBytesLen);
-                System.arraycopy(strBytes, 0, bytes, pos, strBytesLen);
-                return bytes;
-            }
-            byte[] bytes = new byte[2 + type.getLength()];
-            int pos = ByteUtil.appendType2Bytes(bytes, 0, type);
-            byte[] numberBytes = ByteUtil.convertSpecSizeToBytes(type, (Number) value);
-            System.arraycopy(numberBytes, 0, bytes, pos, numberBytes.length);
+            byte[] strBytes = value.getBytes(StandardCharsets.UTF_8);
+            int strBytesLen = strBytes.length;
+            // Type + Length + data length
+            byte[] bytes = new byte[4 + strBytesLen];
+            int pos = ByteUtil.appendInt2Bytes(bytes, 0, strBytesLen);
+            System.arraycopy(strBytes, 0, bytes, pos, strBytesLen);
             return bytes;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof StrConst(String value1)) {
+                return value.equals(value1);
+            }
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return this.value;
         }
     }
 
     final Map<String, FieldMeta> fileMetaMap;
-    final String filename;
-    final String namespace;
-    final List<Constant> constants;
-    String library;
+    final int filename;
+    final int namespace;
+    final List<StrConst> constants;
+    int library;
 
     public ASTBuilder(final String namespace, final String filename) {
         super(null);
-        this.filename = filename;
-        this.namespace = namespace;
+        this.library = -1;
         this.fileMetaMap = new TreeMap<>();
         this.constants = new ArrayList<>();
+        this.filename = this.addConstant(filename);
+        this.namespace = this.addConstant(namespace);
     }
 
     @Override
@@ -70,17 +75,22 @@ public class ASTBuilder extends Context {
     }
 
     @Override
-    public String getNamespace() {
+    public int getNamespace() {
         return namespace;
     }
 
     @Override
-    public void addConstant(Type type, Object value) {
-        Constant constant = new Constant(type, value);
-        this.constants.add(constant);
+    public int addConstant(String value) {
+        StrConst constant = new StrConst(value);
+        int index = this.constants.indexOf(constant);
+        if (index == -1) {
+            index = this.constants.size();
+            this.constants.add(constant);
+        }
+        return index;
     }
 
-    public List<Constant> getConstants() {
+    public List<StrConst> getConstants() {
         return Collections.unmodifiableList(this.constants);
     }
 
@@ -88,22 +98,28 @@ public class ASTBuilder extends Context {
         List<FuncMeta> funcList = getFuncList();
         for (int i = 0; i < funcList.size(); i++) {
             FuncMeta funcMeta = funcList.get(i);
-            if (funcMeta.getFuncName().equals(funcName)) {
+            StrConst strConst = getConstant(funcMeta.getName());
+            if (strConst.value.equals(funcName)) {
                 return i;
             }
         }
         throw new ParserException("Function '" + funcName + "' not found.");
     }
 
-    public void setLibrary(String library) {
+    @Override
+    public StrConst getConstant(int index) {
+        return this.constants.get(index);
+    }
+
+    public void setLibrary(int library) {
         this.library = library;
     }
 
-    public String getLibrary() {
+    public int getLibrary() {
         return library;
     }
 
-    public String getFilename() {
+    public int getFilename() {
         return filename;
     }
 }

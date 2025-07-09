@@ -5,26 +5,26 @@ import io.github.leo1024.otrvm.util.ByteUtil;
 import io.github.leo1024.otrvm.util.CLanguageUtil;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 public class FuncMeta implements ISerializable {
     public static class Param {
-        final String name;
+        final int name;
         final Type type;
 
 
-        public Param(String name, Type type) {
-            this.name = name;
+        public Param(int name, Type type) {
             this.type = type;
+            this.name = name;
         }
     }
 
-    final String name;
+    final int name;
     final Type retType;
     final List<Param> params;
-    final String namespace;
-    final String libNames;
+    final int namespace;
     final boolean nativeFunc;
     final boolean importFunc;
     int offset;
@@ -32,16 +32,16 @@ public class FuncMeta implements ISerializable {
     int byteCodeSize;
     int locals;
     int stacks;
+    Map<Integer, Integer> nameValueMap;
 
-
-    public FuncMeta(boolean importFunc, String namespace, String name, Type retType, List<Param> params, boolean nativeFunc, String libNames) {
+    public FuncMeta(boolean importFunc, int namespace, int name, Type retType, List<Param> params, boolean nativeFunc, Map<Integer, Integer> nameValueMap) {
         this.name = name;
         this.retType = retType;
         this.params = params;
         this.namespace = namespace;
-        this.libNames = libNames;
         this.nativeFunc = nativeFunc;
         this.importFunc = importFunc;
+        this.nameValueMap = nameValueMap;
     }
 
     public int getOffset() {
@@ -67,52 +67,44 @@ public class FuncMeta implements ISerializable {
 
     @Override
     public byte[] toBytes() {
-        byte[] nameBytes = CLanguageUtil.toCStyleStr(name);
-        byte[] namespaceBytes = CLanguageUtil.toCStyleStr(Optional.ofNullable(namespace).orElse(""));
-        int nameLength = nameBytes.length;
-        int namespaceLength = namespaceBytes.length;
         if (this.importFunc) {
-            byte[] bytes = new byte[nameLength + namespaceLength];
-            System.arraycopy(namespaceBytes, 0, bytes, 0, namespaceLength);
-            System.arraycopy(nameBytes, 0, bytes, namespaceLength, nameLength);
+            byte[] bytes = new byte[4];
+            ByteUtil.appendShort2Bytes(bytes, 0, (short) namespace);
+            ByteUtil.appendShort2Bytes(bytes, 2, (short) name);
             return bytes;
         }
-        // offset(4) +byteCodeSize(4)+ typeId(2)+locals(2)+stacks(2)
-        int totalLength = 14;
 
-        totalLength += nameLength;
-        totalLength += namespaceLength;
-
-        // Calculate all params length
-        int paramsLength = 0;
-        for (Param param : params) {
-            // typeId(2) + nameBytes(contain '\0')
-            paramsLength += (2 + CLanguageUtil.toCStyleStr(param.name).length);
-        }
-
-        int libNameLen = 0;
-        byte[] libNameBytes = null;
-        if (this.nativeFunc) {
-            final String tmp;
-            tmp = Objects.requireNonNullElse(libNames, "");
-            libNameBytes = CLanguageUtil.toCStyleStr(tmp);
-            libNameLen = libNameBytes.length;
-        }
-
+        int paramsLength = 4 * params.size();
+        int nAttrCount = nameValueMap.size();
         // alloc precise size
-        byte[] data = new byte[1 + totalLength + libNameLen + paramsLength + 2];
+        byte[] data = new byte[/*Namespace*/2
+                // Function name
+                + 2
+                // Offset(4) +byteCodeSize(4)+ typeId(2)+locals(2)+stacks(2)
+                + 14
+                // Native flag
+                + 1
+                // Native attribute count
+                + 2
+                // Native attribute bytes length
+                + nAttrCount * 4
+                // Param length and param count
+                + paramsLength + 2
+                ];
         //Writer namespace
-        System.arraycopy(namespaceBytes, 0, data, 0, namespaceLength);
-        int pos = namespaceLength;
-        // Writer func name
-        System.arraycopy(nameBytes, 0, data, pos, nameLength);
-        pos += nameLength;
+        int pos = ByteUtil.appendShort2Bytes(data, 0, (short) this.namespace);
+
+        // Writer function name
+        pos = ByteUtil.appendShort2Bytes(data, pos, (short) this.name);
+
         // Is native func
         data[pos++] = (byte) (this.nativeFunc ? 1 : 0);
-        if (this.nativeFunc) {
-            System.arraycopy(libNameBytes, 0, data, pos, libNameLen);
-            pos += libNameLen;
+        pos = ByteUtil.appendShort2Bytes(data, pos, (short) nAttrCount);
+        for (Map.Entry<Integer, Integer> entry : nameValueMap.entrySet()) {
+            pos = ByteUtil.appendShort2Bytes(data, pos, entry.getKey().shortValue());
+            pos = ByteUtil.appendShort2Bytes(data, pos, entry.getValue().shortValue());
         }
+
         // Writer locals
         pos = ByteUtil.appendShort2Bytes(data, pos, (short) this.locals);
         // Writer stacks
@@ -126,21 +118,17 @@ public class FuncMeta implements ISerializable {
         Type realRetType = Optional.ofNullable(retType).orElse(Type.NIL);
         pos = ByteUtil.appendType2Bytes(data, pos, realRetType);
 
-
-        System.arraycopy(ByteUtil.short2Bytes((short) params.size()), 0, data, pos, 2);
-        pos += 2;
+        pos = ByteUtil.appendShort2Bytes(data, pos, (short) params.size());
 
         // Batch writer params
         for (Param param : params) {
-            byte[] paramNameBytes = CLanguageUtil.toCStyleStr(param.name);
             pos = ByteUtil.appendType2Bytes(data, pos, param.type);
-            System.arraycopy(paramNameBytes, 0, data, pos, paramNameBytes.length);
-            pos += paramNameBytes.length;
+            pos = ByteUtil.appendShort2Bytes(data, pos, (byte) param.name);
         }
         return data;
     }
 
-    public String getFuncName() {
+    public int getName() {
         return name;
     }
 }

@@ -8,11 +8,13 @@ import java.nio.charset.StandardCharsets;
 
 public class FieldMeta implements ISerializable {
     private final Type type;
+    private final int index;
     private final String name;
 
-    public FieldMeta(final Type type, final String name) {
+    public FieldMeta(final Type type, final int index, final String name) {
         this.type = type;
         this.name = name;
+        this.index = index;
     }
 
     public final Type getType() {
@@ -21,18 +23,14 @@ public class FieldMeta implements ISerializable {
 
     @Override
     public final byte[] toBytes() {
-        byte[] nameBytes = CLanguageUtil.toCStyleStr(this.name);
-
-        final int totalLength = 2 + nameBytes.length;
-        byte[] bytes = new byte[totalLength];
+        byte[] bytes = new byte[4];
 
         int offset = 0;
 
         // Writer type id
         offset = ByteUtil.appendType2Bytes(bytes, offset, type);
-
-        // Copy name bytes(without end char)
-        System.arraycopy(nameBytes, 0, bytes, offset, nameBytes.length);
+        // Writer name index
+        offset = ByteUtil.appendShort2Bytes(bytes, offset, (short) index);
 
         return bytes;
     }

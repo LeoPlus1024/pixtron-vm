@@ -49,7 +49,7 @@ public class BinaryHeader implements ISerializable {
                 maxFuncSize += array.length;
             }
         }
-        final List<ASTBuilder.Constant> constants = builder.getConstants();
+        final List<ASTBuilder.StrConst> constants = builder.getConstants();
         final byte[][] constBytes = new byte[constants.size()][];
         int maxConstSize = 0;
         // Writer constant data
@@ -58,21 +58,17 @@ public class BinaryHeader implements ISerializable {
             maxConstSize += bytes.length;
             constBytes[i] = bytes;
         }
-        int libraryLength = 0;
-        byte[] libraryBytes = null;
-        if (builder.getLibrary() != null) {
-            libraryBytes = CLanguageUtil.toCStyleStr(builder.getLibrary());
-            libraryLength = libraryBytes.length;
-        }
+
         int pos = 0;
         int constSize = constants.size();
-        byte[] fileBytes = CLanguageUtil.toCStyleStr(builder.getFilename());
-        int fileBytesLength = fileBytes.length;
-        byte[] data = new byte[/*Magic*/4
+        boolean libraryFlag = builder.getLibrary() != -1;
+        byte[] data = new byte[/*Magic**/ 4
                 // Version
                 + 2
+                // Namespace
+                + 2
                 // Filename
-                + fileBytesLength
+                + 2
                 // Function size
                 + maxFuncSize
                 // Field size
@@ -80,26 +76,30 @@ public class BinaryHeader implements ISerializable {
                 + 8
                 // Constant size
                 + 2
+                + maxConstSize
                 // library flag
                 + 1
-                + maxConstSize
-                + libraryLength
+                // library constant index
+                + (libraryFlag ? 2 : 0)
                 ];
 
         pos = ByteUtil.appendInt2Bytes(data, pos, magic);
         pos = ByteUtil.appendShort2Bytes(data, pos, version.getVersion());
-        System.arraycopy(fileBytes, 0, data, pos, fileBytesLength);
-        pos += fileBytesLength;
-        data[pos++] = libraryLength == 0 ? (byte) 0 : (byte) 1;
-        if (libraryLength > 0) {
-            System.arraycopy(libraryBytes, 0, data, pos, libraryLength);
-            pos += libraryLength;
-        }
         pos = ByteUtil.appendShort2Bytes(data, pos, (short) constSize);
 
         for (byte[] constByte : constBytes) {
             System.arraycopy(constByte, 0, data, pos, constByte.length);
             pos += constByte.length;
+        }
+        pos = ByteUtil.appendShort2Bytes(data, pos, (short) builder.getNamespace());
+        // Filename
+        pos = ByteUtil.appendShort2Bytes(data, pos, (short) builder.getFilename());
+        // Library flag
+        data[pos++] = libraryFlag ? (byte) 1 : (byte) 0;
+        // Library index
+        if (libraryFlag) {
+            System.arraycopy(ByteUtil.short2Bytes((short) builder.getLibrary()), 0, data, pos, 2);
+            pos += 2;
         }
 
         pos = ByteUtil.appendInt2Bytes(data, pos, fieldSize);

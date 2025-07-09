@@ -7,11 +7,11 @@
 #define GET_LOCALS(frame) (((VMValue *) (frame + 1)) + frame->max_stacks)
 
 static inline VirtualStackFrame *pvm_ipush_stack_frame(RuntimeContext *context, const Method *method,
-                                                       const uint16_t argv) {
+                                                       const uint16_t argc) {
     const uint32_t sp = context->sp;
     const uint16_t max_locals = method->max_locals;
     const uint16_t max_stacks = method->max_stacks;
-    if (max_locals < argv) {
+    if (max_locals < argc) {
         context->throw_exception(context, "Method param count mistake.");
     }
     const uint32_t vstack_size = sizeof(VirtualStackFrame) + ((max_locals + max_stacks) * VM_VALUE_SIZE);
@@ -57,12 +57,12 @@ extern inline VMValue *pvm_pop_operand(const RuntimeContext *context) {
     return value;
 }
 
-extern inline void pvm_create_stack_frame(RuntimeContext *context, const Method *method, const uint16_t argv,
-                                          const VMValue **args) {
-    const VirtualStackFrame *frame = pvm_ipush_stack_frame(context, method, argv);
-    for (uint16_t i = 0; i < argv; i++) {
-        const VMValue *arg = args[i];
-        if (arg->type != (method->args + i)->type) {
+extern inline void pvm_create_stack_frame(RuntimeContext *context, const Method *method, const uint16_t argc,
+                                          const VMValue **argv) {
+    const VirtualStackFrame *frame = pvm_ipush_stack_frame(context, method, argc);
+    for (uint16_t i = 0; i < argc; i++) {
+        const VMValue *arg = argv[i];
+        if (arg->type != (method->argv + i)->type) {
             context->throw_exception(context, "Invalid argument.");
         }
         VMValue *locals = GET_LOCALS(frame);
@@ -71,23 +71,23 @@ extern inline void pvm_create_stack_frame(RuntimeContext *context, const Method 
 }
 
 extern inline void pvm_push_stack_frame(RuntimeContext *context, const Method *method) {
-    const uint16_t argv = method->argv;
+    const uint16_t argc = method->argc;
     VirtualStackFrame *frame = context->frame;
-    const VirtualStackFrame *new_frame = pvm_ipush_stack_frame(context, method, argv);
-    if (argv == 0) {
+    const VirtualStackFrame *new_frame = pvm_ipush_stack_frame(context, method, argc);
+    if (argc == 0) {
         return;
     }
     const uint32_t sp = frame->sp;
-    const VMValue *operand_stack = GET_OPERAND_STACK(frame) + sp + argv - 1;
+    const VMValue *operand_stack = GET_OPERAND_STACK(frame) + sp + argc - 1;
     VMValue *locals = GET_LOCALS(new_frame);
-    if (argv == 1) {
+    if (argc == 1) {
         memcpy(locals, operand_stack, VM_VALUE_SIZE);
     } else {
-        for (int i = 0; i < argv; ++i) {
+        for (int i = 0; i < argc; ++i) {
             memcpy(locals + i, operand_stack--, VM_VALUE_SIZE);
         }
     }
-    frame->sp = sp + argv;
+    frame->sp = sp + argc;
 }
 
 extern inline void pvm_pop_stack_frame(RuntimeContext *context) {

@@ -41,14 +41,19 @@ public abstract class Context {
         return exprList;
     }
 
-    public String getNamespace() {
-        if (parent != null) {
-            return parent.getNamespace();
-        }
-        return null;
+    public int getNamespace() {
+        throw new ParserException("Not support get namespace.");
     }
 
-    public void addConstant(Type type, Object value) {
+    public int addConstant(String value) {
         throw new ParserException("Not support add constant.");
+    }
+
+    public ASTBuilder.StrConst getConstant(int index) {
+        throw new ParserException("Not support get constant.");
+    }
+
+    public Context getParent() {
+        return parent;
     }
 }

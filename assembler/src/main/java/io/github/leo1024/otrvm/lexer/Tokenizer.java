@@ -39,6 +39,7 @@ public class Tokenizer {
                      Constants.DOT,
                      Constants.LEFT_BRACKET,
                      Constants.RIGHT_BRACKET,
+                     Constants.EQUALS,
                      Constants.RIGHT_PAREN -> new Token(TokenKind.DELIMITER, chr, line, column);
                 // Hex  literal
                 case Constants.COMMENT -> {
