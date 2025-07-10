@@ -23,7 +23,7 @@ public class Parser {
         }
         String namespace = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
         final boolean hasFileDef = this.tokenSequence.checkToken(
-            it -> it.tokenKindIn(TokenKind.PSEUDO) && it.toPseudo() == Pseudo.FILE);
+                it -> it.tokenKindIn(TokenKind.PSEUDO) && it.toPseudo() == Pseudo.FILE);
         final String filename;
         if (hasFileDef) {
             final Token tmp = this.tokenSequence.consume();
@@ -59,7 +59,7 @@ public class Parser {
                 default -> {
                     Token token = this.tokenSequence.consume();
                     if (tokenKind == TokenKind.IDENTIFIER
-                        && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
+                            && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
                         context.addLabel(token.getValue());
                     } else {
                         throw ParserException.create(token, "Unexpected token.");
@@ -114,7 +114,7 @@ public class Parser {
             Symbol methodName = context.addConstant(method);
             Symbol namespace = context.addConstant(nameSpaceToken.getValue());
             FuncMeta funcMeta = new FuncMeta(true, namespace, methodName, Type.VOID, List.of(),
-                false, null);
+                    false, null);
             context.addExpr(new FuncExpr(context, funcMeta));
         }
     }
@@ -137,7 +137,7 @@ public class Parser {
         if (tokenKind != TokenKind.STRING) {
             throw ParserException.create(this.tokenSequence.consume(), "Only support string constant.");
         }
-        String value = (String)Helper.convertLiteral(this.tokenSequence.consume());
+        String value = (String) Helper.convertLiteral(this.tokenSequence.consume());
         context.addConstant(value);
     }
 
@@ -179,14 +179,14 @@ public class Parser {
             Helper.expect(tokenSequence, Constants.RIGHT_PAREN);
         }
         boolean declareRetType = this.tokenSequence.checkToken(
-            token -> token != null && token.valEqual(Constants.COLON));
+                token -> token != null && token.valEqual(Constants.COLON));
         Type retType = null;
         if (declareRetType) {
             retType = Helper.expect(tokenSequence, TokenKind.TYPE).toType();
         }
         Symbol symbol = context.addConstant(name.getValue());
         FuncMeta funcMeta = new FuncMeta(false, context.getNamespace(), symbol, retType, paramList, isNativeFunc,
-            nameValueMap);
+                nameValueMap);
         FuncExpr func = new FuncExpr(context, funcMeta);
         while (!this.tokenSequence.checkToken(it -> Helper.checkPseudoToken(it, Pseudo.END))) {
             parseExpr(func);
@@ -201,32 +201,31 @@ public class Parser {
         if (!hasParam) {
             return new HashMap<>();
         }
-        final Map<Symbol, Symbol> nameValMap = new HashMap<>();
-        for (; ; ) {
+
+        final Map<Symbol, Symbol> nativeAttribute = new HashMap<>();
+        do {
             Token token = Helper.requireTokenNotNull(tokenSequence.consume(), "Native param can't normal enclose.");
             if (token.valEqual(Constants.RIGHT_PAREN)) {
-                break;
-            }
-            if (!token.tokenKindIn(TokenKind.IDENTIFIER)) {
-                throw ParserException.create(token, "Native property expect a identifier.");
+                return nativeAttribute;
             }
             String paramName = token.getValue();
             Helper.expect(tokenSequence, Constants.EQUALS);
             String paramValue = Helper.expect(tokenSequence, TokenKind.STRING).getValue();
             Symbol nameSymbol = context.addConstant(paramName);
             Symbol valueSymbol = context.addConstant(paramValue);
-            if (nameValMap.containsKey(nameSymbol)) {
+            if (nativeAttribute.containsKey(nameSymbol)) {
                 throw ParserException.create(token, "Repeat define same native property.");
             }
-            nameValMap.put(nameSymbol, valueSymbol);
-        }
-        return nameValMap;
+            nativeAttribute.put(nameSymbol, valueSymbol);
+        } while (this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COMMA)));
+        Helper.expect(tokenSequence, Constants.RIGHT_PAREN);
+        return nativeAttribute;
     }
 
     private void convertVMOpts(Context context) {
         VMOption option = VMOption.of(Helper.expect(this.tokenSequence, TokenKind.VM_OPTIONS));
         Object value = Helper.convertLiteral(
-            Helper.expect(this.tokenSequence, TokenKind.STRING, TokenKind.INTEGER, TokenKind.HEX, TokenKind.FLOAT));
+                Helper.expect(this.tokenSequence, TokenKind.STRING, TokenKind.INTEGER, TokenKind.HEX, TokenKind.FLOAT));
         context.setOption(option, value);
     }
 
@@ -292,7 +291,7 @@ public class Parser {
         Token token = Helper.expect(this.tokenSequence, TokenKind.STRING);
         final String value = token.getValue();
         Symbol symbol = context.addConstant(value);
-        return new IndexExpr(Opcode.LDC, (short)symbol.index());
+        return new IndexExpr(Opcode.LDC, (short) symbol.index());
     }
 
     private Expr parserCallExpr() {

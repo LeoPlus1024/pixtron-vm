@@ -95,7 +95,8 @@ extern inline bool pvm_lookup_native_handle(const Klass *klass, Method *method, 
         }
     }
     if (fptr == NULL) {
-        g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND, "Native method <%s> linker fail.", method_name);
+        g_set_error(error, KLASS_DOMAIN, METHOD_NOT_FOUND, "Native method <%s.%s> linker fail.",
+                    pvm_get_symbol_value(klass->name), method_name);
     }
     method->native_handle = fptr;
     return fptr != NULL;

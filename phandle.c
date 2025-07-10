@@ -1,6 +1,6 @@
 #include "phandle.h"
 #include "pobj.h"
-#include "pcore.h"
+#include "ffi.h"
 
 struct _PHandle {
     Method *cleanup;
@@ -11,22 +11,22 @@ static void pvm_handle_destructor(void *object) {
     if (object == NULL) {
         return;
     }
-    const PHandle *handle = (PHandle *) object;
-    if (handle->cleanup == NULL) {
+    PHandle *handle = object;
+    const Method *method = handle->cleanup;
+    if (method == NULL) {
         return;
     }
-    Value value;
-    value.type = TYPE_HANDLE;
-    value.obj = handle->handle;
-    const Value *argv[1] = {&value};
-
-    const CallMethodParam param = {
-        handle->cleanup,
-        1,
-        argv
-    };
-
-    pvm_call_method(&param);
+    ffi_cif cif;
+    ffi_type *arg_type[0] = {&ffi_type_pointer};
+    const bool success = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 1, &ffi_type_void, arg_type) == FFI_OK;
+    if (!success) {
+        const Klass *klass = method->klass;
+        g_printerr("Native method <%s.%s> ffi init fail.", pvm_get_symbol_value(klass->name),
+                   pvm_get_symbol_value(method->name));
+        exit(0);
+    }
+    void *args[] = {&(handle->handle)};
+    ffi_call(&cif, method->native_handle, NULL, args);
 }
 
 
