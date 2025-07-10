@@ -23,7 +23,7 @@ public class Parser {
         }
         String namespace = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
         final boolean hasFileDef = this.tokenSequence.checkToken(
-                it -> it.tokenKindIn(TokenKind.PSEUDO) && it.toPseudo() == Pseudo.FILE);
+            it -> it.tokenKindIn(TokenKind.PSEUDO) && it.toPseudo() == Pseudo.FILE);
         final String filename;
         if (hasFileDef) {
             final Token tmp = this.tokenSequence.consume();
@@ -59,7 +59,7 @@ public class Parser {
                 default -> {
                     Token token = this.tokenSequence.consume();
                     if (tokenKind == TokenKind.IDENTIFIER
-                            && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
+                        && this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.COLON))) {
                         context.addLabel(token.getValue());
                     } else {
                         throw ParserException.create(token, "Unexpected token.");
@@ -111,19 +111,19 @@ public class Parser {
         Helper.expect(this.tokenSequence, Constants.FROM);
         Token nameSpaceToken = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER);
         for (String method : methods) {
-            int methodName = context.addConstant(method);
-            int namespace = context.addConstant(nameSpaceToken.getValue());
+            Symbol methodName = context.addConstant(method);
+            Symbol namespace = context.addConstant(nameSpaceToken.getValue());
             FuncMeta funcMeta = new FuncMeta(true, namespace, methodName, Type.VOID, List.of(),
-                    false, null);
+                false, null);
             context.addExpr(new FuncExpr(context, funcMeta));
         }
     }
 
     private void parseField(Context context) {
         final Type type = Helper.expect(this.tokenSequence, TokenKind.TYPE).toType();
-        final String name = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
-        final int index = context.addConstant(name);
-        final FieldMeta fieldMeta = new FieldMeta(type, index, name);
+        final String value = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
+        final Symbol name = context.addConstant(value);
+        final FieldMeta fieldMeta = new FieldMeta(type, name);
         context.addField(fieldMeta);
     }
 
@@ -137,7 +137,7 @@ public class Parser {
         if (tokenKind != TokenKind.STRING) {
             throw ParserException.create(this.tokenSequence.consume(), "Only support string constant.");
         }
-        String value = (String) Helper.convertLiteral(this.tokenSequence.consume());
+        String value = (String)Helper.convertLiteral(this.tokenSequence.consume());
         context.addConstant(value);
     }
 
@@ -145,16 +145,16 @@ public class Parser {
         Helper.expect(this.tokenSequence, Constants.LEFT_PAREN);
         Token libraryToken = Helper.expect(this.tokenSequence, TokenKind.STRING);
         Helper.expect(this.tokenSequence, Constants.RIGHT_PAREN);
-        int index = context.addConstant(libraryToken.getValue());
+        Symbol library = context.addConstant(libraryToken.getValue());
         if (!(context instanceof ASTBuilder builder)) {
             throw ParserException.create(libraryToken, "Library only support in klass top level.");
         }
-        builder.setLibrary(index);
+        builder.setLibrary(library);
     }
 
     private Expr parseFunc(final Context context) {
         boolean isNativeFunc = this.tokenSequence.currentKind() == TokenKind.PSEUDO;
-        Map<Integer, Integer> nameValueMap = new HashMap<>();
+        Map<Symbol, Symbol> nameValueMap = new HashMap<>();
         if (isNativeFunc) {
             nameValueMap = parseNativeMeta(context);
         }
@@ -169,8 +169,8 @@ public class Parser {
             while (!emptyParam) {
                 Token paramType = Helper.expect(tokenSequence, TokenKind.TYPE);
                 Token paramName = Helper.expect(tokenSequence, TokenKind.IDENTIFIER);
-                int index = context.addConstant(paramName.getValue());
-                FuncMeta.Param param = new FuncMeta.Param(index, paramType.toType());
+                Symbol symbol = context.addConstant(paramName.getValue());
+                FuncMeta.Param param = new FuncMeta.Param(paramType.toType(), symbol);
                 paramList.add(param);
                 if (!this.tokenSequence.checkToken(token -> token.valEqual(Constants.COMMA))) {
                     emptyParam = true;
@@ -179,13 +179,14 @@ public class Parser {
             Helper.expect(tokenSequence, Constants.RIGHT_PAREN);
         }
         boolean declareRetType = this.tokenSequence.checkToken(
-                token -> token != null && token.valEqual(Constants.COLON));
+            token -> token != null && token.valEqual(Constants.COLON));
         Type retType = null;
         if (declareRetType) {
             retType = Helper.expect(tokenSequence, TokenKind.TYPE).toType();
         }
-        int nameIndex = context.addConstant(name.getValue());
-        FuncMeta funcMeta = new FuncMeta(false, context.getNamespace(), nameIndex, retType, paramList, isNativeFunc, nameValueMap);
+        Symbol symbol = context.addConstant(name.getValue());
+        FuncMeta funcMeta = new FuncMeta(false, context.getNamespace(), symbol, retType, paramList, isNativeFunc,
+            nameValueMap);
         FuncExpr func = new FuncExpr(context, funcMeta);
         while (!this.tokenSequence.checkToken(it -> Helper.checkPseudoToken(it, Pseudo.END))) {
             parseExpr(func);
@@ -194,13 +195,13 @@ public class Parser {
         return func;
     }
 
-    private Map<Integer, Integer> parseNativeMeta(Context context) {
+    private Map<Symbol, Symbol> parseNativeMeta(Context context) {
         Helper.checkPseudoToken(tokenSequence.consume(), Pseudo.NATIVE);
         boolean hasParam = this.tokenSequence.checkToken(it -> it != null && it.valEqual(Constants.LEFT_PAREN));
         if (!hasParam) {
             return new HashMap<>();
         }
-        final Map<Integer, Integer> nameValMap = new HashMap<>();
+        final Map<Symbol, Symbol> nameValMap = new HashMap<>();
         for (; ; ) {
             Token token = Helper.requireTokenNotNull(tokenSequence.consume(), "Native param can't normal enclose.");
             if (token.valEqual(Constants.RIGHT_PAREN)) {
@@ -212,12 +213,12 @@ public class Parser {
             String paramName = token.getValue();
             Helper.expect(tokenSequence, Constants.EQUALS);
             String paramValue = Helper.expect(tokenSequence, TokenKind.STRING).getValue();
-            int index = context.addConstant(paramName);
-            int value = context.addConstant(paramValue);
-            if (nameValMap.containsKey(index)) {
+            Symbol nameSymbol = context.addConstant(paramName);
+            Symbol valueSymbol = context.addConstant(paramValue);
+            if (nameValMap.containsKey(nameSymbol)) {
                 throw ParserException.create(token, "Repeat define same native property.");
             }
-            nameValMap.put(index, value);
+            nameValMap.put(nameSymbol, valueSymbol);
         }
         return nameValMap;
     }
@@ -225,7 +226,7 @@ public class Parser {
     private void convertVMOpts(Context context) {
         VMOption option = VMOption.of(Helper.expect(this.tokenSequence, TokenKind.VM_OPTIONS));
         Object value = Helper.convertLiteral(
-                Helper.expect(this.tokenSequence, TokenKind.STRING, TokenKind.INTEGER, TokenKind.HEX, TokenKind.FLOAT));
+            Helper.expect(this.tokenSequence, TokenKind.STRING, TokenKind.INTEGER, TokenKind.HEX, TokenKind.FLOAT));
         context.setOption(option, value);
     }
 
@@ -290,8 +291,8 @@ public class Parser {
     private Expr parseLdc(final Context context) {
         Token token = Helper.expect(this.tokenSequence, TokenKind.STRING);
         final String value = token.getValue();
-        int index = context.addConstant(value);
-        return new IndexExpr(Opcode.LDC, (short) index);
+        Symbol symbol = context.addConstant(value);
+        return new IndexExpr(Opcode.LDC, (short)symbol.index());
     }
 
     private Expr parserCallExpr() {

@@ -2,19 +2,14 @@ package io.github.leo1024.otrvm.conf;
 
 import io.github.leo1024.otrvm.ISerializable;
 import io.github.leo1024.otrvm.util.ByteUtil;
-import io.github.leo1024.otrvm.util.CLanguageUtil;
-
-import java.nio.charset.StandardCharsets;
 
 public class FieldMeta implements ISerializable {
     private final Type type;
-    private final int index;
-    private final String name;
+    private final Symbol name;
 
-    public FieldMeta(final Type type, final int index, final String name) {
+    public FieldMeta(final Type type, final Symbol name) {
         this.type = type;
         this.name = name;
-        this.index = index;
     }
 
     public final Type getType() {
@@ -30,13 +25,23 @@ public class FieldMeta implements ISerializable {
         // Writer type id
         offset = ByteUtil.appendType2Bytes(bytes, offset, type);
         // Writer name index
-        offset = ByteUtil.appendShort2Bytes(bytes, offset, (short) index);
+        offset = ByteUtil.appendSymbol(bytes, offset, this.name);
 
         return bytes;
     }
 
-
-    public final String getName() {
+    public final Symbol getName() {
         return name;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof FieldMeta fieldMeta)) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        return fieldMeta.type == this.type && fieldMeta.name.equals(this.name);
     }
 }

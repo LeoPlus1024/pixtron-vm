@@ -31,7 +31,7 @@ public class Assembler {
         final List<FieldMeta> fieldList = builder.getFieldList();
         final BinaryHeader header = new BinaryHeader(Version.V1_0, builder, fieldList, funcMetas);
         final byte[] headerBytes = header.toBytes();
-        Path path = buildDir.resolve(String.format("%s.klass", builder.getConstant(builder.getNamespace())));
+        Path path = buildDir.resolve(String.format("%s.klass", builder.getNamespace()));
         try (FileOutputStream outputStream = new FileOutputStream(path.toFile())) {
             outputStream.write(headerBytes);
             int offset = 0;

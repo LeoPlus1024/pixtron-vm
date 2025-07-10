@@ -49,7 +49,7 @@ public class BinaryHeader implements ISerializable {
                 maxFuncSize += array.length;
             }
         }
-        final List<ASTBuilder.StrConst> constants = builder.getConstants();
+        final List<ASTBuilder.Const> constants = builder.getConstants();
         final byte[][] constBytes = new byte[constants.size()][];
         int maxConstSize = 0;
         // Writer constant data
@@ -61,45 +61,44 @@ public class BinaryHeader implements ISerializable {
 
         int pos = 0;
         int constSize = constants.size();
-        boolean libraryFlag = builder.getLibrary() != -1;
+        boolean libraryFlag = builder.getLibrary() != null;
         byte[] data = new byte[/*Magic**/ 4
-                // Version
-                + 2
-                // Namespace
-                + 2
-                // Filename
-                + 2
-                // Function size
-                + maxFuncSize
-                // Field size
-                + maxFieldSize
-                + 8
-                // Constant size
-                + 2
-                + maxConstSize
-                // library flag
-                + 1
-                // library constant index
-                + (libraryFlag ? 2 : 0)
-                ];
+            // Version
+            + 2
+            // Namespace
+            + 2
+            // Filename
+            + 2
+            // Function size
+            + maxFuncSize
+            // Field size
+            + maxFieldSize
+            + 8
+            // Constant size
+            + 2
+            + maxConstSize
+            // library flag
+            + 1
+            // library constant index
+            + (libraryFlag ? 2 : 0)
+            ];
 
         pos = ByteUtil.appendInt2Bytes(data, pos, magic);
         pos = ByteUtil.appendShort2Bytes(data, pos, version.getVersion());
-        pos = ByteUtil.appendShort2Bytes(data, pos, (short) constSize);
+        pos = ByteUtil.appendShort2Bytes(data, pos, (short)constSize);
 
         for (byte[] constByte : constBytes) {
             System.arraycopy(constByte, 0, data, pos, constByte.length);
             pos += constByte.length;
         }
-        pos = ByteUtil.appendShort2Bytes(data, pos, (short) builder.getNamespace());
+        pos = ByteUtil.appendSymbol(data, pos, builder.getNamespace());
         // Filename
-        pos = ByteUtil.appendShort2Bytes(data, pos, (short) builder.getFilename());
+        pos = ByteUtil.appendSymbol(data, pos, builder.getFilename());
         // Library flag
-        data[pos++] = libraryFlag ? (byte) 1 : (byte) 0;
+        data[pos++] = libraryFlag ? (byte)1 : (byte)0;
         // Library index
         if (libraryFlag) {
-            System.arraycopy(ByteUtil.short2Bytes((short) builder.getLibrary()), 0, data, pos, 2);
-            pos += 2;
+            pos = ByteUtil.appendSymbol(data, pos, builder.getLibrary());
         }
 
         pos = ByteUtil.appendInt2Bytes(data, pos, fieldSize);

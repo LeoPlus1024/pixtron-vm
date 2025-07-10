@@ -1,6 +1,7 @@
 package io.github.leo1024.otrvm.parser;
 
 import io.github.leo1024.otrvm.conf.FieldMeta;
+import io.github.leo1024.otrvm.conf.Symbol;
 import io.github.leo1024.otrvm.conf.Type;
 import io.github.leo1024.otrvm.conf.VMOption;
 import io.github.leo1024.otrvm.ex.ParserException;
@@ -41,15 +42,15 @@ public abstract class Context {
         return exprList;
     }
 
-    public int getNamespace() {
+    public Symbol getNamespace() {
         throw new ParserException("Not support get namespace.");
     }
 
-    public int addConstant(String value) {
+    public Symbol addConstant(String value) {
         throw new ParserException("Not support add constant.");
     }
 
-    public ASTBuilder.StrConst getConstant(int index) {
+    public ASTBuilder.Const getConstant(int index) {
         throw new ParserException("Not support get constant.");
     }
 
