@@ -69,10 +69,10 @@ public class ASTBuilder extends Context {
 
     public List<FuncMeta> getFuncList() {
         return this.getExprList()
-            .stream()
-            .filter(it -> it instanceof FuncExpr)
-            .map(it -> ((FuncExpr)it).getFuncMeta())
-            .toList();
+                .stream()
+                .filter(it -> it instanceof FuncExpr)
+                .map(it -> ((FuncExpr) it).getFuncMeta())
+                .toList();
     }
 
     @Override
@@ -100,7 +100,7 @@ public class ASTBuilder extends Context {
         for (int i = 0; i < funcList.size(); i++) {
             FuncMeta funcMeta = funcList.get(i);
             Symbol symbol = funcMeta.getName();
-            if (symbol.valueEqual(funcName)) {
+            if (Objects.equals(symbol.name(), funcName)) {
                 return i;
             }
         }

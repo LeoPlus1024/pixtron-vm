@@ -11,6 +11,7 @@ import io.github.leo1024.otrvm.parser.Expr;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class FuncExpr extends Context implements Expr {
 
@@ -66,7 +67,7 @@ public class FuncExpr extends Context implements Expr {
 
     @Override
     public String toString() {
-        return this.funcMeta.getName().value();
+        return Objects.toString(this.funcMeta.getName());
     }
 
     @Override

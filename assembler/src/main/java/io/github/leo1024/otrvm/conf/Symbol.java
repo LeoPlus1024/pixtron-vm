@@ -1,18 +1,17 @@
 package io.github.leo1024.otrvm.conf;
 
-public record Symbol(int index, String value) {
-    public boolean valueEqual(String value) {
-        return this.value.equals(value);
-    }
+import java.util.Objects;
+
+public record Symbol(int index, String name) {
 
     @Override
     public String toString() {
-        return value;
+        return name;
     }
 
     public boolean equals(Object obj) {
         if (obj instanceof Symbol symbol) {
-            return symbol.valueEqual(value);
+            return Objects.equals(symbol.name, name);
         }
         return false;
     }
