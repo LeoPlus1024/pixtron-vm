@@ -36,14 +36,16 @@ extern bool pvm_string_equal(const PStr *a, const PStr *b) {
     if (a->len != b->len) {
         return false;
     }
-    return memcmp(a->value, b->value, a->len) == 0;
+    return memcmp(pvm_string_get_data(a), pvm_string_get_data(b), a->len) == 0;
 }
 
 extern uint32_t pvm_string_hash(PStr *str) {
     if (str->hash_code != 0) {
         return str->hash_code;
     }
-    const char *p = str->value;
+
+    const char *p = pvm_string_get_data(str);
+
     uint32_t n = str->len;
     uint32_t h = 0;
 
@@ -59,14 +61,13 @@ extern uint32_t pvm_string_hash(PStr *str) {
 extern PStr *pvm_string_new(const char *str, const uint32_t len) {
     assert(str!=NULL);
     PStr *pstr = pvm_object_new(sizeof(PStr), (ObjectDestructor) pvm_string_destructor, 1);
+    pstr->len = len;
     if (len <= 7) {
         memcpy(pstr->values, str, len);
         return pstr;
     }
-    char *buffer = pvm_mem_calloc(len + 1);
-    memcpy(buffer, str, len);
-    pstr->len = len;
-    pstr->value = buffer;
+    char *buffer = pvm_mem_calloc(len + 1);;
+    pstr->value = memcpy(buffer, str, len);
     return pstr;
 }
 
@@ -83,6 +84,7 @@ extern char *pvm_string_to_cstr(const PStr *str) {
         return NULL;
     }
     const uint32_t len = str->len + 1;
-    char *c_str = pvm_mem_cpy(str->value, len);
+    const char *buffer = pvm_string_get_data(str);
+    char *c_str = pvm_mem_cpy(buffer, len);
     return c_str;
 }

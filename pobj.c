@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <glib.h>
 #include "pmem.h"
+#include "config.h"
 
 struct _ObjectHeader {
     atomic_uint_least64_t rc;
@@ -40,6 +41,9 @@ extern inline void pvm_object_refdec(void *object) {
     if (pre != 1) {
         return;
     }
+#if VM_DEBUG_ENABLE
+    g_debug("Prepare to release memory %p", header);
+#endif
     header->destructor(object);
     pvm_mem_free(TO_REF(header));
 }

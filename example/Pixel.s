@@ -1,8 +1,10 @@
 @namespace Pixel
 
-@import {    PVA_init , PVA_window_show } from PVAudio
+@import {    PVA_init , PVA_game_loop } from PVAudio
+@import {   println     }   from System
 
 @field handle pva
+
 @func main() : void
     %locals 1
     %stacks 4
@@ -13,6 +15,9 @@
     call PVA_init
     sfield 0
     lfield 0
-    call PVA_window_show
+    call PVA_game_loop
+    ldc "Game end"
+    call println
+    srefdec 0
     ret
 @end

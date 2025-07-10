@@ -4,7 +4,7 @@
 
 @library("PVAudio")
 
-@func @native PVA_window_show(handle h) : bool @end
+@func @native PVA_game_loop(handle h) : void @end
 
 @func @native(destroy="PVA_destroy",raw_str="on") PVA_init(string title,int w,int h,int flags) : handle @end
 

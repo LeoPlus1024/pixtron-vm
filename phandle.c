@@ -1,4 +1,7 @@
 #include "phandle.h"
+
+#include <assert.h>
+
 #include "pobj.h"
 #include "ffi.h"
 
@@ -35,4 +38,9 @@ extern inline PHandle *pvm_handle_new(Handle handle, Method *cleanup) {
     phandle->cleanup = cleanup;
     phandle->handle = handle;
     return phandle;
+}
+
+extern inline void *pvm_handle_get_data(const PHandle *handle) {
+    assert(handle != NULL);
+    return handle->handle;
 }

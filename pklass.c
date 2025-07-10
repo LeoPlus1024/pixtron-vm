@@ -405,11 +405,13 @@ extern inline void pvm_set_klass_field(RuntimeContext *context, const guint16 in
 
 extern inline void pvm_get_klass_constant(RuntimeContext *context, const uint16_t index, VMValue *value) {
     const Klass *klass = context->frame->method->klass;
+#if VM_DEBUG_ENABLE
     const uint16_t constSize = klass->const_size;
     if (index >= constSize) {
         context->throw_exception(context, "Constant pool index out of bounds: requested #%d (valid range: 0-%d)", index,
                                  constSize);
     }
+#endif
     value->type = TYPE_STRING;
     value->obj = klass->constants[index];
 }

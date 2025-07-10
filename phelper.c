@@ -145,6 +145,8 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
                     copies[i] = pvm_string_to_cstr(operand->obj);
                 } else if (type == TYPE_OBJECT) {
                     copies[i] = operand;
+                } else if (type == TYPE_HANDLE) {
+                    copies[i] = pvm_handle_get_data(operand->obj);
                 } else {
                     copies[i] = (operand->obj);
                 }
