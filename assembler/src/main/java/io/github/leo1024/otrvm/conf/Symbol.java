@@ -12,7 +12,7 @@ public record Symbol(int index, String value) {
 
     public boolean equals(Object obj) {
         if (obj instanceof Symbol symbol) {
-            return symbol.valueEqual(value) && symbol.index() == index;
+            return symbol.valueEqual(value);
         }
         return false;
     }
