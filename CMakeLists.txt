@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
 project(PixotronVM C)
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(VM_DEBUG_ENABLE "1")
 set(VM_STACK_SIZE "1024*1024")
 set(VM_EXCEPT_STACK_DEPTH "30")
+
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto -O2")
 
@@ -31,16 +36,11 @@ file(GLOB SOURCES *.c lib/*.c)
 
 
 if (EXISTS ${CMAKE_SOURCE_DIR}/example/build)
-    file(COPY ${CMAKE_SOURCE_DIR}/example/build DESTINATION ${CMAKE_BINARY_DIR}/tests)
+    file(COPY ${CMAKE_SOURCE_DIR}/example/build DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 endif ()
 
-
-enable_testing()
-
-add_subdirectory(pva)
-add_subdirectory(tests)
-
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
+
 
 execute_process(COMMAND ${Python_EXECUTABLE}
         ${CMAKE_SOURCE_DIR}/op_gen.py
@@ -65,3 +65,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         ${CMAKE_BINARY_DIR}/include
         ${GLIB_DEP_INCLUDE_DIRS}
 )
+
+enable_testing()
+
+add_subdirectory(pva)
+add_subdirectory(tests)

@@ -181,6 +181,15 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
         value->type = type;
         field->name = pvm_load_symbol(klass, buf, &position);
         field->value = value;
+        if (TYPE_SMALL_INTEGER(type)) {
+            value->i32 = 0;
+        } else if (type == TYPE_LONG) {
+            value->i64 = 0;
+        } else if (type == TYPE_DOUBLE) {
+            value->f64 = 0;
+        } else {
+            value->obj = NULL;
+        }
         index++;
     }
     klass->fields = files;
@@ -219,7 +228,7 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
                 pvm_load_symbol0(klass, buf, &position, attr_ptr);
                 pvm_load_symbol0(klass, buf, &position, value_ptr);
                 if (pvm_symbol_cmp_cstr(attr_ptr, PFFI_DESTROY)) {
-                    method->cleanup = pvm_symbol_dup(attr_ptr);
+                    method->cleanup = pvm_symbol_dup(value_ptr);
                 } else if (pvm_symbol_cmp_cstr(attr_ptr, PFFI_RAW_STR)) {
                     method->raw_str = pvm_symbol_cmp_cstr(value_ptr,PFFI_ON);
                 }
@@ -273,7 +282,7 @@ static inline Klass *pvm_create_klass(const PixtronVM *vm, const char *klassName
     uint32_t mcount = klass->mcount;
     while (mcount-- > 0) {
         Method *method = klass->methods[mcount];
-        if (method->m_cleanup != NULL) {
+        if (method->cleanup != NULL && method->klass == klass) {
             const char *destroy_name = pvm_get_symbol_value(method->cleanup);
             Method *cleanup = pvm_get_method_by_name(klass, destroy_name);
             if (cleanup == NULL) {

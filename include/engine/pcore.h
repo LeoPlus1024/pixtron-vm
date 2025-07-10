@@ -10,7 +10,7 @@ typedef enum:uint8_t {
 
 #define TYPE_INTEGER(value) (value == TYPE_INT)
 
-#define TYPE_SMALL_INTEGER(value) (value == TYPE_BYTE || value == TYPE_SHORT || value == TYPE_INT)
+#define TYPE_SMALL_INTEGER(value) (value == TYPE_BYTE || value == TYPE_SHORT || value == TYPE_INT || value == TYPE_BOOL)
 
 #define TYPE_REFERENCE(type) (type == TYPE_HANDLE || type == TYPE_STRING || type == TYPE_ARRAY)
 /**

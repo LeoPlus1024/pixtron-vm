@@ -4,6 +4,10 @@
 #include <glib.h>
 #include "pmem.h"
 
+struct _ObjectHeader {
+    atomic_uint_least64_t rc;
+    ObjectDestructor destructor;
+};
 
 extern inline void *pvm_object_new(uint64_t size,
                                    const ObjectDestructor destructor,

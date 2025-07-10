@@ -20,7 +20,6 @@
 #define LIB_SUFFIX ".so"
 #endif
 #include <assert.h>
-
 #include "config.h"
 #include "phandle.h"
 
@@ -183,31 +182,27 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
     }
     void *fptr = method->native_handle;
     if (ret != TYPE_VOID) {
-        VMValue value;
-        value.i64 = 0;
-        value.type = ret;
-        void *retval = NULL;
+        VMValue *value = pvm_get_operand(context);
+        value->type = ret;
         if (ret == TYPE_HANDLE) {
-            ffi_call(&cif, fptr, retval, values);
-            value.obj = pvm_handle_new(retval, method->m_cleanup);
+            ffi_call(&cif, fptr, &(value->obj), values);
+            value->obj = pvm_handle_new(value->obj, method->m_cleanup);
         } else {
             switch (ret) {
                 case TYPE_BOOL:
                 case TYPE_BYTE:
                 case TYPE_INT:
                 case TYPE_LONG:
-                    retval = &value.i64;
+                    value->i64 = 0;
+                    ffi_call(&cif, fptr, &value->i64, values);
                     break;
                 case TYPE_DOUBLE:
-                    retval = &value.f64;
+                    ffi_call(&cif, fptr, &value->f64, values);
                     break;
                 default:
-                    retval = &value.obj;
+                    ffi_call(&cif, fptr, &value->obj, values);
             }
-            ffi_call(&cif, fptr, retval, values);
         }
-        // Push ret value to operand stack
-        pvm_push_operand(context, &value);
     } else {
         ffi_call(&cif, fptr, NULL, values);
     }

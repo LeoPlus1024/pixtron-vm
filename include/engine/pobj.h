@@ -9,15 +9,12 @@
 
 #include <stdatomic.h>
 
+typedef struct _ObjectHeader ObjectHeader;
+
 #define CONVERT_TO_OBJECT(ptr) ((void *)(((uint8_t *)ptr) + sizeof(ObjectHeader)))
 #define GET_OBJECT_HEADER(ptr) ((ObjectHeader *)((uint8_t *)ptr - sizeof(ObjectHeader)))
 
 typedef void (*ObjectDestructor)(const void *);
-
-typedef struct {
-    atomic_uint_least64_t rc;
-    ObjectDestructor destructor;
-} ObjectHeader;
 
 /**
  * @brief Allocates and initializes a new reference-counted object.

@@ -17,7 +17,7 @@ static void pvm_handle_destructor(void *object) {
         return;
     }
     ffi_cif cif;
-    ffi_type *arg_type[0] = {&ffi_type_pointer};
+    ffi_type *arg_type[1] = {&ffi_type_pointer};
     const bool success = ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 1, &ffi_type_void, arg_type) == FFI_OK;
     if (!success) {
         const Klass *klass = method->klass;
@@ -34,5 +34,5 @@ extern inline PHandle *pvm_handle_new(Handle handle, Method *cleanup) {
     PHandle *phandle = pvm_object_new(sizeof(PHandle), (ObjectDestructor) pvm_handle_destructor, 1);
     phandle->cleanup = cleanup;
     phandle->handle = handle;
-    return handle;
+    return phandle;
 }

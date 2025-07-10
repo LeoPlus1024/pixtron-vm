@@ -36,6 +36,10 @@ extern PVAHandle *PVA_init(const char *title, const int w, const int h, const in
     return handle;
 }
 
+extern bool PVA_window_show(const PVAHandle *handle) {
+    return SDL_ShowWindow(handle->window);
+}
+
 extern void PVA_destroy(PVAHandle *handle) {
     if (handle == NULL) {
         return;
