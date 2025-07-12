@@ -1,6 +1,12 @@
 #ifndef VIRTUALSTACK_H
 #define VIRTUALSTACK_H
 #include "ptype.h"
+
+#define GET_OPERAND_STACK(frame) ((VMValue *)(frame+1))
+#define GET_LOCALS(frame) (((VMValue *) (frame + 1)) + frame->max_stacks)
+
+extern inline VirtualStackFrame *pvm_ipush_stack_frame(RuntimeContext *context, const Method *method,
+                                                       uint16_t argc);
 /**
  * Pushes a value onto the RuntimeContext's operand stack.
  *

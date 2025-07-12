@@ -3,10 +3,9 @@
 #include <config.h>
 #include <stdio.h>
 
-#define GET_OPERAND_STACK(frame) ((VMValue *)(frame+1))
-#define GET_LOCALS(frame) (((VMValue *) (frame + 1)) + frame->max_stacks)
 
-static inline VirtualStackFrame *pvm_ipush_stack_frame(RuntimeContext *context, const Method *method,
+
+extern inline VirtualStackFrame *pvm_ipush_stack_frame(RuntimeContext *context, const Method *method,
                                                        const uint16_t argc) {
     const uint32_t sp = context->sp;
     const uint16_t max_locals = method->max_locals;

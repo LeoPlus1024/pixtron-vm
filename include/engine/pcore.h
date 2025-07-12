@@ -124,6 +124,12 @@ bigger_float: \
         goto *opcode_table[opcode];                                                 \
     } while (0)
 
-extern void pvm_call_method(const CallMethodParam *callMethodParam);
+
+extern VMValue *pvm_execute_context(RuntimeContext *context, VirtualStackFrame *call_frame);
+
+extern void pvm_execute(const CallMethodParam *callMethodParam);
+
+
+extern RuntimeContext *pvm_execute_context_get();
 
 #endif //ENGINE_H

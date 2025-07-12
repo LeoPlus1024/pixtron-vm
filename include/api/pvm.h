@@ -47,6 +47,9 @@ static const char *const TYPE_NAME[] = {
     "array"
 };
 
+#define BOOL_TRUE  (1)
+#define BOOL_FALSE  (0)
+
 typedef struct _VMValue Value;
 typedef struct PixtronVM VM;
 
@@ -287,6 +290,9 @@ extern void pvm_launch_main(const VM *vm, const char *klass_name);
  * @note This will also free the associated bytecode buffer
  */
 extern void pvm_destroy(VM **vm);
+
+
+extern Value *pvm_call_vm_method(const char *klass_name, const char *method_name, ...);
 
 
 #endif //VM_H

@@ -1,8 +1,16 @@
 @namespace PVAudio
 
 @file "pvaudio.c"
-
+@import {      println     }    from    System
 @library("PVAudio")
+
+@func PVA_event(int event) : void
+    %locals 1
+    %stacks 1
+    llocal 0
+    call println
+    ret
+@end
 
 @func @native PVA_game_loop(handle h) : void @end
 

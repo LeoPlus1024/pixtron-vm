@@ -25,7 +25,7 @@ static inline void pvm_exec_klass_constructor(const Klass *klass) {
         0,
         NULL
     };
-    pvm_call_method(&param);
+    pvm_execute(&param);
 }
 
 static inline void pvm_load_symbol0(const Klass *klass, const uint8_t *buffer, int32_t *pos, Symbol *symbol) {

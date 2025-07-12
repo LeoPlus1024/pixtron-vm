@@ -10,6 +10,7 @@
 #include "pcore.h"
 #include "pstr.h"
 #include "config.h"
+#include "pstack.h"
 
 extern Value *pvm_create_byte_value(const int8_t i8) {
     VMValue *value = pvm_mem_calloc(VM_VALUE_SIZE);
@@ -178,6 +179,7 @@ extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *metho
         exit(-1);
     }
     CallMethodParam *method_param = pvm_mem_calloc(sizeof(CallMethodParam));
+    method_param->vm = vm;
     method_param->argv = argv;
     method_param->method = method;
     if (argv > 0) {
@@ -186,7 +188,7 @@ extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *metho
             method_param->argv[i] = (VMValue *) argv[i];
         }
     }
-    GThread *thread = g_thread_new("main", (GThreadFunc) pvm_call_method, (gpointer) method_param);
+    GThread *thread = g_thread_new("main", (GThreadFunc) pvm_execute, (gpointer) method_param);
     Value *value = g_thread_join(thread);
     if (argv > 0) {
         pvm_mem_free(CAST_REF(&(method_param->argv)));
@@ -197,6 +199,60 @@ extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *metho
 
 extern void pvm_launch_main(const VM *vm, const char *klass_name) {
     pvm_launch(vm, klass_name, "main", 0, NULL);
+}
+
+extern Value *pvm_call_vm_method(const char *klass_name, const char *method_name, ...) {
+    RuntimeContext *context = pvm_execute_context_get();
+    if (context == NULL) {
+        g_critical("FATAL: No execution context available when calling method %s::%s",
+                klass_name, method_name);
+        abort();
+    }
+    GError *error = NULL;
+    const Klass *klass = pvm_get_klass(context->vm, klass_name, &error);
+    if (klass == NULL) {
+        g_critical("%s\n", error->message);
+        abort();
+    }
+    const Method *method = pvm_get_method_by_name(klass, method_name);
+    if (method == NULL) {
+        g_critical("METHOD NOT FOUND: %s::%s", klass_name, method_name);
+        abort();
+    }
+    VirtualStackFrame *call_frame = context->frame;
+    const uint16_t argc = method->argc;
+    if (argc == 0) {
+        return pvm_execute_context(context, call_frame);
+    }
+    const VirtualStackFrame *frame = pvm_ipush_stack_frame(context, method, argc);
+    Value args[argc];
+    va_list va_list;
+    va_start(va_list, method_name);
+    VMValue *locals = GET_LOCALS(frame);
+    for (int i = 0; i < argc; ++i) {
+        const MethodParam *param = method->argv + i;
+        const Type type = param->type;
+        VMValue *local = locals + i;
+        local->type = type;
+        switch (type) {
+            case TYPE_INT:
+            case TYPE_BOOL:
+            case TYPE_BYTE:
+            case TYPE_SHORT:
+                local->i32 = va_arg(va_list, int);
+                break;
+            case TYPE_LONG:
+                local->i64 = va_arg(va_list, int64_t);
+                break;
+            case TYPE_DOUBLE:
+                local->f64 = va_arg(va_list, double);
+                break;
+            default:
+                local->obj = va_arg(va_list, void *);
+        }
+    }
+    va_end(va_list);
+    return pvm_execute_context(context, call_frame);
 }
 
 extern void pvm_destroy(VM **vm) {

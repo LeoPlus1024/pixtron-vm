@@ -42,6 +42,7 @@ typedef struct _VMValue {
 typedef struct {
     const Method *method;
     uint16_t argc;
+    const VM *vm;
     const VMValue **argv;
 } CallMethodParam;
 

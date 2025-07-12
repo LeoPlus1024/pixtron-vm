@@ -19,6 +19,9 @@
 #include "op_gen.h"
 #endif
 
+
+static GPrivate pri_key = G_PRIVATE_INIT(g_free);
+
 static inline void pvm_add(RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
     VMValue *target_operand = pvm_get_operand(context);
@@ -139,7 +142,7 @@ static inline void pvm_lf64(RuntimeContext *context) {
 }
 
 
-static inline VMValue *pvm_ret(RuntimeContext *context) {
+static inline VMValue *pvm_ret(RuntimeContext *context, VirtualStackFrame *call_frame) {
     const VirtualStackFrame *frame = context->frame;
     const VMValue *value = NULL;
     const bool hasRetVal = frame->method->ret != TYPE_VOID;
@@ -148,7 +151,7 @@ static inline VMValue *pvm_ret(RuntimeContext *context) {
     }
     VMValue *ret_val = NULL;
     pvm_pop_stack_frame(context);
-    if (frame->pre == NULL) {
+    if (frame->pre == call_frame) {
         context->exit = exit;
         ret_val = pvm_mem_cpy(value,VM_VALUE_SIZE);
     } else if (value != NULL) {
@@ -600,11 +603,11 @@ static inline void pvm_s2d(RuntimeContext *context) {
     value->type = TYPE_DOUBLE;
 }
 
-extern void pvm_call_method(const CallMethodParam *callMethodParam) {
-    RuntimeContext *context = pvm_init_runtime_context();
-    const Method *method = callMethodParam->method;
-    const VMValue **argv = callMethodParam->argv;
-    pvm_create_stack_frame(context, method, callMethodParam->argc, argv);
+extern RuntimeContext *pvm_execute_context_get() {
+    return g_private_get(&pri_key);
+}
+
+extern VMValue *pvm_execute_context(RuntimeContext *context, VirtualStackFrame *call_frame) {
     static const void *opcode_table[] = {
         [LI8] = &&li8,
         [LI16] = &&li16,
@@ -726,7 +729,7 @@ goto0:
     pvm_goto(context);
     DISPATCH;
 ret:
-    ret_val = pvm_ret(context);
+    ret_val = pvm_ret(context, call_frame);
     if (context->exit) {
         goto finally;
     }
@@ -921,5 +924,15 @@ s2d:
     pvm_s2d(context);
     DISPATCH;
 finally:
-    pvm_free_runtime_context(&context);
+    return ret_val;
+}
+
+extern void pvm_execute(const CallMethodParam *callMethodParam) {
+    RuntimeContext *context = pvm_init_runtime_context();
+    context->vm = (PixtronVM *) callMethodParam->vm;
+    const Method *method = callMethodParam->method;
+    const VMValue **argv = callMethodParam->argv;
+    pvm_create_stack_frame(context, method, callMethodParam->argc, argv);
+    g_private_set(&pri_key, context);
+    pvm_execute_context(context,NULL);
 }

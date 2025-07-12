@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../include/api/pvm.h"
+
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
@@ -14,7 +16,6 @@ struct _PVAHandle {
     SDL_Window *window;
     SDL_Renderer *renderer;
 };
-
 
 
 extern PVAHandle *PVA_init(const char *title, const int w, const int h, const int flags) {
@@ -72,6 +73,7 @@ extern void PVA_game_loop(const PVAHandle *handle) {
 
         // 处理事件
         while (SDL_PollEvent(&event)) {
+            pvm_call_vm_method("PVAudio", "PVA_event", event.type);
             switch (event.type) {
                 case SDL_EVENT_QUIT:
                     running = 0;
@@ -83,8 +85,8 @@ extern void PVA_game_loop(const PVAHandle *handle) {
                     box.y = event.motion.y - BOX_SIZE / 2.0f;
 
                     // 根据位置改变颜色
-                    boxColor.r = (Uint8)((box.x / windowWidth) * 255);
-                    boxColor.g = (Uint8)((box.y / windowHeight) * 255);
+                    boxColor.r = (Uint8) ((box.x / windowWidth) * 255);
+                    boxColor.g = (Uint8) ((box.y / windowHeight) * 255);
                     break;
 
                 case SDL_EVENT_KEY_DOWN:
