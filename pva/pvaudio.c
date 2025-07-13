@@ -1,10 +1,11 @@
 #include <SDL3/SDL.h>
 #include "pvaudio.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "../include/api/pvm.h"
+#include "pvm.h"
 
 
 #define WINDOW_WIDTH 800
@@ -41,9 +42,15 @@ extern PVAHandle *PVA_init(const char *title, const int w, const int h, const in
         SDL_DestroyRenderer(renderer);
         return NULL;
     }
+
     handle->window = window;
     handle->renderer = renderer;
     return handle;
+}
+
+uint64_t PVA_event_tpye(const SDL_Event *event) {
+    assert(event!=NULL);
+    return event->type;
 }
 
 extern void PVA_game_loop(const PVAHandle *handle) {
@@ -73,7 +80,8 @@ extern void PVA_game_loop(const PVAHandle *handle) {
 
         // 处理事件
         while (SDL_PollEvent(&event)) {
-            pvm_call_vm_method("PVAudio", "PVA_event", event.type);
+            uint64_t fps = SDL_GetPerformanceFrequency();
+            pvm_call_vm_method("PVAudio", "PVA_event", &event);
             switch (event.type) {
                 case SDL_EVENT_QUIT:
                     running = 0;

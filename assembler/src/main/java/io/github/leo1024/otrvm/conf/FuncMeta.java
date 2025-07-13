@@ -114,8 +114,7 @@ public class FuncMeta implements ISerializable {
         pos = ByteUtil.appendInt2Bytes(data, pos, byteCodeSize);
 
         // Writer return type
-        Type realRetType = Optional.ofNullable(retType).orElse(Type.NIL);
-        pos = ByteUtil.appendType2Bytes(data, pos, realRetType);
+        pos = ByteUtil.appendType2Bytes(data, pos, retType);
 
         pos = ByteUtil.appendShort2Bytes(data, pos, (short)params.size());
 

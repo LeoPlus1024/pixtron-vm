@@ -184,7 +184,7 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
     }
     void *fptr = method->native_handle;
     if (ret != TYPE_VOID) {
-        VMValue *value = pvm_get_operand(context);
+        VMValue *value = pvm_next_operand(context);
         value->type = ret;
         if (ret == TYPE_HANDLE) {
             ffi_call(&cif, fptr, &(value->obj), values);

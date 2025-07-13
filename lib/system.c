@@ -19,9 +19,6 @@ void printNanoDiff(const int64_t base, const int64_t now) {
 void println(const Value *value) {
     const Type type = pvm_get_value_type(value);
     switch (type) {
-        case NIL:
-            printf("null\n");
-            break;
         case TYPE_BYTE:
             printf("%d\n", pvm_value_get_byte(value));
             break;

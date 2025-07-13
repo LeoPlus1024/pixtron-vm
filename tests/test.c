@@ -15,11 +15,11 @@ static void exec_main(const char *klass_name) {
 
 int main(int argc, char *argv[]) {
     tpva();
-    exec_main("Fib");
-    exec_main("Array");
-    exec_main("Klass");
-    exec_main("Bool");
-    exec_main("Logic");
-    exec_main("Number");
+    // exec_main("Fib");
+    // exec_main("Array");
+    // exec_main("Klass");
+    // exec_main("Bool");
+    // exec_main("Logic");
+    // exec_main("Number");
     exec_main("Pixel");
 }

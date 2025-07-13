@@ -71,6 +71,13 @@ extern PStr *pvm_string_new(const char *str, const uint32_t len) {
     return pstr;
 }
 
+extern PStr *pvm_string_new_from_cstr(const char *str) {
+    if (str == NULL) {
+        return pvm_string_new(str, 0);
+    }
+    return pvm_string_new(str, strlen(str));
+}
+
 extern inline char *pvm_string_get_data(const PStr *pstr) {
     assert(pstr!=NULL);
     if (pstr->len < 8) {

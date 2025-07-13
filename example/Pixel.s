@@ -18,6 +18,7 @@
     call PVA_game_loop
     ldc "Game end"
     call println
-    srefdec 0
+    lfield 0
+    refdec
     ret
 @end

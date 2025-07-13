@@ -14,6 +14,9 @@ extern uint32_t pvm_string_hash(PStr *str);
 
 extern PStr *pvm_string_new(const char *str, uint32_t len);
 
+
+extern PStr * pvm_string_new_from_cstr(const char *str);
+
 extern inline  char *pvm_string_get_data(const PStr *pstr);
 
 

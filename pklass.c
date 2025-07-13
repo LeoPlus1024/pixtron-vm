@@ -47,12 +47,7 @@ static inline Symbol *pvm_load_symbol(const Klass *klass, const uint8_t *buffer,
 static inline char *pvm_method_tostring(const Method *method) {
     GString *str = g_string_new(NULL);
     const Type retType = method->ret;
-    const char *retTypeName;
-    if (retType == NIL) {
-        retTypeName = "void";
-    } else {
-        retTypeName = TYPE_NAME[retType];
-    }
+    const char *retTypeName = TYPE_NAME[retType];
     g_string_append(str, pvm_get_symbol_value(method->name));
     g_string_append_c(str, '(');
     const uint16_t argv = method->argc;

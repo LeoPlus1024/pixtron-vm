@@ -5,7 +5,6 @@
 
 // 类型标记（操作数中使用）
 typedef enum:uint16_t {
-    NIL = 0,
     TYPE_BYTE,
     TYPE_SHORT,
     TYPE_INT,
@@ -21,7 +20,6 @@ typedef enum:uint16_t {
 
 
 static const uint8_t TYPE_SIZE[] = {
-    [NIL] = 0,
     [TYPE_BYTE] = 1,
     [TYPE_SHORT] = 2,
     [TYPE_INT] = 4,
@@ -34,17 +32,17 @@ static const uint8_t TYPE_SIZE[] = {
 };
 
 static const char *const TYPE_NAME[] = {
-    "null",
-    "byte",
-    "short",
-    "int",
-    "long",
-    "double",
-    "bool",
-    "object",
-    "void",
-    "string",
-    "array"
+    [TYPE_BYTE] = "byte",
+    [TYPE_SHORT] = "short",
+    [TYPE_INT] = "int",
+    [TYPE_LONG] = "long",
+    [TYPE_DOUBLE] = "double",
+    [TYPE_BOOL] = "bool",
+    [TYPE_OBJECT] = "object",
+    [TYPE_VOID] = "void",
+    [TYPE_STRING] = "string",
+    [TYPE_ARRAY] = "array",
+    [TYPE_HANDLE] = "handle"
 };
 
 #define BOOL_TRUE  (1)

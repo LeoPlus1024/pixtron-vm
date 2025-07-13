@@ -10,6 +10,7 @@
 #include "pcore.h"
 #include "pstr.h"
 #include "config.h"
+#include "phandle.h"
 #include "pstack.h"
 
 extern Value *pvm_create_byte_value(const int8_t i8) {
@@ -205,7 +206,7 @@ extern Value *pvm_call_vm_method(const char *klass_name, const char *method_name
     RuntimeContext *context = pvm_execute_context_get();
     if (context == NULL) {
         g_critical("FATAL: No execution context available when calling method %s::%s",
-                klass_name, method_name);
+                   klass_name, method_name);
         abort();
     }
     GError *error = NULL;
@@ -246,6 +247,12 @@ extern Value *pvm_call_vm_method(const char *klass_name, const char *method_name
                 break;
             case TYPE_DOUBLE:
                 local->f64 = va_arg(va_list, double);
+                break;
+            case TYPE_STRING:
+                local->obj = pvm_string_new_from_cstr(va_arg(va_list, void *));
+                break;
+            case TYPE_HANDLE:
+                local->obj = pvm_handle_new(va_arg(va_list, void *), method->m_cleanup);
                 break;
             default:
                 local->obj = va_arg(va_list, void *);
