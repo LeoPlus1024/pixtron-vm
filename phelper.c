@@ -21,6 +21,7 @@
 #endif
 #include <assert.h>
 #include "config.h"
+#include "pcore.h"
 #include "phandle.h"
 
 #define DY_SUFFIX_LEN sizeof(LIB_SUFFIX)
@@ -189,7 +190,11 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
         value->type = ret;
         if (ret == TYPE_HANDLE) {
             ffi_call(&cif, fptr, &(value->obj), values);
-            value->obj = pvm_handle_new(value->obj, method->m_cleanup);
+            if (value->obj == NULL) {
+                memcpy(value, &NIL_VALUE,VM_VALUE_SIZE);
+            } else {
+                value->obj = pvm_handle_new(value->obj, method->m_cleanup);
+            }
         } else {
             switch (ret) {
                 case TYPE_BOOL:

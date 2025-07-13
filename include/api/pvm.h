@@ -5,6 +5,7 @@
 
 // 类型标记（操作数中使用）
 typedef enum:uint16_t {
+    TYPE_NIL,
     TYPE_BYTE,
     TYPE_SHORT,
     TYPE_INT,
@@ -32,6 +33,7 @@ static const uint8_t TYPE_SIZE[] = {
 };
 
 static const char *const TYPE_NAME[] = {
+    [TYPE_NIL] = "nil",
     [TYPE_BYTE] = "byte",
     [TYPE_SHORT] = "short",
     [TYPE_INT] = "int",

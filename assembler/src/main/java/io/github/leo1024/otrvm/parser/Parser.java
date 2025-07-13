@@ -245,10 +245,10 @@ public class Parser {
                  ICMP0, ICMP1, ICMPX, LCMP0, LCMP1, LCMPX, DCMP0,
                  DCMP1, DCMPX, LTRUE, LFALSE, IAND, LAND, IOR, LOR,
                  IXOR, LXOR, INOT, LNOT, THROW, I2B, I2S, B2S,
-                 B2I, B2L, B2D, S2B, S2I, S2L, S2D -> new SimpleExpr(opcode);
+                 B2I, B2L, B2D, S2B, S2I, S2L, S2D, LDNIL, ISNIL -> new SimpleExpr(opcode);
             case CALL -> parserCallExpr();
             case IINC -> parseIinc();
-            case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT, IFTRUE, IFFALSE -> {
+            case GOTO, IFEQ, IFNE, IFLE, IFGE, IFGT, IFLT, IFTRUE, IFFALSE, IFNIL -> {
                 String label = Helper.expect(this.tokenSequence, TokenKind.IDENTIFIER).getValue();
                 yield new RedirectExpr(opcode, label);
             }

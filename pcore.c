@@ -11,7 +11,6 @@
 #include <dlfcn.h>
 
 #include "phelper.h"
-#include "pstr.h"
 #include "parr.h"
 #include "pobj.h"
 #include <glib.h>
@@ -19,8 +18,13 @@
 #include "op_gen.h"
 #endif
 
+#define NULL_POINTER_CHECK(context,value,msg) do {                                                                  \
+                                                if(value->type == TYPE_NIL) {                                       \
+                                                    pvm_thrown_exception(context,"NullPointerException:%s",msg);    \
+                                                }                                                                   \
+                                           }while (0)
 
-static GPrivate pri_key = G_PRIVATE_INIT(g_free);
+static GPrivate CONTEXT_KEY = G_PRIVATE_INIT(g_free);
 
 static inline void pvm_add(RuntimeContext *context) {
     const VMValue *source_operand = pvm_pop_operand(context);
@@ -271,6 +275,7 @@ static inline void pvm_newarray(RuntimeContext *context) {
 static inline void pvm_setarray(RuntimeContext *context) {
     const VMValue *idx_value = pvm_pop_operand(context);
     const VMValue *arr_value = pvm_pop_operand(context);
+    NULL_POINTER_CHECK(context, arr_value, "Null array reference when setting element");
     const VMValue *value = pvm_pop_operand(context);
     const PArr *array = (PArr *) (arr_value->obj);
     const int32_t index = idx_value->i32;
@@ -288,6 +293,7 @@ static inline void pvm_getarray(RuntimeContext *context) {
     VMValue *arr_val = pvm_get_operand(context);
     const PArr *array = (PArr *) (arr_val->obj);
     const int32_t index = idx_val->i32;
+    NULL_POINTER_CHECK(context, idx_val, "Null array reference when getting element");
 #if VM_DEBUG_ENABLE
     if (ARRAY_INDEX_OUT_OF_BOUND_CHECK(array, index)) {
         context->throw_exception(context, "Array index out of bounds.");
@@ -603,8 +609,31 @@ static inline void pvm_s2d(RuntimeContext *context) {
     value->type = TYPE_DOUBLE;
 }
 
+static inline void pvm_lnil(const RuntimeContext *context) {
+    VMValue *value = pvm_next_operand(context);
+    memcpy(value, &NIL_VALUE,VM_VALUE_SIZE);
+}
+
+static inline void pvm_isnil(const RuntimeContext *context) {
+    VMValue *value = pvm_get_operand(context);
+    value->type = TYPE_BOOL;
+    value->i32 = value->type == TYPE_NIL;
+}
+
+static inline void pvm_ifnil(const RuntimeContext *context) {
+    const VMValue *value = pvm_pop_operand(context);
+    VirtualStackFrame *frame = context->frame;
+    const uint32_t pc = frame->pc;
+    if (value->type == TYPE_NIL) {
+        const int16_t offset = pvm_bytecode_read_int16(context);
+        frame->pc = pc + offset;
+    } else {
+        frame->pc = pc + 2;
+    }
+}
+
 extern RuntimeContext *pvm_execute_context_get() {
-    return g_private_get(&pri_key);
+    return g_private_get(&CONTEXT_KEY);
 }
 
 extern VMValue *pvm_execute_context(RuntimeContext *context, VirtualStackFrame *call_frame) {
@@ -688,6 +717,9 @@ extern VMValue *pvm_execute_context(RuntimeContext *context, VirtualStackFrame *
         [S2I] = &&s2i,
         [S2L] = &&s2l,
         [S2D] = &&s2d,
+        [LNIL] = &&lnil,
+        [ISNIL] = &&isnil,
+        [IFNIL] = &&ifnil,
 
     };
     VMValue *ret_val = NULL;
@@ -923,6 +955,15 @@ s2l:
 s2d:
     pvm_s2d(context);
     DISPATCH;
+lnil:
+    pvm_lnil(context);
+    DISPATCH;
+isnil:
+    pvm_isnil(context);
+    DISPATCH;
+ifnil:
+    pvm_ifnil(context);
+    DISPATCH;
 finally:
     return ret_val;
 }
@@ -933,6 +974,6 @@ extern void pvm_execute(const CallMethodParam *callMethodParam) {
     const Method *method = callMethodParam->method;
     const VMValue **argv = callMethodParam->argv;
     pvm_create_stack_frame(context, method, callMethodParam->argc, argv);
-    g_private_set(&pri_key, context);
+    g_private_set(&CONTEXT_KEY, context);
     pvm_execute_context(context,NULL);
 }

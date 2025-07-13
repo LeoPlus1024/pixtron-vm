@@ -76,4 +76,7 @@
     S2B,
     S2I,
     S2L,
-    S2D
+    S2D,
+    LNIL,
+    ISNIL,
+    IFNIL

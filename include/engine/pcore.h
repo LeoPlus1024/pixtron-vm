@@ -6,6 +6,8 @@ typedef enum:uint8_t {
 #include "opcode.txt"
 } Opcode;
 
+#define NIL_VALUE ((const VMValue){ .type = TYPE_NIL, .obj = NULL })
+
 #define TYPE_BIGGER_INTEGER(value) (value == TYPE_LONG)
 
 #define TYPE_INTEGER(value) (value == TYPE_INT)

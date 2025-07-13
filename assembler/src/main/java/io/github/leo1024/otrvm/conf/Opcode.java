@@ -84,7 +84,10 @@ public enum Opcode {
     S2B("s2b", 75),
     S2I("s2i", 76),
     S2L("s2l", 77),
-    S2D("s2d", 78);
+    S2D("s2d", 78),
+    LDNIL("ldnil", 79),
+    ISNIL("isnil", 80),
+    IFNIL("ifnil", 81),;
 
     private final byte value;
     private final String mnemonic;
