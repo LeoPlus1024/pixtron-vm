@@ -107,6 +107,7 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
     void *values[argc];
     void *copies[argc];
 
+    const bool raw_str = method->raw_str;
     // Initialize native method params
     for (int i = argc - 1; i >= 0; --i) {
         const MethodParam *param = method->argv + i;
@@ -142,7 +143,7 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
             default:
                 arg_types[i] = &ffi_type_pointer;
                 if (type == TYPE_STRING) {
-                    copies[i] = pvm_string_to_cstr(operand->obj);
+                    copies[i] = raw_str ? pvm_string_get_data(operand->obj) : pvm_string_to_cstr(operand->obj);
                 } else if (type == TYPE_OBJECT) {
                     copies[i] = operand;
                 } else if (type == TYPE_HANDLE) {
@@ -207,6 +208,10 @@ extern inline void pvm_ffi_call(RuntimeContext *context, const Method *method) {
         }
     } else {
         ffi_call(&cif, fptr, NULL, values);
+    }
+    // If raw_str will skip copies string free
+    if (raw_str) {
+        return;
     }
     // Free string copies
     for (int i = 0; i < argc; ++i) {
