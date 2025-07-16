@@ -15,7 +15,7 @@ extern inline void *pvm_mem_calloc(const size_t size) {
     void *ptr = calloc(1, size);
     if (ptr == NULL) {
         fprintf(stderr, "Out of memory.\n");
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     return ptr;
 }

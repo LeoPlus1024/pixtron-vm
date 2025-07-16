@@ -131,7 +131,7 @@ extern VM *pvm_init(const char *klass_path) {
     GHashTable *string_table = g_hash_table_new((GHashFunc) pvm_string_hash, (GEqualFunc) pvm_string_equal);
     if (klasses == NULL || envs == NULL) {
         fprintf(stderr, "VM init fail.");
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     char **env_list = g_listenv();
     int32_t index = 0;
@@ -158,7 +158,7 @@ extern VM *pvm_init(const char *klass_path) {
         pvm_destroy((VM **) &vm);
         g_printerr("%s", error->message);
         g_error_free(error);
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     return (VM *) vm;
 }
@@ -172,12 +172,12 @@ extern Value *pvm_launch(const VM *vm, const char *klass_name, const char *metho
         if (error != NULL) {
             g_printerr("Launcher VM fail:%s\n", error->message);
         }
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     const Method *method = pvm_get_method_by_name(klass, method_name);
     if (method == NULL) {
         g_printerr("Method '%s' not found in klass:%s", method_name, klass->name);
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     CallMethodParam *method_param = pvm_mem_calloc(sizeof(CallMethodParam));
     method_param->vm = vm;
@@ -207,18 +207,18 @@ extern Value *pvm_call_vm_method(const char *klass_name, const char *method_name
     if (context == NULL) {
         g_critical("FATAL: No execution context available when calling method %s::%s",
                    klass_name, method_name);
-        abort();
+        exit(EXIT_FAILURE);
     }
     GError *error = NULL;
     const Klass *klass = pvm_get_klass(context->vm, klass_name, &error);
     if (klass == NULL) {
         g_critical("%s\n", error->message);
-        abort();
+        exit(EXIT_FAILURE);
     }
     const Method *method = pvm_get_method_by_name(klass, method_name);
     if (method == NULL) {
         g_critical("METHOD NOT FOUND: %s::%s", klass_name, method_name);
-        abort();
+        exit(EXIT_FAILURE);
     }
     VirtualStackFrame *call_frame = context->frame;
     const uint16_t argc = method->argc;
