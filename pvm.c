@@ -123,7 +123,7 @@ extern VM *pvm_init(const char *klass_path) {
     setlocale(LC_ALL, "");
     PixtronVM *vm = pvm_mem_calloc(sizeof(PixtronVM));
     if (klass_path != NULL) {
-        vm->klassPath = g_strdup(klass_path);
+        vm->klass_path = g_strdup(klass_path);
     }
 
     GHashTable *envs = g_hash_table_new(g_str_hash, g_str_equal);

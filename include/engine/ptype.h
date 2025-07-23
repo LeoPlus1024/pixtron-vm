@@ -150,7 +150,7 @@ typedef struct _VirtualStackFrame {
 
 typedef struct VM {
     // Klass path
-    char *klassPath;
+    char *klass_path;
     // Environments
     GHashTable *envs;
     // Classes

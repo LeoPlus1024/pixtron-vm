@@ -314,7 +314,7 @@ static inline Klass *pvm_load_klass(const PixtronVM *vm, const char *klass_name,
     GFileInfo *fileInfo = NULL;
     GFileEnumerator *enumerator = NULL;
 
-    dir = g_file_new_for_path(vm->klassPath);
+    dir = g_file_new_for_path(vm->klass_path);
     enumerator = g_file_enumerate_children(dir,
                                            G_FILE_ATTRIBUTE_STANDARD_NAME,
                                            G_FILE_QUERY_INFO_NONE,
@@ -357,7 +357,7 @@ extern inline Klass *pvm_get_klass(const PixtronVM *vm, const char *klass_name, 
         return klass;
     }
     // If Klass path is null skip klass load
-    if (vm->klassPath == NULL) {
+    if (vm->klass_path == NULL) {
         return NULL;
     }
     klass = pvm_load_klass(vm, klass_name, error);
